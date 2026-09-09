@@ -1,0 +1,6 @@
+{
+  "name": "i-Ready Diagnostic & Prep: Math & Literacy",
+  "description": "Adaptive kindergarten diagnostic assessment and next-test preparation suite for Math and Literacy with module and comprehensive test options, baseline comparison, and targeted practice.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -12,6 +12,7 @@ import { StudentProfileSetup } from './components/StudentProfileSetup';
 import { StudentAssessmentView } from './components/StudentAssessmentView';
 import { DiagnosticReportView } from './components/DiagnosticReportView';
 import { PracticeModeView } from './components/PracticeModeView';
+import { PasscodeLock } from './components/PasscodeLock';
 import {
   Sparkles,
   Calculator,
@@ -28,6 +29,10 @@ import { soundEngine } from './utils/audio';
 type AppView = 'setup' | 'assessing' | 'report' | 'practice';
 
 export function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('classroom_auth') === 'true';
+  });
+  
   const [currentView, setCurrentView] = useState<AppView>('setup');
   const [studentProfile, setStudentProfile] = useState<StudentProfile>({
     studentName: 'Kindergarten Learner',
@@ -349,6 +354,17 @@ export function App() {
     }
     setCurrentView('practice');
   };
+
+  if (!isAuthenticated) {
+    return (
+      <PasscodeLock 
+        onUnlock={() => {
+          localStorage.setItem('classroom_auth', 'true');
+          setIsAuthenticated(true);
+        }} 
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F3F4F6] text-slate-900 flex flex-col font-sans selection:bg-indigo-100">

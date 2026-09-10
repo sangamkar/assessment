@@ -178,7 +178,7 @@ export interface AssessmentQuestion {
   };
   // Math Specific Visuals
   mathVisual?: {
-    type: 'ten_frame' | 'counter_dots' | 'measurement_compare' | 'clock' | 'bar_graph' | 'balance_scale' | 'tally_chart';
+    type: 'ten_frame' | 'counter_dots' | 'measurement_compare' | 'clock' | 'bar_graph' | 'balance_scale' | 'tally_chart' | 'paper_clips' | 'height_compare';
     details?: any;
   };
   sortItems?: SortItem[];

@@ -36,6 +36,13 @@ export const MATH_QUESTIONS: AssessmentQuestion[] = [
     promptText: 'Which one is TALLER?',
     audioPrompt: 'Which one is taller: the tall green pine tree or the small flower sprout?',
     targetStandard: 'CCSS.MATH.K.MD.A.2',
+    mathVisual: {
+      type: 'height_compare',
+      details: {
+        itemA: { label: 'Pine Tree', height: 'tall' },
+        itemB: { label: 'Sprout', height: 'short' },
+      },
+    },
     choices: [
       { id: 'md_tree', label: 'The tall pine tree (Taller)', isCorrect: true },
       { id: 'md_sprout', label: 'The small flower sprout (Shorter)', isCorrect: false, errorTag: 'measurement_comparison_error' },
@@ -168,6 +175,10 @@ export const MATH_QUESTIONS: AssessmentQuestion[] = [
     promptText: 'Count the red dots. How many dots are there in total?',
     audioPrompt: 'Count the red dots one by one. How many dots are there in total?',
     targetStandard: 'CCSS.MATH.K.CC.B.5',
+    mathVisual: {
+      type: 'counter_dots',
+      details: { count: 7, color: 'red' },
+    },
     choices: [
       { id: 'cnt_7', label: '7 dots', isCorrect: true },
       { id: 'cnt_6', label: '6 dots', isCorrect: false, errorTag: 'side_counting_error' },

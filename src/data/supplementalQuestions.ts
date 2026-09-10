@@ -332,6 +332,10 @@ export const SUPPLEMENTAL_QUESTIONS: AssessmentQuestion[] = [
     promptText: 'A marker is lined up next to 6 paper clips end-to-end. How long is the marker?',
     audioPrompt: 'A marker is lined up next to 6 paper clips end-to-end with no gaps. How many paper clips long is the marker?',
     targetStandard: 'CCSS.MATH.K.MD.A.1',
+    mathVisual: {
+      type: 'paper_clips',
+      details: { count: 6, objectName: 'Marker' },
+    },
     choices: [
       { id: 'md_pc_c1', label: '6 paper clips long', isCorrect: true },
       { id: 'md_pc_c2', label: '3 paper clips long', isCorrect: false, errorTag: 'measurement_unit_error' },

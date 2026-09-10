@@ -2,7 +2,7 @@ import React from 'react';
 
 interface MathVisualRendererProps {
   visual: {
-    type: 'ten_frame' | 'counter_dots' | 'measurement_compare' | 'clock' | 'bar_graph' | 'balance_scale' | 'tally_chart';
+    type: 'ten_frame' | 'counter_dots' | 'measurement_compare' | 'clock' | 'bar_graph' | 'balance_scale' | 'tally_chart' | 'paper_clips' | 'height_compare';
     details?: any;
   };
 }
@@ -52,31 +52,125 @@ export const MathVisualRenderer: React.FC<MathVisualRendererProps> = ({ visual }
       );
     }
 
+    case 'counter_dots': {
+      const count = visual.details?.count || 5;
+      const color = visual.details?.color || 'blue';
+      
+      const bgColor = color === 'red' ? 'bg-red-500' : 
+                      color === 'green' ? 'bg-green-500' : 
+                      color === 'yellow' ? 'bg-yellow-400' : 'bg-blue-500';
+                      
+      const borderColor = color === 'red' ? 'border-red-600' : 
+                          color === 'green' ? 'border-green-600' : 
+                          color === 'yellow' ? 'border-yellow-500' : 'border-blue-600';
+
+      return (
+        <div className="flex flex-col items-center gap-3 p-5 bg-white rounded-2xl border border-slate-200 shadow-xs">
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+            Count the dots
+          </div>
+          <div className="flex flex-wrap justify-center max-w-[280px] gap-3 p-4 bg-slate-50 rounded-xl border-2 border-slate-100">
+            {Array.from({ length: count }).map((_, i) => (
+              <div
+                key={i}
+                className={`w-10 h-10 rounded-full ${bgColor} border-2 ${borderColor} shadow-sm animate-scale-in`}
+                style={{ animationDelay: `${i * 100}ms` }}
+              />
+            ))}
+          </div>
+        </div>
+      );
+    }
+
     case 'measurement_compare': {
       return (
         <div className="flex flex-col items-center gap-4 p-5 bg-white rounded-2xl border border-slate-200 shadow-xs w-full max-w-md">
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
             Length Comparison
           </div>
-          <div className="w-full flex flex-col gap-3">
+          <div className="w-full flex flex-col gap-6 relative px-2 py-4">
+            {/* Alignment dashed line */}
+            <div className="absolute left-[70px] top-0 bottom-0 border-l-2 border-dashed border-slate-300" />
+            
             {/* Long Yellow Pencil */}
-            <div className="flex items-center gap-3">
-              <span className="w-16 text-xs font-bold text-slate-600">Pencil:</span>
-              <div className="flex-1 bg-amber-100 rounded-xl p-1.5 flex items-center">
-                <div className="h-6 w-full max-w-[240px] bg-amber-400 rounded-lg border-2 border-amber-500 flex items-center justify-between px-2 shadow-xs">
-                  <span className="text-[10px] font-black text-amber-800 uppercase">Longer</span>
-                  <div className="w-2 h-2 rounded-full bg-amber-600" />
-                </div>
-              </div>
+            <div className="flex items-center gap-4 relative z-10 w-full">
+              <span className="w-12 text-right text-sm font-bold text-slate-600">Pencil</span>
+              <svg viewBox="0 0 240 30" className="h-10 w-full drop-shadow-sm">
+                 {/* Eraser */}
+                 <rect x="0" y="5" width="20" height="20" rx="3" fill="#f472b6" stroke="#334155" strokeWidth="2" />
+                 {/* Metal */}
+                 <rect x="18" y="5" width="10" height="20" fill="#cbd5e1" stroke="#334155" strokeWidth="2" />
+                 {/* Body */}
+                 <rect x="28" y="5" width="160" height="20" fill="#fbbf24" stroke="#334155" strokeWidth="2" />
+                 <line x1="28" y1="12" x2="188" y2="12" stroke="#d97706" strokeWidth="1" opacity="0.5" />
+                 <line x1="28" y1="18" x2="188" y2="18" stroke="#d97706" strokeWidth="1" opacity="0.5" />
+                 {/* Wood Tip */}
+                 <polygon points="188,5 220,15 188,25" fill="#fef3c7" stroke="#334155" strokeWidth="2" strokeLinejoin="round" />
+                 {/* Graphite */}
+                 <polygon points="210,12 220,15 210,18" fill="#334155" stroke="#334155" strokeWidth="2" strokeLinejoin="round" />
+              </svg>
             </div>
+
             {/* Short Red Crayon */}
-            <div className="flex items-center gap-3">
-              <span className="w-16 text-xs font-bold text-slate-600">Crayon:</span>
-              <div className="flex-1 bg-rose-100 rounded-xl p-1.5 flex items-center">
-                <div className="h-6 w-[95px] bg-rose-500 rounded-lg border-2 border-rose-600 flex items-center justify-between px-2 shadow-xs">
-                  <span className="text-[10px] font-black text-white uppercase">Shorter</span>
-                </div>
-              </div>
+            <div className="flex items-center gap-4 relative z-10 w-full">
+              <span className="w-12 text-right text-sm font-bold text-slate-600">Crayon</span>
+              <svg viewBox="0 0 240 30" className="h-10 w-full drop-shadow-sm">
+                 {/* Flat end */}
+                 <rect x="0" y="5" width="8" height="20" rx="2" fill="#e11d48" stroke="#334155" strokeWidth="2" />
+                 {/* Wrapper */}
+                 <rect x="6" y="5" width="80" height="20" fill="#f43f5e" stroke="#334155" strokeWidth="2" />
+                 {/* Wrapper details */}
+                 <path d="M 12 5 Q 16 15 12 25 M 78 5 Q 74 15 78 25" fill="none" stroke="#be123c" strokeWidth="2" />
+                 <text x="45" y="19" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#881337" opacity="0.6">CRAYON</text>
+                 {/* Tip */}
+                 <path d="M 86 6 L 100 11 L 100 19 L 86 24 Z" fill="#e11d48" stroke="#334155" strokeWidth="2" strokeLinejoin="round" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    case 'height_compare': {
+      return (
+        <div className="flex flex-col items-center gap-4 p-5 bg-white rounded-2xl border border-slate-200 shadow-xs w-full max-w-md">
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+            Height Comparison
+          </div>
+          <div className="w-full relative px-6 pt-4 pb-2 flex justify-around items-end h-56 border-b-4 border-slate-300">
+            {/* Tall Pine Tree */}
+            <div className="flex flex-col items-center gap-2 z-10">
+              <svg viewBox="0 0 100 160" className="w-20 h-40 drop-shadow-md">
+                {/* Trunk */}
+                <rect x="42" y="120" width="16" height="40" fill="#78350f" rx="2" />
+                {/* Leaves */}
+                <path d="M 50 10 L 90 70 L 65 70 L 100 130 L 0 130 L 35 70 L 10 70 Z" fill="#15803d" stroke="#166534" strokeWidth="2" strokeLinejoin="round" />
+              </svg>
+              <span className="text-xs font-bold text-slate-600">Pine Tree</span>
+            </div>
+
+            {/* Small Flower */}
+            <div className="flex flex-col items-center gap-2 z-10">
+              <svg viewBox="0 0 100 160" className="w-20 h-40 drop-shadow-md">
+                {/* Stem */}
+                <rect x="47" y="100" width="6" height="60" fill="#22c55e" rx="3" />
+                {/* Leaves */}
+                <path d="M 47 130 Q 30 110 20 120 Q 30 140 47 135" fill="#4ade80" />
+                <path d="M 53 140 Q 70 120 80 130 Q 70 150 53 145" fill="#4ade80" />
+                {/* Petals */}
+                <circle cx="50" cy="85" r="10" fill="#fbbf24" />
+                <circle cx="35" cy="85" r="12" fill="#ec4899" />
+                <circle cx="65" cy="85" r="12" fill="#ec4899" />
+                <circle cx="50" cy="70" r="12" fill="#ec4899" />
+                <circle cx="50" cy="100" r="12" fill="#ec4899" />
+                <circle cx="38" cy="73" r="12" fill="#ec4899" />
+                <circle cx="62" cy="73" r="12" fill="#ec4899" />
+                <circle cx="38" cy="97" r="12" fill="#ec4899" />
+                <circle cx="62" cy="97" r="12" fill="#ec4899" />
+                {/* Center again to overlap correctly */}
+                <circle cx="50" cy="85" r="8" fill="#f59e0b" />
+              </svg>
+              <span className="text-xs font-bold text-slate-600">Sprout</span>
             </div>
           </div>
         </div>
@@ -176,6 +270,15 @@ export const MathVisualRenderer: React.FC<MathVisualRendererProps> = ({ visual }
     }
 
     case 'clock': {
+      const hour = visual.details?.hour || 3;
+      const minute = visual.details?.minute || 0;
+      
+      const hourAngle = (hour % 12) * 30 + (minute / 60) * 30;
+      const minuteAngle = minute * 6;
+
+      // We start pointing up (12) which is angle 0 in clock terms, but in SVG 12 is (70, 10).
+      // A standard math rotation from the center (70, 70).
+      
       return (
         <div className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl border border-slate-200 shadow-xs">
           <svg viewBox="0 0 140 140" className="w-32 h-32 drop-shadow-sm">
@@ -186,10 +289,15 @@ export const MathVisualRenderer: React.FC<MathVisualRendererProps> = ({ visual }
             <text x="112" y="74" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#0f172a">3</text>
             <text x="70" y="118" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#0f172a">6</text>
             <text x="28" y="74" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#0f172a">9</text>
-            {/* Short Hour Hand pointing at 3 */}
-            <line x1="70" y1="70" x2="98" y2="70" stroke="#2563eb" strokeWidth="5" strokeLinecap="round" />
-            {/* Long Minute Hand pointing at 12 */}
-            <line x1="70" y1="70" x2="70" y2="35" stroke="#dc2626" strokeWidth="3.5" strokeLinecap="round" />
+            
+            {/* Hands */}
+            <g transform={`rotate(${hourAngle}, 70, 70)`}>
+              <line x1="70" y1="70" x2="70" y2="45" stroke="#2563eb" strokeWidth="5" strokeLinecap="round" />
+            </g>
+            <g transform={`rotate(${minuteAngle}, 70, 70)`}>
+              <line x1="70" y1="70" x2="70" y2="30" stroke="#dc2626" strokeWidth="3.5" strokeLinecap="round" />
+            </g>
+            
             <circle cx="70" cy="70" r="5" fill="#0f172a" />
           </svg>
           <span className="text-xs font-bold text-slate-700">Analog Clock</span>
@@ -211,6 +319,53 @@ export const MathVisualRenderer: React.FC<MathVisualRendererProps> = ({ visual }
               <line x1="85" y1="15" x2="85" y2="55" stroke="#78350f" strokeWidth="5" strokeLinecap="round" />
               <line x1="15" y1="50" x2="95" y2="20" stroke="#b45309" strokeWidth="6" strokeLinecap="round" />
             </svg>
+          </div>
+        </div>
+      );
+    }
+
+    case 'paper_clips': {
+      const count = visual.details?.count || 6;
+      const objectName = visual.details?.objectName || 'Marker';
+      
+      return (
+        <div className="flex flex-col items-center gap-6 p-6 bg-white rounded-2xl border border-slate-200 shadow-xs w-full max-w-2xl">
+          <div className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">
+            Measure with Paper Clips
+          </div>
+          <div className="w-full flex flex-col gap-4 relative px-4 py-4 items-center overflow-x-auto">
+            {/* The Object */}
+            <div className="flex items-center gap-4 relative z-10">
+              <span className="w-16 text-right text-base font-bold text-slate-600">{objectName}</span>
+              <div 
+                className="h-12 bg-indigo-500 rounded-lg border-2 border-indigo-700 shadow-sm flex items-center justify-center relative"
+                style={{ width: `${count * 3.5}rem` }}
+              >
+                 <div className="absolute left-1.5 w-4 h-7 bg-indigo-300 rounded-sm" />
+                 <div className="absolute right-0 w-10 h-10 bg-indigo-400 rounded-r-md border-l-2 border-indigo-700" />
+                 <span className="text-white font-bold tracking-widest opacity-50 uppercase text-sm">MARKER</span>
+              </div>
+            </div>
+            {/* The Paper Clips */}
+            <div className="flex items-center gap-4 relative z-10">
+               <span className="w-16 text-right text-base font-bold text-slate-600">Clips</span>
+               <div className="flex">
+                 {Array.from({ length: count }).map((_, i) => (
+                   <div key={i} className="flex justify-center items-center" style={{ width: '3.5rem' }}>
+                      {/* Horizontal paper clip, tight viewBox so they touch end-to-end */}
+                      <svg viewBox="0 2 37 16" className="w-full h-8 text-slate-400 drop-shadow-sm">
+                        <path 
+                          d="M 10 15 L 30 15 A 5 5 0 0 0 30 5 L 5 5 A 3 3 0 0 0 5 11 L 25 11 A 1 1 0 0 0 25 9 L 10 9" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          strokeWidth="2.5" 
+                          strokeLinecap="round" 
+                        />
+                      </svg>
+                   </div>
+                 ))}
+               </div>
+            </div>
           </div>
         </div>
       );

@@ -346,6 +346,12 @@ export const QuestionReviewSection: React.FC<QuestionReviewSectionProps> = ({ re
                             </div>
                           )}
 
+                          {item.question.mathVisual && (
+                            <div className="mt-3 flex flex-col items-center p-2 bg-slate-50 rounded-xl border border-slate-100">
+                              <MathVisualRenderer visual={item.question.mathVisual} />
+                            </div>
+                          )}
+
                           {item.question.sightWord && (
                             <div className="mt-2 text-sm font-black text-center p-2 bg-amber-50 rounded-lg text-amber-900 border border-amber-200">
                               Sight Word: &quot;{item.question.sightWord}&quot;

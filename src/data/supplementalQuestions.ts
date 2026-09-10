@@ -309,6 +309,12 @@ export const SUPPLEMENTAL_QUESTIONS: AssessmentQuestion[] = [
     promptText: 'A tally mark bundle has 4 lines down and 1 line across (卌). How many is that?',
     audioPrompt: 'A full tally bundle has 4 sticks with 1 slash across. How many does one full bundle represent?',
     targetStandard: 'CCSS.MATH.K.MD.B.3',
+    mathVisual: {
+      type: 'tally_chart',
+      details: {
+        title: 'Tally Mark Bundle',
+      },
+    },
     choices: [
       { id: 'md_tl_c1', label: '5', isCorrect: true },
       { id: 'md_tl_c2', label: '4', isCorrect: false, errorTag: 'tally_slash_omission' },
@@ -342,6 +348,17 @@ export const SUPPLEMENTAL_QUESTIONS: AssessmentQuestion[] = [
     promptText: 'In a class graph: 5 kids chose Blue, 3 chose Red, 2 chose Green. Which color was chosen the MOST?',
     audioPrompt: 'On a class graph: 5 children chose Blue, 3 chose Red, and 2 chose Green. Which color was chosen the most?',
     targetStandard: 'CCSS.MATH.K.MD.B.3',
+    mathVisual: {
+      type: 'bar_graph',
+      details: {
+        title: 'Favorite Colors Graph',
+        categories: [
+          { name: 'Blue', count: 5, color: '#3b82f6' },
+          { name: 'Red', count: 3, color: '#ef4444' },
+          { name: 'Green', count: 2, color: '#10b981' },
+        ],
+      },
+    },
     choices: [
       { id: 'md_clr_c1', label: 'Blue (5 votes)', isCorrect: true },
       { id: 'md_clr_c2', label: 'Red (3 votes)', isCorrect: false, errorTag: 'graph_reading_error' },
@@ -359,6 +376,17 @@ export const SUPPLEMENTAL_QUESTIONS: AssessmentQuestion[] = [
     promptText: '5 children chose Blue and 2 children chose Green. How many MORE children chose Blue than Green?',
     audioPrompt: '5 children chose Blue and 2 children chose Green. How many more children chose Blue than Green?',
     targetStandard: 'CCSS.MATH.1.MD.C.4',
+    mathVisual: {
+      type: 'bar_graph',
+      details: {
+        title: 'Favorite Colors Graph',
+        categories: [
+          { name: 'Blue', count: 5, color: '#3b82f6' },
+          { name: 'Red', count: 3, color: '#ef4444' },
+          { name: 'Green', count: 2, color: '#10b981' },
+        ],
+      },
+    },
     choices: [
       { id: 'md_hmm_c1', label: '3 more', isCorrect: true },
       { id: 'md_hmm_c2', label: '7 more', isCorrect: false, errorTag: 'add_subtract_confusion' },

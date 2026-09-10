@@ -2,7 +2,7 @@ import React from 'react';
 
 interface MathVisualRendererProps {
   visual: {
-    type: 'ten_frame' | 'counter_dots' | 'measurement_compare' | 'clock' | 'bar_graph' | 'balance_scale';
+    type: 'ten_frame' | 'counter_dots' | 'measurement_compare' | 'clock' | 'bar_graph' | 'balance_scale' | 'tally_chart';
     details?: any;
   };
 }
@@ -116,36 +116,60 @@ export const MathVisualRenderer: React.FC<MathVisualRendererProps> = ({ visual }
     }
 
     case 'bar_graph': {
-      const categories = visual.details?.categories || [
+      const categories: Array<{ name: string; count: number; color?: string }> = visual.details?.categories || [
         { name: 'Dogs', count: 5, color: '#3b82f6' },
         { name: 'Cats', count: 3, color: '#10b981' },
         { name: 'Fish', count: 2, color: '#f59e0b' },
       ];
+      const maxVal = Math.max(...categories.map((c) => c.count || 1), 5);
+      const yTicks = Array.from({ length: maxVal + 1 }, (_, i) => maxVal - i);
+
       return (
-        <div className="flex flex-col items-center gap-3 p-5 bg-white rounded-2xl border border-slate-200 shadow-xs w-full max-w-sm">
-          <div className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-            {visual.details?.title || 'Class Pets Survey'}
+        <div className="flex flex-col items-center gap-3 p-5 bg-white rounded-2xl border border-slate-200 shadow-xs w-full max-w-md">
+          <div className="text-xs font-bold text-slate-700 uppercase tracking-wider text-center">
+            📊 {visual.details?.title || 'Class Survey Bar Graph'}
           </div>
-          <div className="w-full flex items-end justify-center gap-6 h-36 border-b-2 border-slate-300 pb-2 px-4">
-            {categories.map((cat: any, i: number) => {
-              const heightPercent = (cat.count / 5) * 100;
-              return (
-                <div key={i} className="flex flex-col items-center gap-1.5 flex-1 max-w-[70px]">
-                  <span className="text-xs font-black text-slate-800">{cat.count}</span>
-                  <div
-                    className="w-full rounded-t-xl transition-all duration-300 shadow-xs flex items-end justify-center"
-                    style={{
-                      height: `${heightPercent}%`,
-                      backgroundColor: cat.color,
-                      minHeight: '24px',
-                    }}
-                  />
-                  <span className="text-[11px] font-bold text-slate-700 truncate w-full text-center">
-                    {cat.name}
-                  </span>
-                </div>
-              );
-            })}
+
+          <div className="w-full flex items-stretch gap-2 pt-2 px-2">
+            {/* Y-Axis scale numbers */}
+            <div className="flex flex-col justify-between items-end pr-2 text-[10px] font-extrabold text-slate-400 select-none pb-7 pt-1">
+              {yTicks.map((val) => (
+                <span key={val} className="leading-none">{val}</span>
+              ))}
+            </div>
+
+            {/* Graph area with horizontal guide lines and bars */}
+            <div className="flex-1 relative flex items-end justify-around h-44 border-l-2 border-b-2 border-slate-400 pb-2 px-3">
+              {/* Horizontal guide lines */}
+              <div className="absolute inset-0 pb-2 flex flex-col justify-between pointer-events-none">
+                {yTicks.map((val) => (
+                  <div key={val} className="w-full border-t border-slate-100/90" />
+                ))}
+              </div>
+
+              {/* Bars */}
+              {categories.map((cat, i) => {
+                const heightPercent = Math.max(8, Math.round((cat.count / maxVal) * 100));
+                return (
+                  <div key={i} className="relative z-10 flex flex-col items-center gap-1.5 flex-1 max-w-[76px] h-full justify-end">
+                    <span className="text-xs font-black text-slate-800 bg-white/90 px-1.5 py-0.5 rounded-md shadow-2xs border border-slate-200">
+                      {cat.count}
+                    </span>
+                    <div
+                      className="w-full rounded-t-xl transition-all duration-300 shadow-sm border-t-2 border-x-2 border-black/10 flex items-end justify-center"
+                      style={{
+                        height: `${heightPercent}%`,
+                        backgroundColor: cat.color || '#3b82f6',
+                        minHeight: '22px',
+                      }}
+                    />
+                    <span className="text-[11px] font-bold text-slate-700 truncate w-full text-center mt-0.5">
+                      {cat.name}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       );
@@ -169,6 +193,25 @@ export const MathVisualRenderer: React.FC<MathVisualRendererProps> = ({ visual }
             <circle cx="70" cy="70" r="5" fill="#0f172a" />
           </svg>
           <span className="text-xs font-bold text-slate-700">Analog Clock</span>
+        </div>
+      );
+    }
+
+    case 'tally_chart': {
+      return (
+        <div className="flex flex-col items-center gap-2 p-5 bg-white rounded-2xl border border-slate-200 shadow-xs">
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+            {visual.details?.title || 'Tally Mark Bundle'}
+          </div>
+          <div className="p-4 bg-amber-50/60 rounded-xl border border-amber-200/80 flex items-center justify-center">
+            <svg viewBox="0 0 120 70" className="w-32 h-20">
+              <line x1="25" y1="15" x2="25" y2="55" stroke="#78350f" strokeWidth="5" strokeLinecap="round" />
+              <line x1="45" y1="15" x2="45" y2="55" stroke="#78350f" strokeWidth="5" strokeLinecap="round" />
+              <line x1="65" y1="15" x2="65" y2="55" stroke="#78350f" strokeWidth="5" strokeLinecap="round" />
+              <line x1="85" y1="15" x2="85" y2="55" stroke="#78350f" strokeWidth="5" strokeLinecap="round" />
+              <line x1="15" y1="50" x2="95" y2="20" stroke="#b45309" strokeWidth="6" strokeLinecap="round" />
+            </svg>
+          </div>
         </div>
       );
     }

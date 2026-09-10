@@ -117,6 +117,17 @@ export const MATH_QUESTIONS: AssessmentQuestion[] = [
     audioPrompt: 'There are five dogs and two fish. How many more students chose dogs than fish? Five minus two.',
     targetStandard: 'CCSS.MATH.1.MD.C.4',
     gradeLevel: 'above_kindergarten',
+    mathVisual: {
+      type: 'bar_graph',
+      details: {
+        title: 'Favorite Class Pets',
+        categories: [
+          { name: 'Dogs', count: 5, color: '#3b82f6' },
+          { name: 'Cats', count: 3, color: '#10b981' },
+          { name: 'Fish', count: 2, color: '#f59e0b' },
+        ],
+      },
+    },
     choices: [
       { id: 'more_3', label: '3 more students (5 - 2 = 3)', isCorrect: true },
       { id: 'more_2', label: '2 more', isCorrect: false, errorTag: 'graph_reading_error' },

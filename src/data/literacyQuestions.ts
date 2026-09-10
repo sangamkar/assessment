@@ -2,7 +2,7 @@ import { AssessmentQuestion } from '../types/assessment';
 
 export const LITERACY_QUESTIONS: AssessmentQuestion[] = [
   // =========================================================================
-  // DOMAIN 1: HIGH-FREQUENCY WORDS (Aarav's Key Focus Area from i-Ready Report)
+  // DOMAIN 1: HIGH-FREQUENCY WORDS (Foundational Kindergarten Sight Words Domain)
   // =========================================================================
   {
     id: 'hfw_the_find',

@@ -164,14 +164,14 @@ export const EXTENDED_QUESTIONS: AssessmentQuestion[] = [
     ],
   },
   {
-    id: 'num_groups_of_10_aarav_4_groups',
+    id: 'num_groups_of_10_four_groups',
     subject: 'math',
     domain: 'number_and_operations',
     subskill: '4 Groups of 10 = 40',
     difficulty: 3,
     format: 'multiple_choice',
-    promptText: 'Aarav has 4 groups of 10 blocks. How many blocks does he have in all?',
-    audioPrompt: 'Aarav has four groups of ten blocks. How many blocks does he have in all?',
+    promptText: 'Sam has 4 groups of 10 blocks. How many blocks does he have in all?',
+    audioPrompt: 'Sam has four groups of ten blocks. How many blocks does he have in all?',
     targetStandard: 'CCSS.MATH.1.NBT.B.2',
     gradeLevel: 'above_kindergarten',
     choices: [

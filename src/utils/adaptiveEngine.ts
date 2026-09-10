@@ -16,7 +16,7 @@ import {
   StudentProfile,
 } from '../types/assessment';
 import { BASE_QUESTIONS, getQuestionsBySubject, getQuestionsByDomain } from '../data/questionBank';
-import { AARAV_BENCHMARK } from '../data/aaravBenchmark';
+import { GRADE_K_BENCHMARK } from '../data/gradeBenchmark';
 import { sessionHistory } from './sessionHistory';
 
 // Math Domain Hierarchy (aligned with i-Ready Diagnostic)
@@ -719,8 +719,8 @@ export class AdaptiveEngine {
       zoneOfProximalDevelopment: `Level ${highestDifficulty} – ${this.getDifficultyInfo(highestDifficulty).shortTag}`,
     };
 
-    // Aarav benchmark baseline comparison
-    const benchmarkData = this.subject === 'reading' ? AARAV_BENCHMARK.reading : AARAV_BENCHMARK.math;
+    // Kindergarten standard benchmark comparison
+    const benchmarkData = this.subject === 'reading' ? GRADE_K_BENCHMARK.reading : GRADE_K_BENCHMARK.math;
 
     return {
       studentProfile,
@@ -743,7 +743,7 @@ export class AdaptiveEngine {
       suggestedReassessmentDate: formattedReassessDate,
       responses,
       adaptiveProfile,
-      aaravBaselineComparison: {
+      benchmarkComparison: {
         priorTestDate: benchmarkData.testDate,
         priorScaleScore: benchmarkData.scaleScore,
         priorPlacement: benchmarkData.placementLabel,

@@ -21,7 +21,6 @@ import {
   ShieldCheck,
   RotateCcw,
 } from 'lucide-react';
-import { AARAV_BENCHMARK } from '../data/aaravBenchmark';
 import { sessionHistory } from '../utils/sessionHistory';
 
 interface StudentProfileSetupProps {
@@ -37,8 +36,7 @@ export const StudentProfileSetup: React.FC<StudentProfileSetupProps> = ({
 }) => {
   const today = new Date().toISOString().split('T')[0];
 
-  const [studentName, setStudentName] = useState('Aarav Sangamkar');
-  const [studentId, setStudentId] = useState('210668');
+  const [studentName, setStudentName] = useState('');
   const [grade, setGrade] = useState('Kindergarten');
   const [assessmentDate, setAssessmentDate] = useState(today);
   const [assessorName, setAssessorName] = useState('');
@@ -142,8 +140,7 @@ export const StudentProfileSetup: React.FC<StudentProfileSetupProps> = ({
     setAssessmentScope('single_module');
     setTargetModuleDomain(domain);
     onStartAssessment({
-      studentName: studentName.trim() || 'Aarav Sangamkar',
-      studentId: studentId.trim(),
+      studentName: studentName.trim() || 'Kindergarten Learner',
       grade,
       assessmentDate,
       assessorName: assessorName.trim(),
@@ -157,11 +154,9 @@ export const StudentProfileSetup: React.FC<StudentProfileSetupProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!studentName.trim()) return;
 
     onStartAssessment({
-      studentName: studentName.trim(),
-      studentId: studentId.trim(),
+      studentName: studentName.trim() || 'Kindergarten Learner',
       grade,
       assessmentDate,
       assessorName: assessorName.trim(),
@@ -197,7 +192,7 @@ export const StudentProfileSetup: React.FC<StudentProfileSetupProps> = ({
                 Adaptive Assessment Mode
               </span>
               <span className="text-xs text-slate-400 font-semibold">
-                Student ID: {AARAV_BENCHMARK.studentId}
+                Kindergarten Benchmark Standard
               </span>
             </div>
 
@@ -326,37 +321,37 @@ export const StudentProfileSetup: React.FC<StudentProfileSetupProps> = ({
           </div>
         </div>
 
-        {/* TILE 2: Last Test Analysis Bento Card (col-span-12 lg:col-span-4) */}
+        {/* TILE 2: Benchmark Standards Bento Card (col-span-12 lg:col-span-4) */}
         <div className="col-span-12 lg:col-span-4 bg-indigo-50 border border-indigo-100 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-indigo-900 font-bold flex items-center gap-2 text-base">
                 <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span>
-                Last Test Analysis
+                Benchmark Standards
               </h3>
               <span className="text-[10px] bg-indigo-200/80 text-indigo-800 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider">
-                Official Baseline
+                Grade K Norms
               </span>
             </div>
 
             <div className="space-y-3.5">
               <div className="flex justify-between items-center text-sm p-3 bg-white/70 rounded-xl border border-indigo-100">
-                <span className="text-indigo-700 font-medium">Literacy Component</span>
-                <span className="font-extrabold text-indigo-950">407 / 800 (97th %ile)</span>
+                <span className="text-indigo-700 font-medium">Literacy On-Grade Target</span>
+                <span className="font-extrabold text-indigo-950">362 - 479</span>
               </div>
               <div className="flex justify-between items-center text-sm p-3 bg-white/70 rounded-xl border border-indigo-100">
-                <span className="text-indigo-700 font-medium">Math Component</span>
-                <span className="font-extrabold text-indigo-950">360 / 800 (83rd %ile)</span>
+                <span className="text-indigo-700 font-medium">Math On-Grade Target</span>
+                <span className="font-extrabold text-indigo-950">362 - 448</span>
               </div>
 
               <div className="pt-3 border-t border-indigo-200">
                 <p className="text-xs text-indigo-600 uppercase font-bold tracking-widest mb-1">
-                  Key Insight
+                  Curriculum Focus
                 </p>
                 <p className="text-xs text-indigo-900 leading-relaxed font-medium">
-                  Aarav is just <strong>2 points</strong> away from on-grade Math (362). Prioritize{' '}
-                  <strong>Geometry</strong>, <strong>Measurement &amp; Data</strong>, and{' '}
-                  <strong>High-Frequency Words</strong> in upcoming sessions.
+                  Standard benchmark scale threshold is <strong>362+</strong>. Priority mastery targets:
+                  <strong> Geometry</strong>, <strong>Measurement &amp; Data</strong>, and{' '}
+                  <strong>High-Frequency Sight Words</strong>.
                 </p>
               </div>
             </div>
@@ -369,7 +364,7 @@ export const StudentProfileSetup: React.FC<StudentProfileSetupProps> = ({
               className="flex-1 px-3 py-2 bg-white hover:bg-indigo-100/50 rounded-xl text-xs font-bold text-indigo-900 transition flex items-center justify-center gap-1 border border-indigo-200 shadow-2xs cursor-pointer"
             >
               <Calculator className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Math Report</span>
+              <span>Sample Math Report</span>
             </button>
             <button
               type="button"
@@ -377,7 +372,7 @@ export const StudentProfileSetup: React.FC<StudentProfileSetupProps> = ({
               className="flex-1 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-xs font-bold text-white transition flex items-center justify-center gap-1 shadow-2xs cursor-pointer"
             >
               <BookOpen className="w-3.5 h-3.5" />
-              <span>Reading Report</span>
+              <span>Sample Reading Report</span>
             </button>
           </div>
         </div>
@@ -557,44 +552,30 @@ export const StudentProfileSetup: React.FC<StudentProfileSetupProps> = ({
             <div className="space-y-3">
               <div>
                 <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">
-                  Student Name
+                  Learner / Student Name (Optional)
                 </label>
                 <input
                   type="text"
-                  required
+                  placeholder="e.g. Student 1"
                   value={studentName}
                   onChange={(e) => setStudentName(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:bg-white focus:border-indigo-500 focus:outline-none transition"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">
-                    Grade
-                  </label>
-                  <select
-                    value={grade}
-                    onChange={(e) => setGrade(e.target.value)}
-                    className="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:bg-white focus:outline-none cursor-pointer"
-                  >
-                    <option value="Kindergarten">Grade K (Aarav)</option>
-                    <option value="Pre-K">Pre-K</option>
-                    <option value="Grade 1">Grade 1</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">
-                    Student ID
-                  </label>
-                  <input
-                    type="text"
-                    value={studentId}
-                    onChange={(e) => setStudentId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:bg-white focus:outline-none"
-                  />
-                </div>
+              <div>
+                <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">
+                  Grade Level
+                </label>
+                <select
+                  value={grade}
+                  onChange={(e) => setGrade(e.target.value)}
+                  className="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 bg-slate-50 focus:bg-white focus:outline-none cursor-pointer"
+                >
+                  <option value="Kindergarten">Kindergarten (Grade K)</option>
+                  <option value="Pre-K">Pre-K</option>
+                  <option value="Grade 1">Grade 1</option>
+                </select>
               </div>
 
               <div>
@@ -665,10 +646,10 @@ export const StudentProfileSetup: React.FC<StudentProfileSetupProps> = ({
             </div>
             <div>
               <span className="text-sm font-bold text-slate-700 block">
-                Detailed Diagnostic &amp; Growth Archive
+                Standard Diagnostic &amp; Growth Archive
               </span>
               <span className="text-xs text-slate-400 font-medium">
-                Baseline calibration loaded from August 2026 i-Ready Diagnostic reports (Math 360 &amp; Reading 407).
+                Calibrated for Kindergarten standard diagnostic benchmarks (On-grade scale threshold 362+).
               </span>
             </div>
           </div>
@@ -694,7 +675,7 @@ export const StudentProfileSetup: React.FC<StudentProfileSetupProps> = ({
               onClick={onQuickMathDemo}
               className="text-xs text-indigo-600 font-bold border-b-2 border-indigo-600 border-opacity-30 pb-0.5 hover:border-opacity-100 cursor-pointer"
             >
-              Review Math History
+              Sample Math Report
             </button>
             <span className="text-slate-300">•</span>
             <button
@@ -702,7 +683,7 @@ export const StudentProfileSetup: React.FC<StudentProfileSetupProps> = ({
               onClick={onQuickReadingDemo}
               className="text-xs text-indigo-600 font-bold border-b-2 border-indigo-600 border-opacity-30 pb-0.5 hover:border-opacity-100 cursor-pointer"
             >
-              Review Reading History
+              Sample Reading Report
             </button>
           </div>
         </div>

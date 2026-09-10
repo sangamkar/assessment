@@ -2,7 +2,7 @@ import React from 'react';
 import { CompleteDiagnosticResult, MasteryLevel, DomainDiagnosticReport, AssessmentDomain } from '../types/assessment';
 import { QuestionReviewSection } from './QuestionReviewSection';
 import { AdaptiveTrajectoryView } from './AdaptiveTrajectoryView';
-import { AARAV_BENCHMARK } from '../data/aaravBenchmark';
+import { GRADE_K_BENCHMARK } from '../data/gradeBenchmark';
 import {
   Printer,
   RotateCcw,
@@ -51,7 +51,7 @@ export const DiagnosticReportView: React.FC<DiagnosticReportViewProps> = ({
   } = result;
 
   const isReading = subject === 'reading';
-  const baselineInfo = isReading ? AARAV_BENCHMARK.reading : AARAV_BENCHMARK.math;
+  const baselineInfo = isReading ? GRADE_K_BENCHMARK.reading : GRADE_K_BENCHMARK.math;
 
   const getLevelBadgeColor = (level: MasteryLevel) => {
     switch (level) {
@@ -95,7 +95,7 @@ export const DiagnosticReportView: React.FC<DiagnosticReportViewProps> = ({
               Diagnostic Evaluation: {isReading ? 'Reading / Literacy' : 'Mathematics'}
             </div>
             <div className="text-[11px] text-slate-400 font-medium">
-              Calibrated for Aarav Sangamkar (Grade K) • Kindergarten Benchmark Standards
+              Calibrated for Kindergarten Benchmark Standards • Adaptive Diagnostic
             </div>
           </div>
         </div>
@@ -147,12 +147,10 @@ export const DiagnosticReportView: React.FC<DiagnosticReportViewProps> = ({
                 </div>
 
                 <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight mt-2">
-                  {studentProfile.studentName}
+                  {studentProfile.studentName || 'Kindergarten Learner'}
                 </h1>
                 <div className="flex flex-wrap items-center gap-x-3 text-xs text-slate-400 mt-1 font-medium">
                   <span>Grade: <strong className="text-slate-700">{studentProfile.grade}</strong></span>
-                  <span>•</span>
-                  <span>ID: <strong className="text-slate-700">{studentProfile.studentId || '210668'}</strong></span>
                   <span>•</span>
                   <span>Date: <strong className="text-slate-700">{studentProfile.assessmentDate}</strong></span>
                 </div>
@@ -215,24 +213,24 @@ export const DiagnosticReportView: React.FC<DiagnosticReportViewProps> = ({
           </div>
         </div>
 
-        {/* TILE 2: Actual Test Baseline Comparison Bento (col-span-12 lg:col-span-4) */}
+        {/* TILE 2: Grade K Benchmark Standard Norms Bento (col-span-12 lg:col-span-4) */}
         <div className="col-span-12 lg:col-span-4 bg-indigo-50 border border-indigo-100 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-indigo-900 font-bold flex items-center gap-2 text-base">
                 <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
-                Baseline Comparison
+                Grade K Benchmark Standards
               </h3>
               <span className="text-[10px] bg-indigo-200/80 text-indigo-800 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider">
-                {baselineInfo.testDate}
+                Standard Norm
               </span>
             </div>
 
             <div className="space-y-3">
               <div className="p-3 bg-white/80 rounded-xl border border-indigo-100 flex items-center justify-between">
-                <span className="text-xs text-indigo-800 font-medium">Prior Test Score</span>
+                <span className="text-xs text-indigo-800 font-medium">On-Grade Threshold</span>
                 <span className="text-sm font-extrabold text-indigo-950">
-                  {baselineInfo.scaleScore} ({baselineInfo.nationalPercentile}th %ile)
+                  362 Scale Score
                 </span>
               </div>
 
@@ -241,21 +239,21 @@ export const DiagnosticReportView: React.FC<DiagnosticReportViewProps> = ({
                 <span className="text-sm font-extrabold text-emerald-600">
                   {scaleScore}{' '}
                   <span className="text-[10px] text-slate-500 font-normal">
-                    ({scaleScore >= baselineInfo.scaleScore ? `+${scaleScore - baselineInfo.scaleScore} pts` : 'baseline'})
+                    ({scaleScore >= 362 ? 'On-Grade K Met' : `${362 - scaleScore} pts to On-Grade`})
                   </span>
                 </span>
               </div>
 
               <div className="p-3 bg-white/80 rounded-xl border border-indigo-100 flex items-center justify-between">
-                <span className="text-xs text-indigo-800 font-medium">Next Test Target</span>
+                <span className="text-xs text-indigo-800 font-medium">On-Grade Level Range</span>
                 <span className="text-sm font-extrabold text-indigo-600">
-                  {baselineInfo.nextTestTargetScore}+ (On Grade {baselineInfo.onGradeLevelRange})
+                  {baselineInfo.onGradeLevelRange}
                 </span>
               </div>
 
               <div className="pt-3 border-t border-indigo-200">
                 <p className="text-[10px] uppercase tracking-wider font-bold text-indigo-600 mb-1">
-                  Test Dossier Recommendation
+                  Instructional Guidance
                 </p>
                 <p className="text-xs text-indigo-900 leading-relaxed font-medium">
                   {baselineInfo.actionPlanSummary}

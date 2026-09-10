@@ -12,7 +12,6 @@ import { StudentProfileSetup } from './components/StudentProfileSetup';
 import { StudentAssessmentView } from './components/StudentAssessmentView';
 import { DiagnosticReportView } from './components/DiagnosticReportView';
 import { PracticeModeView } from './components/PracticeModeView';
-import { AARAV_BENCHMARK } from './data/aaravBenchmark';
 import {
   Sparkles,
   Calculator,
@@ -31,8 +30,7 @@ type AppView = 'setup' | 'assessing' | 'report' | 'practice';
 export function App() {
   const [currentView, setCurrentView] = useState<AppView>('setup');
   const [studentProfile, setStudentProfile] = useState<StudentProfile>({
-    studentName: 'Aarav Sangamkar',
-    studentId: '210668',
+    studentName: 'Kindergarten Learner',
     grade: 'Kindergarten',
     assessmentDate: new Date().toISOString().split('T')[0],
     subject: 'math',
@@ -104,20 +102,19 @@ export function App() {
     setCurrentView('report');
   };
 
-  // Quick Demo: Load Aarav's Math Baseline Report
+  // Quick Demo: Load Sample Math Report
   const handleQuickMathDemo = () => {
     const profile: StudentProfile = {
-      studentName: 'Aarav Sangamkar',
-      studentId: '210668',
+      studentName: 'Kindergarten Learner',
       grade: 'Kindergarten',
-      assessmentDate: '08/31/2026',
+      assessmentDate: new Date().toISOString().split('T')[0],
       subject: 'math',
       assessmentScope: 'comprehensive',
     };
     setStudentProfile(profile);
 
     const engine = new AdaptiveEngine('math', 'comprehensive');
-    // Pre-populate with realistic responses reflecting Aarav's 360 score (Measurement/Geometry needs)
+    // Pre-populate with realistic responses demonstrating domain balance
     engine.recordResponse({
       questionId: 'md_length_pencils',
       domain: 'measurement_and_data',
@@ -211,28 +208,27 @@ export function App() {
     });
 
     const report = engine.generateReport(profile);
-    report.scaleScore = 360;
-    report.overallLevel = 'Approaching Grade K';
-    report.nationalPercentile = 83;
+    report.scaleScore = 365;
+    report.overallLevel = 'At Grade K';
+    report.nationalPercentile = 54;
     report.lowestMissingPrerequisite = 'Measurement and Data';
     setDiagnosticResult(report);
     setCurrentView('report');
   };
 
-  // Quick Demo: Load Aarav's Reading Baseline Report
+  // Quick Demo: Load Sample Reading Report
   const handleQuickReadingDemo = () => {
     const profile: StudentProfile = {
-      studentName: 'Aarav Sangamkar',
-      studentId: '210668',
+      studentName: 'Kindergarten Learner',
       grade: 'Kindergarten',
-      assessmentDate: '08/27/2026',
+      assessmentDate: new Date().toISOString().split('T')[0],
       subject: 'reading',
       assessmentScope: 'comprehensive',
     };
     setStudentProfile(profile);
 
     const engine = new AdaptiveEngine('reading', 'comprehensive');
-    // Pre-populate with realistic responses reflecting Aarav's 407 score (High-Frequency Words needs)
+    // Pre-populate with realistic responses demonstrating domain balance
     engine.recordResponse({
       questionId: 'hfw_the_cloze',
       domain: 'high_frequency_words',
@@ -324,10 +320,10 @@ export function App() {
     });
 
     const report = engine.generateReport(profile);
-    report.scaleScore = 407;
+    report.scaleScore = 380;
     report.overallLevel = 'At Grade K';
-    report.nationalPercentile = 97;
-    report.lexileMeasure = 'BR165L';
+    report.nationalPercentile = 66;
+    report.lexileMeasure = 'BR150L';
     report.lowestMissingPrerequisite = 'High-Frequency Words*';
     setDiagnosticResult(report);
     setCurrentView('report');
@@ -371,7 +367,7 @@ export function App() {
                 Assessment Hub
               </div>
               <div className="text-xs text-slate-500 font-medium mt-1">
-                Prep Portal: All Subjects &amp; Comprehensive Readiness • Aarav (Grade K)
+                Kindergarten Diagnostic &amp; Adaptive Practice Portal
               </div>
             </div>
           </div>
@@ -379,10 +375,10 @@ export function App() {
           <div className="flex items-center flex-wrap gap-2.5">
             <div className="bg-white px-3.5 py-1.5 rounded-xl shadow-xs border border-slate-200 hidden lg:block">
               <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">
-                Next Test Target
+                Benchmark Standards
               </span>
               <span className="text-slate-700 font-semibold text-xs">
-                Oct 2026 • 385+ Math / 435+ Read
+                On-Grade Target: 362+ Scale Score
               </span>
             </div>
 

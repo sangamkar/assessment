@@ -2,7 +2,7 @@ import { AssessmentQuestion } from '../types/assessment';
 
 export const MATH_QUESTIONS: AssessmentQuestion[] = [
   // =========================================================================
-  // DOMAIN 1: MEASUREMENT AND DATA (Aarav's Priority Growth Area from i-Ready!)
+  // DOMAIN 1: MEASUREMENT AND DATA (Priority Kindergarten Growth Domain)
   // =========================================================================
   {
     id: 'md_length_pencil_crayon',

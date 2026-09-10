@@ -293,7 +293,7 @@ export interface CompleteDiagnosticResult {
   suggestedReassessmentDate: string;
   responses: QuestionResponse[];
   adaptiveProfile?: AdaptiveProfile;
-  aaravBaselineComparison?: {
+  benchmarkComparison?: {
     priorTestDate: string;
     priorScaleScore: number;
     priorPlacement: string;

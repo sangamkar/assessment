@@ -3,6 +3,7 @@ import type { Choice } from '../content/types';
 import type { QuestStep } from '../engine/planner';
 import type { Mode } from '../engine/progress';
 import { soundEngine } from '../utils/audio';
+import { localize } from '../content/curricula';
 import { Intro } from './Intro';
 import { SpeakButton } from './SpeakButton';
 import { Visual } from './Visual';
@@ -17,6 +18,7 @@ export interface AnswerEvent {
 }
 
 interface Props {
+  locale: 'en-US' | 'en-IN';
   mode: Mode;
   title: string;
   color: string;
@@ -32,7 +34,7 @@ interface Props {
 
 type Phase = 'intro' | 'ask' | 'retry' | 'right' | 'explain' | 'moving';
 
-export function Player({ mode, title, color, total, first, getNext, introSeen, onIntroDone, onAnswer, onFinish, onExit }: Props) {
+export function Player({ locale, mode, title, color, total, first, getNext, introSeen, onIntroDone, onAnswer, onFinish, onExit }: Props) {
   const [step, setStep] = useState<QuestStep | null>(first);
   const [n, setN] = useState(1);
   const [phase, setPhase] = useState<Phase>(first && mode !== 'checkup' && !introSeen(first.skill.id) ? 'intro' : 'ask');
@@ -44,10 +46,12 @@ export function Player({ mode, title, color, total, first, getNext, introSeen, o
   const practice = mode !== 'checkup';
 
   const item = step?.item;
+  const L = (t: string) => localize(t, locale);
+  const speakItem = () => item && soundEngine.speakParts(item.voice ? [{ text: L(item.say) }, item.voice] : [{ text: L(item.say) }]);
 
   // Read the question aloud whenever a new one appears.
   useEffect(() => {
-    if (phase === 'ask' && item) soundEngine.speak(item.say);
+    if (phase === 'ask' && item) speakItem();
     return () => soundEngine.stopSpeech();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item?.id, phase === 'intro']);
@@ -73,7 +77,7 @@ export function Player({ mode, title, color, total, first, getNext, introSeen, o
     if (eliminated.includes(c.id)) return;
     soundEngine.playTap();
     setSelected(c.id);
-    if (item.speakChoices !== false && c.say) soundEngine.speak(c.say);
+    if (item.speakChoices !== false && c.say) soundEngine.speak(item.choiceLang ? c.say : L(c.say), undefined, item.choiceLang);
   };
 
   const submit = () => {
@@ -105,7 +109,7 @@ export function Player({ mode, title, color, total, first, getNext, introSeen, o
       setTimeout(advance, 1500);
     } else if (firstTry) {
       soundEngine.playGentleBuzzer();
-      const msg = item.hint ?? 'Not quite. Look again and try one more time!';
+      const msg = L(item.hint ?? 'Not quite. Look again and try one more time!');
       setMessage(msg);
       setEliminated([choice.id]);
       setSelected(null);
@@ -113,9 +117,9 @@ export function Player({ mode, title, color, total, first, getNext, introSeen, o
       soundEngine.speak(`Hmm. ${msg}`);
     } else {
       setEliminated((e) => [...e, choice.id]);
-      setMessage(item.explain);
+      setMessage(L(item.explain));
       setPhase('explain');
-      soundEngine.speak(`Let's learn it. ${item.explain}`);
+      soundEngine.speak(`Let's learn it. ${L(item.explain)}`);
     }
   };
 
@@ -146,6 +150,7 @@ export function Player({ mode, title, color, total, first, getNext, introSeen, o
         <Intro
           skill={step.skill}
           color={color}
+          locale={locale}
           onDone={() => {
             onIntroDone(step.skill.id);
             setPhase('ask');
@@ -155,9 +160,9 @@ export function Player({ mode, title, color, total, first, getNext, introSeen, o
         <>
           {/* Prompt */}
           <div className="mt-5 flex items-center gap-4 rounded-[2rem] bg-white p-4 shadow-md">
-            <SpeakButton text={item.say} big />
+            <SpeakButton text={L(item.say)} extra={item.voice} big />
             <div className="flex-1">
-              <div className="font-kid text-2xl font-bold leading-tight text-slate-800 sm:text-3xl">{item.show ?? item.say}</div>
+              <div className="font-kid text-2xl font-bold leading-tight text-slate-800 sm:text-3xl">{L(item.show ?? item.say)}</div>
               {practice && <div className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-400">{step.skill.icon} {step.skill.kidTitle}</div>}
             </div>
           </div>
@@ -181,6 +186,7 @@ export function Player({ mode, title, color, total, first, getNext, introSeen, o
                   onClick={() => choose(c)}
                   disabled={isGone || reveal || phase === 'moving'}
                   aria-label={c.say ?? c.text ?? 'choice'}
+                  lang={item.choiceLang}
                   className={`relative flex min-h-[110px] items-center justify-center rounded-[1.75rem] bg-white p-3 shadow-md transition-all duration-200 ${
                     isRight ? 'scale-105 ring-8 ring-emerald-400' : isSel ? 'scale-105 ring-8 ring-sky-400' : 'ring-2 ring-slate-200 hover:ring-sky-200'
                   } ${isGone ? 'opacity-25 grayscale' : ''}`}
@@ -210,7 +216,7 @@ export function Player({ mode, title, color, total, first, getNext, introSeen, o
             )}
             {phase === 'explain' ? (
               <div className="flex gap-3">
-                <SpeakButton text={item.explain} />
+                <SpeakButton text={L(item.explain)} />
                 <button onClick={advance} className="rounded-full px-10 py-4 font-kid text-2xl font-bold text-white shadow-lg active:scale-95" style={{ background: color }}>
                   Next ▶
                 </button>

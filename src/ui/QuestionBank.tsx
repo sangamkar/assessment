@@ -56,6 +56,7 @@ export function QuestionBank() {
           <select value={skill.id} onChange={(e) => setSkillId(e.target.value)} className="mt-1 block max-w-xs rounded-lg border border-slate-300 px-2 py-1.5">
             {skills.map((s) => (
               <option key={s.id} value={s.id}>
+                {s.regions ? '🇮🇳 ' : ''}
                 {s.grade === 'K' ? '' : `[G${s.grade}] `}
                 {s.title}
               </option>
@@ -81,9 +82,11 @@ export function QuestionBank() {
             <span className="text-slate-400">{item.id}</span>
           </div>
           <div className="flex items-start gap-3">
-            <SpeakButton text={item.say} />
+            <SpeakButton text={item.say} extra={item.voice} />
             <div>
-              <div className="font-semibold text-slate-800">🔊 “{item.say}”</div>
+              <div className="font-semibold text-slate-800">
+                🔊 “{item.say}”{item.voice && <span className="ml-1 text-teal-700"> + {item.voice.lang === 'hi-IN' ? 'Hindi' : item.voice.lang} voice: “{item.voice.text}”</span>}
+              </div>
               {item.show && <div className="text-sm text-slate-500">On screen: {item.show}</div>}
             </div>
           </div>

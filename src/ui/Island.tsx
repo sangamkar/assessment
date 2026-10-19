@@ -1,5 +1,5 @@
 import React from 'react';
-import { getSubject, skillsFor } from '../content';
+import { CURRICULA, getSubject, skillsFor } from '../content';
 import type { Skill, SubjectId } from '../content/types';
 import { isVisible, skillStatus } from '../engine/planner';
 import type { SkillStatus } from '../engine/planner';
@@ -18,6 +18,7 @@ const STATUS_STYLE: Record<SkillStatus, string> = {
 export function Island({ state, subject, onBack, onPlay }: { state: AppState; subject: SubjectId; onBack: () => void; onPlay: (skill: Skill) => void }) {
   const meta = getSubject(subject);
   const skills = skillsFor(subject).filter((s) => isVisible(state, s));
+  const curriculum = CURRICULA[state.settings.primary];
 
   const tap = (skill: Skill, status: SkillStatus) => {
     if (status === 'locked') {
@@ -58,7 +59,8 @@ export function Island({ state, subject, onBack, onPlay }: { state: AppState; su
                         style={status === 'learning' ? ({ '--tw-ring-color': meta.color } as React.CSSProperties) : undefined}
                       >
                         {status === 'locked' ? '🔒' : skill.icon}
-                        {skill.grade !== 'K' && <span className="absolute -left-1 -top-1 rounded-full bg-slate-700 px-1.5 text-[10px] font-bold text-white">G{skill.grade}</span>}
+                        {skill.grade !== 'K' && <span className="absolute -left-1 -top-1 rounded-full bg-slate-700 px-1.5 text-[10px] font-bold text-white">{curriculum.gradeBadge[skill.grade]}</span>}
+                        {skill.regions?.includes('in-cbse') && <span className="absolute -right-1 -top-1 text-sm">🇮🇳</span>}
                         {status === 'mastered' && <span className="absolute -bottom-1 -right-1 text-2xl">⭐</span>}
                         {status === 'review' && <span className="absolute -bottom-1 -right-1 rounded-full bg-sky-500 px-1 text-sm text-white">↻</span>}
                       </span>

@@ -1,4 +1,4 @@
-import type { Difficulty } from '../content/types';
+import type { CurriculumId, Difficulty } from '../content/types';
 
 export type Mode = 'quest' | 'skill' | 'checkup';
 
@@ -49,6 +49,10 @@ export interface Settings {
   muted: boolean;
   unlockAll: boolean;
   showStretch: boolean;
+  /** Curricula he is preparing for; region-only skills (Hindi, rupees…) appear when theirs is on. */
+  curricula: CurriculumId[];
+  /** Drives grade names, spelling, English accent and currency. */
+  primary: CurriculumId;
 }
 
 export interface AppState {
@@ -70,7 +74,7 @@ const DAY = 24 * 60 * 60 * 1000;
 export const MASTERY = { window: 8, minAttempts: 6, accuracy: 0.85, minHardAttempts: 3, minDays: 3 };
 
 export function emptyState(): AppState {
-  return { version: 1, settings: { muted: false, unlockAll: false, showStretch: true }, skills: {}, attempts: [], stars: 0, days: [], checkups: [] };
+  return { version: 1, settings: { muted: false, unlockAll: false, showStretch: true, curricula: ['us-ga'], primary: 'us-ga' }, skills: {}, attempts: [], stars: 0, days: [], checkups: [] };
 }
 
 export function loadState(): AppState {

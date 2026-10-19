@@ -18,6 +18,7 @@ function prereqMet(state: AppState, id: string): boolean {
 }
 
 export function isVisible(state: AppState, skill: Skill): boolean {
+  if (skill.regions && !skill.regions.some((r) => state.settings.curricula.includes(r))) return false;
   return skill.grade === 'K' || state.settings.showStretch;
 }
 
@@ -74,11 +75,11 @@ export interface QuestStep {
 export const QUEST_LENGTH = 8;
 
 /** Rotating subject order so every subject gets regular attention. */
-function subjectRotation(now: number): SubjectId[] {
-  const order: SubjectId[] = ['math', 'reading', 'science', 'reasoning', 'social'];
+function subjectRotation(state: AppState, now: number): SubjectId[] {
   const day = Math.floor(now / (24 * 60 * 60 * 1000));
-  // Math and reading lead most days (i-Ready); the others rotate in.
-  const rest = order.slice(2);
+  // Math and reading lead most days (i-Ready); the other subjects rotate in.
+  const rest: SubjectId[] = ['science', 'reasoning', 'social'];
+  if (ALL_SKILLS.some((s) => s.subject === 'hindi' && isVisible(state, s))) rest.push('hindi');
   const lead = rest[day % rest.length];
   return day % 2 === 0 ? ['math', 'reading', lead] : ['reading', 'math', lead];
 }
@@ -108,15 +109,15 @@ export function buildQuest(state: AppState, now = Date.now()): QuestStep[] {
 
   const candidates = focusSkills(state, now);
   const focus: Skill[] = [];
-  for (const subject of subjectRotation(now)) {
+  for (const subject of subjectRotation(state, now)) {
     const s = candidates.find((c) => c.subject === subject && !focus.includes(c));
     if (s) focus.push(s);
-    if (focus.length === 2) break;
+    if (focus.length === 3) break;
   }
-  for (const c of candidates) if (focus.length < 2 && !focus.includes(c)) focus.push(c);
+  for (const c of candidates) if (focus.length < 3 && !focus.includes(c)) focus.push(c);
 
-  // Interleave focus skills (A, B, A, B…) — mixed practice sticks better than blocks.
-  for (let round = 0; round < 3; round++) focus.forEach((s) => take(s, 'focus'));
+  // Interleave focus skills (A, B, C, A, B, C) — mixed practice sticks better than blocks.
+  for (let round = 0; round < 2; round++) focus.forEach((s) => take(s, 'focus'));
 
   const due = ALL_SKILLS.filter((s) => skillStatus(state, s, now) === 'review');
   const mastered = ALL_SKILLS.filter((s) => skillState(state, s.id).mastered);

@@ -114,7 +114,8 @@ formats and explanations. It is not a test simulator.
 | 1. Foundation | Skill map, new item schema, all questions rewritten, validator, kid UI (island map, Quest player), mastery + spaced review, Check-up, parent dashboard, backup/restore | **This change** |
 | 2. Breadth | More items per skill (target 8+), drag-and-drop and ordering interactions, tracing letters/numbers, recorded human audio for phonemes | Next |
 | 3. Depth | Grade 1 → 2 content, Math Kangaroo-style puzzle track, STEM project cards (photo/voice log), creativity prompts | Later |
-| 4. Platform | Cloud sync (Supabase/Firebase), multiple children, AI-assisted item drafting with human review, weekly email summary | Later |
+| 3b. International | Curriculum overlays: **India (CBSE/NCERT) done** — Hindi Garden, rupees, India general awareness, Indian-English locale. Next: Hindi मात्रा, NCERT EVS, Cambridge Primary. See [INDIA.md](INDIA.md) | In progress |
+| 4. Platform | Cloud sync (Supabase/Firebase), multiple children, AI-assisted item drafting with human review, weekly email summary. Public launch only after a closed trial — see [PUBLIC-LAUNCH.md](PUBLIC-LAUNCH.md) | Later |
 
 ## 8. Code layout
 
@@ -122,6 +123,8 @@ formats and explanations. It is not a test simulator.
 src/content/         skill map + items (one file per subject)
   types.ts           Skill, Item, Visual, Choice
   math.ts reading.ts science.ts social.ts reasoning.ts
+  hindi.ts india.ts  region-only skills (shown when India is switched on)
+  curricula.ts       curriculum overlays: grade names, locale, standard references
   index.ts           registry + subject metadata
 src/engine/          rng, progress store, mastery, Quest planner, Check-up
 src/ui/              kid + parent screens

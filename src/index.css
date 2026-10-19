@@ -3,9 +3,9 @@
 @theme {
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   /* Rounded, friendly display face for the kid UI. */
-  --font-kid: "Fredoka", ui-rounded, "Plus Jakarta Sans", sans-serif;
+  --font-kid: "Fredoka", "Noto Sans Devanagari", ui-rounded, "Plus Jakarta Sans", sans-serif;
   /* Andika is designed for beginning readers (single-story a and g). */
-  --font-reader: "Andika", "Plus Jakarta Sans", sans-serif;
+  --font-reader: "Andika", "Noto Sans Devanagari", "Plus Jakarta Sans", sans-serif;
 }
 
 body {

@@ -4,6 +4,8 @@ import { READING_SKILLS } from './reading';
 import { SCIENCE_SKILLS } from './science';
 import { SOCIAL_SKILLS } from './social';
 import { REASONING_SKILLS } from './reasoning';
+import { HINDI_SKILLS } from './hindi';
+import { INDIA_SKILLS } from './india';
 
 export const SUBJECTS: SubjectMeta[] = [
   {
@@ -77,9 +79,24 @@ export const SUBJECTS: SubjectMeta[] = [
       { id: 'figural', title: 'Figural & Spatial Reasoning' },
     ],
   },
+  {
+    id: 'hindi',
+    title: 'Hindi',
+    kidTitle: 'Hindi Garden',
+    icon: '🪷',
+    color: '#0d9488',
+    soft: '#ccfbf1',
+    strands: [
+      { id: 'varnamala', title: 'Letters (वर्णमाला)' },
+      { id: 'shabd', title: 'Words (शब्द)' },
+      { id: 'ginti', title: 'Numbers & colours (गिनती, रंग)' },
+    ],
+  },
 ];
 
-export const ALL_SKILLS: Skill[] = [...MATH_SKILLS, ...READING_SKILLS, ...SCIENCE_SKILLS, ...SOCIAL_SKILLS, ...REASONING_SKILLS];
+// India-only skills slot in next to their subject (they only show when India is switched on).
+const [moneyIN, ...indiaSocial] = [INDIA_SKILLS.find((s) => s.subject === 'math')!, ...INDIA_SKILLS.filter((s) => s.subject !== 'math')];
+export const ALL_SKILLS: Skill[] = [...MATH_SKILLS, moneyIN, ...READING_SKILLS, ...SCIENCE_SKILLS, ...SOCIAL_SKILLS, ...indiaSocial, ...REASONING_SKILLS, ...HINDI_SKILLS];
 
 const BY_ID = new Map(ALL_SKILLS.map((s) => [s.id, s]));
 
@@ -95,4 +112,4 @@ export function skillsFor(subject: SubjectId): Skill[] {
   return ALL_SKILLS.filter((s) => s.subject === subject);
 }
 
-export const GRADE_LABEL: Record<string, string> = { K: 'Kindergarten', '1': 'Grade 1 stretch', '2': 'Grade 2 stretch' };
+export { CURRICULA, localize } from './curricula';

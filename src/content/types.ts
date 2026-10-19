@@ -1,4 +1,6 @@
-export type SubjectId = 'math' | 'reading' | 'science' | 'social' | 'reasoning';
+export type SubjectId = 'math' | 'reading' | 'science' | 'social' | 'reasoning' | 'hindi';
+/** Curricula the skill map can be aligned to (see curricula.ts). */
+export type CurriculumId = 'us-ga' | 'in-cbse';
 export type Grade = 'K' | '1' | '2';
 export type Difficulty = 1 | 2 | 3;
 
@@ -80,6 +82,7 @@ export type Visual =
   | { kind: 'measure'; emoji: string; units: number; unit: string }
   | { kind: 'bond'; whole: number | '?'; a: number | '?'; b: number | '?' }
   | { kind: 'place'; thing: string; ref: string; where: Place }
+  | { kind: 'coins'; values: number[]; symbol: string }
   | { kind: 'row'; items: Visual[]; sep?: string };
 
 export interface Choice {
@@ -111,6 +114,10 @@ export interface Item {
   speakChoices?: boolean;
   /** Keep authored order instead of shuffling (e.g. ordered scales). */
   keepOrder?: boolean;
+  /** Spoken right after `say` in another language — e.g. the Hindi letter or word being asked about. */
+  voice?: { text: string; lang: string };
+  /** Language for speaking choice names (default: the app's English locale). */
+  choiceLang?: string;
 }
 
 export interface Slide {
@@ -144,6 +151,8 @@ export interface Skill {
   intro: Slide[];
   items?: Item[];
   generate?: (rng: Rng, difficulty: Difficulty) => Item;
+  /** Only shown for these curricula (e.g. Hindi, Indian money). Omit for universal skills. */
+  regions?: CurriculumId[];
 }
 
 export interface Strand {

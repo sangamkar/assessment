@@ -414,6 +414,27 @@ export function Visual({ v, size = 'lg' }: { v: V; size?: VSize }) {
       return <PlaceScene thing={v.thing} refEmoji={v.ref} where={v.where} size={size} />;
     case 'composite':
       return <CompositeSvg preset={v.preset} size={size === 'lg' ? 200 : 96} />;
+    case 'coins': {
+      const base = (size === 'lg' ? 64 : size === 'md' ? 48 : 30) * (v.values.length === 1 ? 1.5 : 1);
+      return (
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {v.values.map((value, i) => {
+            const d = base * (0.8 + Math.min(value, 10) * 0.03);
+            const gold = value >= 10 || value === 2;
+            return (
+              <div
+                key={i}
+                className={`flex items-center justify-center rounded-full border-4 font-kid font-bold shadow ${gold ? 'border-amber-500 bg-amber-200 text-amber-900' : 'border-slate-400 bg-slate-200 text-slate-800'}`}
+                style={{ width: d, height: d, fontSize: d * 0.32 }}
+              >
+                {v.symbol}
+                {value}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
     case 'row':
       return (
         <div className="flex flex-wrap items-center justify-center gap-3">

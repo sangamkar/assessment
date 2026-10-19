@@ -3,11 +3,13 @@ import type { Skill } from '../content/types';
 import { soundEngine } from '../utils/audio';
 import { Visual } from './Visual';
 import { SpeakButton } from './SpeakButton';
+import { localize } from '../content/curricula';
 
 /** "Let's learn" slides shown the first time a skill comes up. */
-export function Intro({ skill, color, onDone }: { skill: Skill; color: string; onDone: () => void }) {
+export function Intro({ skill, color, locale, onDone }: { skill: Skill; color: string; locale: 'en-US' | 'en-IN'; onDone: () => void }) {
   const [i, setI] = useState(0);
-  const slide = skill.intro[i];
+  const raw = skill.intro[i];
+  const slide = { ...raw, say: localize(raw.say, locale) };
   const last = i === skill.intro.length - 1;
 
   useEffect(() => {

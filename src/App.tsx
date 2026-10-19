@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { getSkill, getSubject } from './content';
+import { CURRICULA, getSkill, getSubject } from './content';
 import type { SubjectId } from './content/types';
 import type { CheckupAnswer, CheckupPlan, QuestStep } from './engine/planner';
 import { buildQuest, buildSkillSession, creditFromCheckup, nextCheckupItem, planCheckup, scoreCheckup } from './engine/planner';
@@ -48,6 +48,8 @@ export default function App() {
   const update = useCallback((fn: (s: AppState) => AppState) => setStateRaw((s) => fn(s)), []);
   useEffect(() => saveState(state), [state]);
   useEffect(() => soundEngine.setMuted(state.settings.muted), [state.settings.muted]);
+  const locale = CURRICULA[state.settings.primary].locale;
+  useEffect(() => soundEngine.setLocale(locale), [locale]);
 
   if (!authed) {
     return (
@@ -129,6 +131,7 @@ export default function App() {
     case 'play':
       return (
         <Player
+          locale={locale}
           key={`${view.mode}-${view.first?.item.id}`}
           mode={view.mode}
           title={view.title}

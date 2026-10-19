@@ -39,9 +39,10 @@ export function Home({ state, onQuest, onIsland, onGrownUps }: Props) {
         <div className="mt-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-white text-3xl shadow-lg">▶</div>
       </button>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+      <div className={`grid grid-cols-2 gap-4 sm:grid-cols-3 ${SUBJECTS.filter((x) => subjectSummary(state, x.id).total).length > 5 ? 'lg:grid-cols-6' : 'lg:grid-cols-5'}`}>
         {SUBJECTS.map((s) => {
           const sum = subjectSummary(state, s.id);
+          if (!sum.total) return null;
           const pct = sum.total ? Math.round((sum.mastered / sum.total) * 100) : 0;
           return (
             <button key={s.id} onClick={() => onIsland(s.id)} className="flex flex-col items-center gap-2 rounded-[2rem] p-4 shadow-md transition active:scale-95" style={{ background: s.soft }}>

@@ -1,5 +1,7 @@
 import React, { useRef, useState } from 'react';
-import { ALL_SKILLS, GRADE_LABEL, SUBJECTS, getSkill, getSubject } from '../content';
+import { ALL_SKILLS, CURRICULA, SUBJECTS, getSkill, getSubject } from '../content';
+import type { CurriculumId } from '../content/types';
+import { soundEngine } from '../utils/audio';
 import type { SubjectId } from '../content/types';
 import { describeMisconception } from '../content/misconceptions';
 import { focusSkills, isVisible, skillStatus, subjectSummary, topMisconceptions, weakestSkills } from '../engine/planner';
@@ -62,6 +64,7 @@ function Overview({ state }: { state: AppState }) {
       </div>
       {SUBJECTS.map((subject) => {
         const sum = subjectSummary(state, subject.id);
+        if (!sum.total) return null;
         return (
           <Card key={subject.id} title={`${subject.icon} ${subject.title}`} right={<span className="text-xs font-semibold text-slate-500">{sum.mastered} mastered · {sum.learning} learning · {sum.ready} ready · {sum.locked} locked</span>}>
             <div className="flex flex-col gap-2">
@@ -145,7 +148,7 @@ function Focus({ state }: { state: AppState }) {
               <span>{s.icon}</span>
               <div>
                 <div className="font-semibold text-slate-800">
-                  {s.title} <span className="text-xs font-normal text-slate-400">{getSubject(s.subject).title} · {GRADE_LABEL[s.grade]}</span>
+                  {s.title} <span className="text-xs font-normal text-slate-400">{getSubject(s.subject).title} · {CURRICULA[state.settings.primary].gradeLabel[s.grade]}</span>
                 </div>
                 <div className="text-slate-500">{s.parentTip}</div>
               </div>
@@ -206,7 +209,7 @@ function Checkups({ state, onStart }: { state: AppState; onStart: (s: SubjectId)
 function SkillMap({ state }: { state: AppState }) {
   return (
     <div className="flex flex-col gap-4">
-      {SUBJECTS.map((subject) => (
+      {SUBJECTS.filter((subject) => subjectSummary(state, subject.id).total).map((subject) => (
         <Card key={subject.id} title={`${subject.icon} ${subject.title}`}>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-left text-sm">
@@ -214,7 +217,11 @@ function SkillMap({ state }: { state: AppState }) {
                 <tr>
                   <th className="py-1 pr-2">Skill</th>
                   <th className="pr-2">Grade</th>
-                  <th className="pr-2">Standards</th>
+                  {state.settings.curricula.map((c) => (
+                    <th key={c} className="pr-2">
+                      {CURRICULA[c].short} reference
+                    </th>
+                  ))}
                   <th className="pr-2">Status</th>
                   <th className="pr-2">Level</th>
                   <th className="pr-2">Tries</th>
@@ -222,7 +229,7 @@ function SkillMap({ state }: { state: AppState }) {
                 </tr>
               </thead>
               <tbody>
-                {ALL_SKILLS.filter((s) => s.subject === subject.id).map((s) => {
+                {ALL_SKILLS.filter((s) => s.subject === subject.id && (!s.regions || s.regions.some((r) => state.settings.curricula.includes(r)))).map((s) => {
                   const list = attemptsFor(state, s.id).filter((a) => a.mode !== 'checkup');
                   const st = skillState(state, s.id);
                   return (
@@ -230,8 +237,12 @@ function SkillMap({ state }: { state: AppState }) {
                       <td className="py-1.5 pr-2 font-medium text-slate-800">
                         {s.icon} {s.title}
                       </td>
-                      <td className="pr-2 text-slate-500">{s.grade}</td>
-                      <td className="pr-2 text-xs text-slate-500">{s.standards.join(', ')}</td>
+                      <td className="pr-2 text-slate-500">{CURRICULA[state.settings.primary].gradeBadge[s.grade]}</td>
+                      {state.settings.curricula.map((c) => (
+                        <td key={c} className="pr-2 text-xs text-slate-500">
+                          {CURRICULA[c].codes(s).join(', ') || '—'}
+                        </td>
+                      ))}
                       <td className="pr-2">{STATUS_LABEL[skillStatus(state, s)]}{st.credited && !st.mastered ? ' (credited)' : ''}</td>
                       <td className="pr-2">{st.level}</td>
                       <td className="pr-2">{list.length}</td>
@@ -252,7 +263,7 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
   const fileRef = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState('');
   const set = (patch: Partial<AppState['settings']>) => setState({ ...state, settings: { ...state.settings, ...patch } });
-  const toggle = (label: string, hint: string, key: keyof AppState['settings']) => (
+  const toggle = (label: string, hint: string, key: 'muted' | 'unlockAll' | 'showStretch') => (
     <label className="flex items-start justify-between gap-4 py-2">
       <span>
         <span className="block font-semibold text-slate-800">{label}</span>
@@ -301,6 +312,44 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
             </button>
           ))}
         </div>
+      </Card>
+      <Card title="Curriculum">
+        <p className="mb-2 text-sm text-slate-600">Prepare for one or more school systems. Switching India on adds Hindi, Indian money, and India’s symbols, festivals and geography.</p>
+        {(Object.keys(CURRICULA) as CurriculumId[]).map((id) => {
+          const on = state.settings.curricula.includes(id);
+          return (
+            <label key={id} className="flex items-center justify-between gap-4 py-1.5">
+              <span className="font-semibold text-slate-800">{CURRICULA[id].name}</span>
+              <input
+                type="checkbox"
+                className="h-5 w-5"
+                checked={on}
+                onChange={(e) => {
+                  const curricula = e.target.checked ? [...state.settings.curricula, id] : state.settings.curricula.filter((c) => c !== id);
+                  if (!curricula.length) return;
+                  set({ curricula, primary: curricula.includes(state.settings.primary) ? state.settings.primary : curricula[0] });
+                }}
+              />
+            </label>
+          );
+        })}
+        <label className="mt-2 block text-sm font-semibold text-slate-600">
+          Main system (grade names, spelling, English accent)
+          <select value={state.settings.primary} onChange={(e) => set({ primary: e.target.value as CurriculumId })} className="mt-1 block w-full rounded-lg border border-slate-300 px-2 py-1.5">
+            {state.settings.curricula.map((c) => (
+              <option key={c} value={c}>
+                {CURRICULA[c].name}
+              </option>
+            ))}
+          </select>
+        </label>
+        {state.settings.curricula.includes('in-cbse') && (
+          <p className={`mt-3 rounded-lg p-2 text-xs ${soundEngine.hasVoice('hi') ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-900'}`}>
+            {soundEngine.hasVoice('hi')
+              ? 'Hindi voice found on this device ✓'
+              : 'No Hindi voice found on this device. On iPad: Settings → Accessibility → Spoken Content → Voices → Hindi. On Windows/Chrome the “Google हिन्दी” voice is built in.'}
+          </p>
+        )}
       </Card>
       <Card title="Learning">
         {toggle('Show Grade 1–2 stretch skills', 'Stretch skills still unlock only after their prerequisites.', 'showStretch')}

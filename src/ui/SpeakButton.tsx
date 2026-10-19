@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { soundEngine } from '../utils/audio';
 
-export function SpeakButton({ text, extra, big = false, label = 'Hear it again' }: { text: string; extra?: { text: string; lang: string }; big?: boolean; label?: string }) {
+export function SpeakButton({ text, extra, big = false, label = 'Hear it again' }: { text: string; extra?: { text: string; lang: string; roman?: string }; big?: boolean; label?: string }) {
   const [speaking, setSpeaking] = useState(false);
   return (
     <button

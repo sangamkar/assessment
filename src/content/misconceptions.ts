@@ -66,6 +66,9 @@ const CURATED: Record<string, MisconceptionInfo> = {
   moves_means_alive: { title: 'Thinks things that move are alive', fix: 'Living things grow, eat/drink and have babies.' },
   size_predicts_sinking: { title: 'Thinks big things sink and small things float', fix: 'Test it in the bath: beach ball vs. marble.' },
   need_want_confusion: { title: 'Mixes up needs and wants', fix: 'Ask "Could you live without it?"' },
+  indic_short_long_vowel: { title: 'Mixes up short and long vowel letters (अ/आ, ಇ/ಈ)', fix: 'Say pairs with hand signs: short clap for short, long stretch for long.' },
+  indic_aspirate_confusion: { title: 'Mixes up breathy and plain sounds (ग/घ, ಚ/ಛ)', fix: 'Hold a tissue in front of the mouth: breathy sounds make it move.' },
+  indic_word_same_group: { title: 'Knows the word family but not the exact word', fix: 'Practise words in small groups (fruits, body parts) with real objects.' },
   then_now_confusion: { title: 'Mixes up long ago and today', fix: 'Compare old and new photos of the same thing.' },
 };
 

@@ -44,6 +44,22 @@ schools give a one-month relaxation; others do not.
 | **English** | None in content; minor spelling/vocabulary differences | Indian/British spelling and accent when India is the main system | — |
 | **Olympiads** | Very popular in India from Class 1 (e.g. SOF IMO/NSO/IEO) | Puzzle Cave + Brain teasers already train the reasoning | Consider one Olympiad in Class 1–2 for experience, not pressure |
 
+## 3b. Kannada (if the move is to Karnataka / Bengaluru)
+
+Karnataka's Kannada Language Learning Act 2015, its 2017 Rules and the 2022 NOC Rules make
+Kannada a compulsory subject from Class 1 to 10 in **all** schools, including CBSE and CISCE
+schools. Schools can lose their state NOC for not complying. A PIL challenging the rule for
+CBSE/CISCE schools was still being heard in the Karnataka High Court as of July 2025, so check
+the current status, but plan for Kannada. Many Bengaluru schools follow English + Kannada + Hindi.
+
+**Kannada Garden** (Settings → Curriculum → Indian languages) mirrors Hindi Garden: vowels ಅ–ಔ,
+consonants with picture words (ಕ – ಕಮಲ), everyday words, numbers ಒಂದು–ಹತ್ತು, and colours.
+
+**Voices:** many devices have no Kannada text-to-speech voice. Microsoft Edge has Kannada voices,
+and so does Android with Google Text-to-Speech. Without one, the app speaks an English spelling of
+each word ("kempu") and shows a "Grown-up, please say…" prompt, so a parent can model the real
+pronunciation. Recording real Kannada audio is on the roadmap.
+
 ## 4. NCERT *Joyful Mathematics* Class 1 alignment
 
 | Chapter | App skills |
@@ -66,7 +82,7 @@ The mapping is by topic, so it is approximate. Chapter list from NCERT's CIET au
 
 ## 5. Next India steps (roadmap)
 
-1. **Hindi depth:** मात्रा (vowel signs: का, कि, की…), two- and three-letter words, tracing letters, then NCERT *Sarangi* Class 1 stories as listening comprehension.
+1. **Hindi and Kannada depth:** vowel signs (मात्रा: का, कि, की… / ಗುಣಿತಾಕ್ಷರ: ಕಾ, ಕಿ, ಕೀ…), two- and three-letter words, tracing letters, then NCERT *Sarangi* Class 1 stories as listening comprehension.
 2. **Equal groups** skill (Ch 11) and metric measurement (cm, kg, litre).
 3. **EVS** (Environmental Studies) themes from NCERT Class 1–2: family, food, water, plants, animals, transport.
 4. **Cambridge Primary overlay** for international schools in India, if one is chosen instead of CBSE.
@@ -74,6 +90,9 @@ The mapping is by topic, so it is approximate. Chapter list from NCERT's CIET au
 
 ## Sources
 
+- Outlook India — mandatory Kannada in CBSE/CICSE schools challenged in HC: https://www.outlookindia.com/education/mandatory-learning-of-kannada-in-cbse-cicse-schools-in-karnataka-challenged-in-hc-news-307773
+- ETV Bharat — Karnataka HC seeks government response (July 2025): https://www.etvbharat.com/amp/en/!state/karnataka-hc-seeks-govt-response-on-mandatory-kannada-in-cbse-cisce-schools-within-three-months-enn25071106616
+- Deccan Herald — CISCE tells schools to follow state rules on Kannada: https://deccanherald.com/amp/story/india%2Fkarnataka%2Ffollow-state-rules-on-teaching-kannada-cisce-tells-schools-3098896
 - NCERT CIET — *Joyful Mathematics 1* chapter list: https://ciet.ncert.gov.in/audio-book/118
 - Delhi DoE circular (Oct 2025) on age criteria from 2026-27: https://www.edudel.nic.in/upload/upload_2025_26/976_dt_24102025.pdf
 - Tribune India — Delhi uniform Class 1 admission age of 6 from 2026-27: https://www.tribuneindia.com/news/delhi/delhi-govt-to-implement-uniform-admission-age-of-6-years-for-class-1-from-2026-27

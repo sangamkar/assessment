@@ -1,4 +1,4 @@
-import type { CurriculumId, Difficulty } from '../content/types';
+import type { CurriculumId, Difficulty, LanguageCode } from '../content/types';
 
 export type Mode = 'quest' | 'skill' | 'checkup';
 
@@ -53,6 +53,8 @@ export interface Settings {
   curricula: CurriculumId[];
   /** Drives grade names, spelling, English accent and currency. */
   primary: CurriculumId;
+  /** Indian language tracks switched on (shown when India is on). */
+  languages: LanguageCode[];
 }
 
 export type GameId = 'mystery-word' | 'number-path';
@@ -83,7 +85,7 @@ const DAY = 24 * 60 * 60 * 1000;
 export const MASTERY = { window: 8, minAttempts: 6, accuracy: 0.85, minHardAttempts: 3, minDays: 3 };
 
 export function emptyState(): AppState {
-  return { version: 1, settings: { muted: false, unlockAll: false, showStretch: true, curricula: ['us-ga'], primary: 'us-ga' }, skills: {}, attempts: [], stars: 0, days: [], checkups: [], games: {} };
+  return { version: 1, settings: { muted: false, unlockAll: false, showStretch: true, curricula: ['us-ga'], primary: 'us-ga', languages: ['hi'] }, skills: {}, attempts: [], stars: 0, days: [], checkups: [], games: {} };
 }
 
 export function loadState(): AppState {

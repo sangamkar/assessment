@@ -77,7 +77,7 @@ export function Player({ locale, mode, title, color, total, first, getNext, intr
     if (eliminated.includes(c.id)) return;
     soundEngine.playTap();
     setSelected(c.id);
-    if (item.speakChoices !== false && c.say) soundEngine.speak(item.choiceLang ? c.say : L(c.say), undefined, item.choiceLang);
+    if (item.speakChoices !== false && c.say) soundEngine.speakParts([{ text: item.choiceLang ? c.say : L(c.say), lang: item.choiceLang, roman: c.roman }]);
   };
 
   const submit = () => {
@@ -166,6 +166,12 @@ export function Player({ locale, mode, title, color, total, first, getNext, intr
               {practice && <div className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-400">{step.skill.icon} {step.skill.kidTitle}</div>}
             </div>
           </div>
+
+          {item.voice && !soundEngine.hasVoice(item.voice.lang.split('-')[0]) && (
+            <div className="mt-3 rounded-2xl bg-amber-50 px-4 py-2 text-center text-sm font-semibold text-amber-900 ring-1 ring-amber-200">
+              Grown-up: this device has no voice for this language. Please say “{item.voice.roman ?? item.voice.text}” ({item.voice.text}) aloud.
+            </div>
+          )}
 
           {/* Stimulus */}
           {item.visual && (

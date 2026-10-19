@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { ALL_SKILLS, CURRICULA, SUBJECTS, getSkill, getSubject } from '../content';
+import { ALL_SKILLS, CURRICULA, LANGUAGES, SUBJECTS, getSkill, getSubject } from '../content';
 import type { CurriculumId } from '../content/types';
 import { soundEngine } from '../utils/audio';
 import type { SubjectId } from '../content/types';
@@ -333,7 +333,7 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
         </div>
       </Card>
       <Card title="Curriculum">
-        <p className="mb-2 text-sm text-slate-600">Prepare for one or more school systems. Switching India on adds Hindi, Indian money, and India’s symbols, festivals and geography.</p>
+        <p className="mb-2 text-sm text-slate-600">Prepare for one or more school systems. Switching India on adds Indian languages (Hindi, Kannada), Indian money, and India’s symbols, festivals and geography.</p>
         {(Object.keys(CURRICULA) as CurriculumId[]).map((id) => {
           const on = state.settings.curricula.includes(id);
           return (
@@ -363,11 +363,45 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
           </select>
         </label>
         {state.settings.curricula.includes('in-cbse') && (
-          <p className={`mt-3 rounded-lg p-2 text-xs ${soundEngine.hasVoice('hi') ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-900'}`}>
-            {soundEngine.hasVoice('hi')
-              ? 'Hindi voice found on this device ✓'
-              : 'No Hindi voice found on this device. On iPad: Settings → Accessibility → Spoken Content → Voices → Hindi. On Windows/Chrome the “Google हिन्दी” voice is built in.'}
-          </p>
+          <div className="mt-4 border-t border-slate-100 pt-3">
+            <div className="text-sm font-semibold text-slate-600">Indian languages</div>
+            {LANGUAGES.map((l) => {
+              const on = (state.settings.languages ?? ['hi']).includes(l.code);
+              const voice = soundEngine.hasVoice(l.code);
+              return (
+                <div key={l.code} className="py-1.5">
+                  <label className="flex items-center justify-between gap-4">
+                    <span>
+                      <span className="font-semibold text-slate-800">
+                        {l.name} <span className="font-normal">{l.native}</span>
+                      </span>
+                      <span className="block text-xs text-slate-500">{l.note}</span>
+                    </span>
+                    <input
+                      type="checkbox"
+                      className="h-5 w-5"
+                      checked={on}
+                      onChange={(e) => {
+                        const cur = state.settings.languages ?? ['hi'];
+                        set({ languages: e.target.checked ? [...cur, l.code] : cur.filter((c) => c !== l.code) });
+                      }}
+                    />
+                  </label>
+                  {on && (
+                    <p className={`mt-1 rounded-lg p-2 text-xs ${voice ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-900'}`}>
+                      {voice
+                        ? `${l.name} voice found on this device ✓`
+                        : `No ${l.name} voice on this device, so the app reads an English spelling of each ${l.name} word (e.g. “${l.code === 'kn' ? 'kempu' : 'laal'}”) and shows it for you to say aloud. Best fix: ${
+                            l.code === 'kn'
+                              ? 'open the app in Microsoft Edge (it has Kannada voices), or on Android install Google Text-to-Speech with Kannada.'
+                              : 'on iPad add Settings → Accessibility → Spoken Content → Voices → Hindi; Chrome on Windows has “Google हिन्दी”.'
+                          }`}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         )}
       </Card>
       <Card title="Learning">

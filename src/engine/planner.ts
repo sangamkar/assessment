@@ -19,6 +19,7 @@ function prereqMet(state: AppState, id: string): boolean {
 
 export function isVisible(state: AppState, skill: Skill): boolean {
   if (skill.regions && !skill.regions.some((r) => state.settings.curricula.includes(r))) return false;
+  if (skill.language && !(state.settings.languages ?? ['hi']).includes(skill.language)) return false;
   return skill.grade === 'K' || state.settings.showStretch;
 }
 
@@ -79,7 +80,7 @@ function subjectRotation(state: AppState, now: number): SubjectId[] {
   const day = Math.floor(now / (24 * 60 * 60 * 1000));
   // Math and reading lead most days (i-Ready); the other subjects rotate in.
   const rest: SubjectId[] = ['science', 'reasoning', 'social'];
-  if (ALL_SKILLS.some((s) => s.subject === 'hindi' && isVisible(state, s))) rest.push('hindi');
+  for (const lang of ['hindi', 'kannada'] as const) if (ALL_SKILLS.some((s) => s.subject === lang && isVisible(state, s))) rest.push(lang);
   const lead = rest[day % rest.length];
   return day % 2 === 0 ? ['math', 'reading', lead] : ['reading', 'math', lead];
 }

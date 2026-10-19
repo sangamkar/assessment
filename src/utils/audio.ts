@@ -210,7 +210,7 @@ class SoundEngine {
   }
 
   /** Speaks several parts in a row, each in its own language (English prompt, then a Hindi word). */
-  public speakParts(parts: { text: string; lang?: string }[], onEnd?: () => void) {
+  public speakParts(parts: { text: string; lang?: string; roman?: string }[], onEnd?: () => void) {
     if (this.isMuted || typeof window === 'undefined' || !('speechSynthesis' in window)) {
       if (onEnd) onEnd();
       return;
@@ -224,8 +224,14 @@ class SoundEngine {
         if (onEnd) onEnd();
         return;
       }
-      const lang = parts[i].lang ?? this.locale;
-      const utterance = new SpeechSynthesisUtterance(parts[i].text);
+      let lang = parts[i].lang ?? this.locale;
+      let text = parts[i].text;
+      // No voice for this language (common for Kannada): say the romanized form in English instead.
+      if (!lang.startsWith('en') && !this.hasVoice(lang.split('-')[0]) && parts[i].roman) {
+        text = parts[i].roman!;
+        lang = this.locale;
+      }
+      const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = lang;
       utterance.rate = lang.startsWith('hi') ? 0.8 : 0.88;
       utterance.pitch = 1.05;

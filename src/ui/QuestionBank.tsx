@@ -85,7 +85,7 @@ export function QuestionBank() {
             <SpeakButton text={item.say} extra={item.voice} />
             <div>
               <div className="font-semibold text-slate-800">
-                🔊 “{item.say}”{item.voice && <span className="ml-1 text-teal-700"> + {item.voice.lang === 'hi-IN' ? 'Hindi' : item.voice.lang} voice: “{item.voice.text}”</span>}
+                🔊 “{item.say}”{item.voice && <span className="ml-1 text-teal-700"> + {item.voice.lang === 'hi-IN' ? 'Hindi' : item.voice.lang === 'kn-IN' ? 'Kannada' : item.voice.lang} voice: “{item.voice.text}”{item.voice.roman ? ` (${item.voice.roman})` : ''}</span>}
               </div>
               {item.show && <div className="text-sm text-slate-500">On screen: {item.show}</div>}
             </div>

@@ -1,4 +1,6 @@
-export type SubjectId = 'math' | 'reading' | 'science' | 'social' | 'reasoning' | 'hindi';
+export type SubjectId = 'math' | 'reading' | 'science' | 'social' | 'reasoning' | 'hindi' | 'kannada';
+/** Indian-language tracks a parent can switch on. */
+export type LanguageCode = 'hi' | 'kn';
 /** Curricula the skill map can be aligned to (see curricula.ts). */
 export type CurriculumId = 'us-ga' | 'in-cbse';
 export type Grade = 'K' | '1' | '2';
@@ -94,6 +96,8 @@ export interface Choice {
   correct?: true;
   /** Misconception tag for a wrong choice — see misconceptions.ts. */
   why?: string;
+  /** Romanized `say`, spoken by the English voice when the device lacks the language's voice. */
+  roman?: string;
 }
 
 export interface Item {
@@ -115,7 +119,7 @@ export interface Item {
   /** Keep authored order instead of shuffling (e.g. ordered scales). */
   keepOrder?: boolean;
   /** Spoken right after `say` in another language — e.g. the Hindi letter or word being asked about. */
-  voice?: { text: string; lang: string };
+  voice?: { text: string; lang: string; roman?: string };
   /** Language for speaking choice names (default: the app's English locale). */
   choiceLang?: string;
 }
@@ -153,6 +157,8 @@ export interface Skill {
   generate?: (rng: Rng, difficulty: Difficulty) => Item;
   /** Only shown for these curricula (e.g. Hindi, Indian money). Omit for universal skills. */
   regions?: CurriculumId[];
+  /** Language-track skills only show when the parent switches that language on. */
+  language?: LanguageCode;
 }
 
 export interface Strand {

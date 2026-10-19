@@ -5,6 +5,7 @@ import { SCIENCE_SKILLS } from './science';
 import { SOCIAL_SKILLS } from './social';
 import { REASONING_SKILLS } from './reasoning';
 import { HINDI_SKILLS } from './hindi';
+import { KANNADA_SKILLS } from './kannada';
 import { INDIA_SKILLS } from './india';
 
 export const SUBJECTS: SubjectMeta[] = [
@@ -92,11 +93,30 @@ export const SUBJECTS: SubjectMeta[] = [
       { id: 'ginti', title: 'Numbers & colours (गिनती, रंग)' },
     ],
   },
+  {
+    id: 'kannada',
+    title: 'Kannada',
+    kidTitle: 'Kannada Garden',
+    icon: '🐘',
+    color: '#ca8a04',
+    soft: '#fef9c3',
+    strands: [
+      { id: 'varnamala', title: 'Letters (ಅಕ್ಷರಮಾಲೆ)' },
+      { id: 'shabd', title: 'Words (ಪದಗಳು)' },
+      { id: 'ginti', title: 'Numbers & colours (ಸಂಖ್ಯೆ, ಬಣ್ಣ)' },
+    ],
+  },
+];
+
+/** Indian language tracks a parent can switch on. */
+export const LANGUAGES = [
+  { code: 'hi' as const, name: 'Hindi', native: 'हिंदी', lang: 'hi-IN', note: 'Taught in CBSE schools across India (three-language formula).' },
+  { code: 'kn' as const, name: 'Kannada', native: 'ಕನ್ನಡ', lang: 'kn-IN', note: 'Compulsory in all Karnataka schools, Class 1–10, including CBSE/ICSE.' },
 ];
 
 // India-only skills slot in next to their subject (they only show when India is switched on).
 const [moneyIN, ...indiaSocial] = [INDIA_SKILLS.find((s) => s.subject === 'math')!, ...INDIA_SKILLS.filter((s) => s.subject !== 'math')];
-export const ALL_SKILLS: Skill[] = [...MATH_SKILLS, moneyIN, ...READING_SKILLS, ...SCIENCE_SKILLS, ...SOCIAL_SKILLS, ...indiaSocial, ...REASONING_SKILLS, ...HINDI_SKILLS];
+export const ALL_SKILLS: Skill[] = [...MATH_SKILLS, moneyIN, ...READING_SKILLS, ...SCIENCE_SKILLS, ...SOCIAL_SKILLS, ...indiaSocial, ...REASONING_SKILLS, ...HINDI_SKILLS, ...KANNADA_SKILLS];
 
 const BY_ID = new Map(ALL_SKILLS.map((s) => [s.id, s]));
 

@@ -5,6 +5,8 @@
 import { ALL_SKILLS, SUBJECTS, getSkill } from '../src/content';
 import type { Difficulty, Item, Skill } from '../src/content/types';
 import { createRng } from '../src/engine/rng';
+import { canStep, isSolved, makePuzzle } from '../src/games/numberPath';
+import { MYSTERY_WORDS, letterTiles } from '../src/games/words';
 
 const errors: string[] = [];
 const warnings: string[] = [];
@@ -105,6 +107,27 @@ for (const subject of SUBJECTS) {
   for (const s of skills) {
     const count = s.items?.length ?? 0;
     if (!s.generate && count < 4) warnings.push(`${s.id}: only ${count} items (target 8+)`);
+  }
+}
+
+// Games: every generated Number Path must be solvable by its own rules; every word spellable from its tiles.
+for (const level of [1, 2, 3] as const) {
+  for (let seed = 1; seed <= 200; seed++) {
+    const p = makePuzzle(level, createRng(seed * 31 + level));
+    const path: typeof p.solution = [];
+    for (const cell of p.solution) {
+      if (!canStep(p, path, cell)) {
+        err(`number-path L${level} seed ${seed}`, 'known solution breaks the rules');
+        break;
+      }
+      path.push(cell);
+    }
+    if (path.length === p.solution.length && !isSolved(p, path)) err(`number-path L${level} seed ${seed}`, 'solution not recognised as solved');
+  }
+  for (const w of MYSTERY_WORDS[level]) {
+    if (!/^[a-z]+$/.test(w.word)) err(`mystery-word ${w.word}`, 'must be lowercase a–z');
+    const tiles = letterTiles(w.word, 4, (l) => createRng(7).shuffle(l));
+    if (!w.word.split('').every((ch) => tiles.includes(ch))) err(`mystery-word ${w.word}`, 'tiles missing a letter');
   }
 }
 

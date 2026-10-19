@@ -55,6 +55,14 @@ export interface Settings {
   primary: CurriculumId;
 }
 
+export type GameId = 'mystery-word' | 'number-path';
+export interface GameState {
+  level: 1 | 2 | 3;
+  played: number;
+  won: number;
+  streak: number;
+}
+
 export interface AppState {
   version: 1;
   profile?: { name: string; avatar: string; createdAt: number };
@@ -64,6 +72,7 @@ export interface AppState {
   stars: number;
   days: string[];
   checkups: CheckupResult[];
+  games: Partial<Record<GameId, GameState>>;
 }
 
 const KEY = 'learning-quest:v1';
@@ -74,7 +83,7 @@ const DAY = 24 * 60 * 60 * 1000;
 export const MASTERY = { window: 8, minAttempts: 6, accuracy: 0.85, minHardAttempts: 3, minDays: 3 };
 
 export function emptyState(): AppState {
-  return { version: 1, settings: { muted: false, unlockAll: false, showStretch: true, curricula: ['us-ga'], primary: 'us-ga' }, skills: {}, attempts: [], stars: 0, days: [], checkups: [] };
+  return { version: 1, settings: { muted: false, unlockAll: false, showStretch: true, curricula: ['us-ga'], primary: 'us-ga' }, skills: {}, attempts: [], stars: 0, days: [], checkups: [], games: {} };
 }
 
 export function loadState(): AppState {
@@ -180,4 +189,37 @@ export function dayStreak(state: AppState, now = Date.now()): number {
     t -= DAY;
   }
   return streak;
+}
+
+export function gameState(state: AppState, id: GameId): GameState {
+  return state.games?.[id] ?? { level: 1, played: 0, won: 0, streak: 0 };
+}
+
+/**
+ * One round of a game. 2 clean wins in a row → harder; a loss → easier;
+ * 'assisted' (solved with several hints) changes nothing. Clean wins earn a star.
+ */
+export function recordGame(state: AppState, id: GameId, result: 'win' | 'assisted' | 'loss', now = Date.now()): AppState {
+  const g = gameState(state, id);
+  let { level, streak } = g;
+  const won = result === 'win';
+  if (result === 'assisted') {
+    // no level change
+  } else if (won) {
+    streak++;
+    if (streak >= 2 && level < 3) {
+      level = (level + 1) as GameState['level'];
+      streak = 0;
+    }
+  } else {
+    streak = 0;
+    if (level > 1) level = (level - 1) as GameState['level'];
+  }
+  const day = dayKey(now);
+  return {
+    ...state,
+    games: { ...state.games, [id]: { level, streak, played: g.played + 1, won: g.won + (won ? 1 : 0) } },
+    stars: state.stars + (won ? 1 : 0),
+    days: state.days.includes(day) ? state.days : [...state.days, day],
+  };
 }

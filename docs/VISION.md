@@ -88,6 +88,20 @@ These rules come from auditing the original 127-item bank. The validator
 | Q10 | **No isolated phonemes via text-to-speech.** Speech engines can't say /b/ cleanly, so sound items use picture words ("starts like 🐻 bear"). | "Is it /b/, /d/, or /m/?" was read aloud as "slash b slash" |
 | Q11 | **Every item has a teaching explanation** used as feedback in practice. | None existed |
 
+## 4b. Brain Games
+
+Games are learning in disguise. Each one targets named skills and adapts on its own
+level (two clean wins → harder, a loss → easier, solving with many hints → no change).
+
+| Game | Like | Builds | Levels |
+|---|---|---|---|
+| **Mystery Word** | Hangman, without the hanging: a flower loses petals | Phonics encoding: hear each sound, pick its letter, left to right (RF.K.2, RF.K.3) | CVC → blends/digraphs/long vowels → 5-letter words; extra tiles include look-alike letters (b/d, m/n) |
+| **Number Path** | LinkedIn *Zip* | Number order (K.NR.2), planning ahead, spatial reasoning (gifted/Olympiad thinking) | 3×3 → 4×4 → 5×5 grids, more numbers |
+
+Puzzles are generated, and the validator proves every generated Number Path is solvable.
+Ideas for next games: *Shape Sudoku* (4×4 with pictures), *Odd-one-out Connections*
+(group 8 pictures into 2 sets of 4), *Hindi Mystery Word*.
+
 ## 5. Assessment design (Check-up)
 
 * One subject at a time; 2 items per strand, adaptive within the strand
@@ -127,6 +141,7 @@ src/content/         skill map + items (one file per subject)
   curricula.ts       curriculum overlays: grade names, locale, standard references
   index.ts           registry + subject metadata
 src/engine/          rng, progress store, mastery, Quest planner, Check-up
+src/games/           Brain Games logic (word bank, Number Path generator)
 src/ui/              kid + parent screens
 scripts/validate-content.ts   content linter (npm run validate)
 ```

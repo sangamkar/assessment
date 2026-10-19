@@ -8,11 +8,12 @@ import { dayStreak } from '../engine/progress';
 interface Props {
   state: AppState;
   onQuest: () => void;
+  onGames: () => void;
   onIsland: (id: SubjectId) => void;
   onGrownUps: () => void;
 }
 
-export function Home({ state, onQuest, onIsland, onGrownUps }: Props) {
+export function Home({ state, onQuest, onGames, onIsland, onGrownUps }: Props) {
   const name = state.profile?.name ?? 'Explorer';
   const streak = dayStreak(state);
   return (
@@ -29,15 +30,26 @@ export function Home({ state, onQuest, onIsland, onGrownUps }: Props) {
         </div>
       </header>
 
+      <div className="grid gap-4 sm:grid-cols-3">
       <button
         onClick={onQuest}
-        className="group relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-amber-400 via-orange-400 to-rose-400 p-6 text-left shadow-xl transition active:scale-[0.98] sm:p-8"
+        className="group relative overflow-hidden rounded-[2.5rem] sm:col-span-2 bg-gradient-to-br from-amber-400 via-orange-400 to-rose-400 p-6 text-left shadow-xl transition active:scale-[0.98] sm:p-8"
       >
         <div className="absolute -right-6 -top-6 text-[9rem] opacity-30 transition group-hover:rotate-12">🗺️</div>
         <div className="font-kid text-sm font-bold uppercase tracking-widest text-white/80">Today’s Quest · 8 questions</div>
         <div className="mt-1 font-kid text-4xl font-bold text-white sm:text-5xl">Start adventure</div>
         <div className="mt-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-white text-3xl shadow-lg">▶</div>
       </button>
+        <button
+          onClick={onGames}
+          className="relative flex flex-col justify-between overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-violet-500 to-fuchsia-500 p-6 text-left shadow-xl transition active:scale-[0.98]"
+        >
+          <div className="absolute -bottom-4 -right-4 text-[7rem] opacity-30">🧩</div>
+          <div className="font-kid text-sm font-bold uppercase tracking-widest text-white/80">Brain Games</div>
+          <div className="mt-1 font-kid text-3xl font-bold leading-tight text-white">Mystery Word &amp; Number Path</div>
+          <div className="mt-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-white text-3xl shadow-lg">🎮</div>
+        </button>
+      </div>
 
       <div className={`grid grid-cols-2 gap-4 sm:grid-cols-3 ${SUBJECTS.filter((x) => subjectSummary(state, x.id).total).length > 5 ? 'lg:grid-cols-6' : 'lg:grid-cols-5'}`}>
         {SUBJECTS.map((s) => {

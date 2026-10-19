@@ -3,8 +3,11 @@ import { CURRICULA, getSkill, getSubject } from './content';
 import type { SubjectId } from './content/types';
 import type { CheckupAnswer, CheckupPlan, QuestStep } from './engine/planner';
 import { buildQuest, buildSkillSession, creditFromCheckup, nextCheckupItem, planCheckup, scoreCheckup } from './engine/planner';
-import type { AppState, Attempt, Mode } from './engine/progress';
-import { loadState, markIntroSeen, recordAttempt, saveState, skillState } from './engine/progress';
+import type { AppState, Attempt, GameId, Mode } from './engine/progress';
+import { gameState, loadState, markIntroSeen, recordAttempt, recordGame, saveState, skillState } from './engine/progress';
+import { Games } from './ui/games/Games';
+import { MysteryWord } from './ui/games/MysteryWord';
+import { NumberPath } from './ui/games/NumberPath';
 import { PasscodeLock } from './components/PasscodeLock';
 import { soundEngine } from './utils/audio';
 import { Gate } from './ui/Gate';
@@ -21,6 +24,8 @@ type View =
   | { name: 'island'; subject: SubjectId }
   | { name: 'play'; mode: Mode; title: string; color: string; total: number; first: QuestStep | null; again?: () => void }
   | { name: 'results'; mode: Mode; correct: number; total: number; again?: () => void }
+  | { name: 'games' }
+  | { name: 'game'; id: GameId; level: 1 | 2 | 3; run: number }
   | { name: 'gate' }
   | { name: 'parent' };
 
@@ -125,7 +130,14 @@ export default function App() {
 
   switch (view.name) {
     case 'home':
-      return <Home state={state} onQuest={startQuest} onIsland={(subject) => setView({ name: 'island', subject })} onGrownUps={() => setView({ name: 'gate' })} />;
+      return <Home state={state} onQuest={startQuest} onGames={() => setView({ name: 'games' })} onIsland={(subject) => setView({ name: 'island', subject })} onGrownUps={() => setView({ name: 'gate' })} />;
+    case 'games':
+      return <Games state={state} onBack={() => setView({ name: 'home' })} onPlay={(id) => setView({ name: 'game', id, level: gameState(stateRef.current, id).level, run: Date.now() })} />;
+    case 'game': {
+      // Level is fixed for a session; the next session starts at the updated level.
+      const props = { level: view.level, onRound: (r: 'win' | 'assisted' | 'loss') => update((s) => recordGame(s, view.id, r)), onExit: () => setView({ name: 'games' }) };
+      return view.id === 'mystery-word' ? <MysteryWord key={view.run} {...props} /> : <NumberPath key={view.run} {...props} />;
+    }
     case 'island':
       return <Island state={state} subject={view.subject} onBack={() => setView({ name: 'home' })} onPlay={(skill) => startSkill(skill.id)} />;
     case 'play':

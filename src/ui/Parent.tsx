@@ -7,7 +7,8 @@ import { describeMisconception } from '../content/misconceptions';
 import { focusSkills, isVisible, skillStatus, subjectSummary, topMisconceptions, weakestSkills } from '../engine/planner';
 import type { SkillStatus } from '../engine/planner';
 import type { AppState, Band } from '../engine/progress';
-import { MASTERY, accuracy, attemptsFor, dayKey, emptyState, skillState } from '../engine/progress';
+import { MASTERY, accuracy, attemptsFor, dayKey, emptyState, gameState, skillState } from '../engine/progress';
+import { GAMES } from './games/Games';
 import { AVATARS } from './Setup';
 import { QuestionBank } from './QuestionBank';
 
@@ -88,6 +89,24 @@ function Overview({ state }: { state: AppState }) {
           </Card>
         );
       })}
+      <Card title="🎮 Brain games">
+        <div className="grid gap-3 sm:grid-cols-2">
+          {GAMES.map((g) => {
+            const st = gameState(state, g.id);
+            return (
+              <div key={g.id} className="text-sm">
+                <div className="font-semibold text-slate-800">
+                  {g.emoji} {g.title} · Level {st.level}/3
+                </div>
+                <div className="text-slate-500">
+                  {st.played ? `${st.won} solved cleanly of ${st.played} played` : 'Not played yet'}
+                </div>
+                <div className="text-xs text-slate-400">Builds: {g.builds}</div>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
       <p className="text-xs text-slate-500">
         Bars show skills mastered. Percent is first-try accuracy over the last 30 practice questions in that strand. Mastery rule: ≥{pct(MASTERY.accuracy)} over the last {MASTERY.window} tries, at least {MASTERY.minHardAttempts} at level 2+, correct on {MASTERY.minDays}+ different days.
       </p>

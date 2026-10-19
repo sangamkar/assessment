@@ -1,1 +1,21 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  /* Rounded, friendly display face for the kid UI. */
+  --font-kid: "Fredoka", ui-rounded, "Plus Jakarta Sans", sans-serif;
+  /* Andika is designed for beginning readers (single-story a and g). */
+  --font-reader: "Andika", "Plus Jakarta Sans", sans-serif;
+}
+
+body {
+  background: linear-gradient(180deg, #e0f2fe 0%, #f0fdf4 55%, #fefce8 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  touch-action: manipulation;
+  user-select: none;
+}

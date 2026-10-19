@@ -1,0 +1,179 @@
+import type { Difficulty } from '../content/types';
+
+export type Mode = 'quest' | 'skill' | 'checkup';
+
+export interface Attempt {
+  itemId: string;
+  skill: string;
+  d: Difficulty;
+  /** Correct on the first try — the only thing that counts toward mastery. */
+  correct: boolean;
+  why?: string;
+  ts: number;
+  mode: Mode;
+}
+
+export interface SkillState {
+  introSeen: boolean;
+  level: Difficulty;
+  streak: number;
+  mastered: boolean;
+  masteredAt?: number;
+  reviewStep: number;
+  nextReview?: number;
+  /** Shown as known in a Check-up, so Quests don't re-teach it from scratch. */
+  credited?: boolean;
+}
+
+export interface StrandResult {
+  strand: string;
+  title: string;
+  points: number;
+  max: number;
+  band: Band;
+}
+export type Band = 'Strong' | 'On track' | 'Growing' | 'Needs practice';
+
+export interface CheckupResult {
+  id: string;
+  subject: string;
+  ts: number;
+  strands: StrandResult[];
+  correct: number;
+  total: number;
+  misconceptions: { tag: string; count: number }[];
+  recommend: string[];
+}
+
+export interface Settings {
+  muted: boolean;
+  unlockAll: boolean;
+  showStretch: boolean;
+}
+
+export interface AppState {
+  version: 1;
+  profile?: { name: string; avatar: string; createdAt: number };
+  settings: Settings;
+  skills: Record<string, SkillState>;
+  attempts: Attempt[];
+  stars: number;
+  days: string[];
+  checkups: CheckupResult[];
+}
+
+const KEY = 'learning-quest:v1';
+const MAX_ATTEMPTS = 6000;
+export const REVIEW_DAYS = [1, 3, 7, 14, 30];
+const DAY = 24 * 60 * 60 * 1000;
+
+export const MASTERY = { window: 8, minAttempts: 6, accuracy: 0.85, minHardAttempts: 3, minDays: 3 };
+
+export function emptyState(): AppState {
+  return { version: 1, settings: { muted: false, unlockAll: false, showStretch: true }, skills: {}, attempts: [], stars: 0, days: [], checkups: [] };
+}
+
+export function loadState(): AppState {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return emptyState();
+    const parsed = JSON.parse(raw) as AppState;
+    if (parsed.version !== 1) return emptyState();
+    return { ...emptyState(), ...parsed, settings: { ...emptyState().settings, ...parsed.settings } };
+  } catch {
+    return emptyState();
+  }
+}
+
+export function saveState(state: AppState) {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(state));
+  } catch {
+    // Storage full or blocked: progress for this session still lives in memory.
+  }
+}
+
+export const dayKey = (ts: number) => new Date(ts).toLocaleDateString('en-CA');
+
+export function skillState(state: AppState, id: string): SkillState {
+  return state.skills[id] ?? { introSeen: false, level: 1, streak: 0, mastered: false, reviewStep: 0 };
+}
+
+export function attemptsFor(state: AppState, skill: string): Attempt[] {
+  return state.attempts.filter((a) => a.skill === skill);
+}
+
+export function accuracy(list: Attempt[]): number {
+  return list.length ? list.filter((a) => a.correct).length / list.length : 0;
+}
+
+/**
+ * Mastery = it stuck: over the most recent attempts, ≥85% first-try accuracy,
+ * several at difficulty ≥ 2, correct answers on at least 3 different days.
+ */
+export function meetsMastery(list: Attempt[]): boolean {
+  const recent = list.slice(-MASTERY.window);
+  if (recent.length < MASTERY.minAttempts) return false;
+  if (accuracy(recent) < MASTERY.accuracy) return false;
+  if (recent.filter((a) => a.d >= 2).length < MASTERY.minHardAttempts) return false;
+  const days = new Set(list.filter((a) => a.correct).map((a) => dayKey(a.ts)));
+  return days.size >= MASTERY.minDays;
+}
+
+/** Records one answered item and returns the new state (immutable update). */
+export function recordAttempt(state: AppState, attempt: Attempt): AppState {
+  const prev = skillState(state, attempt.skill);
+  const next: SkillState = { ...prev };
+  if (attempt.mode !== 'checkup') {
+    if (attempt.correct) {
+      next.streak = prev.streak + 1;
+      if (next.streak >= 2 && prev.level < 3) {
+        next.level = (prev.level + 1) as Difficulty;
+        next.streak = 0;
+      }
+    } else {
+      next.streak = 0;
+      if (prev.level > 1) next.level = (prev.level - 1) as Difficulty;
+    }
+  }
+  const attempts = [...state.attempts, attempt].slice(-MAX_ATTEMPTS);
+  const list = attempts.filter((a) => a.skill === attempt.skill);
+
+  if (prev.mastered && prev.nextReview && attempt.ts >= prev.nextReview && attempt.mode !== 'checkup') {
+    // A spaced review: success moves the next review further out, a miss brings it back.
+    next.reviewStep = attempt.correct ? Math.min(prev.reviewStep + 1, REVIEW_DAYS.length - 1) : 0;
+    next.nextReview = attempt.ts + REVIEW_DAYS[next.reviewStep] * DAY;
+    if (!attempt.correct && accuracy(list.slice(-4)) < 0.5) next.mastered = false;
+  } else if (!prev.mastered && meetsMastery(list)) {
+    next.mastered = true;
+    next.masteredAt = attempt.ts;
+    next.reviewStep = 0;
+    next.nextReview = attempt.ts + REVIEW_DAYS[0] * DAY;
+  }
+
+  const day = dayKey(attempt.ts);
+  return {
+    ...state,
+    attempts,
+    skills: { ...state.skills, [attempt.skill]: next },
+    stars: state.stars + (attempt.correct && attempt.mode !== 'checkup' ? 1 : 0),
+    days: state.days.includes(day) ? state.days : [...state.days, day],
+  };
+}
+
+export function markIntroSeen(state: AppState, skill: string): AppState {
+  return { ...state, skills: { ...state.skills, [skill]: { ...skillState(state, skill), introSeen: true } } };
+}
+
+/** Consecutive practice days ending today or yesterday. */
+export function dayStreak(state: AppState, now = Date.now()): number {
+  const set = new Set(state.days);
+  let streak = 0;
+  let t = now;
+  if (!set.has(dayKey(t))) t -= DAY;
+  while (set.has(dayKey(t))) {
+    streak++;
+    t -= DAY;
+  }
+  return streak;
+}

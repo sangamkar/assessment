@@ -1,8 +1,7 @@
 # Learning Quest
 
-A private, audio-first learning app for a kindergartner who is ahead of grade level. It teaches, practises and assesses the skills behind **i-Ready**, gifted screening, olympiads and STEM, and grows with him from Kindergarten through Grade 2.
+A private, audio-first learning app for a kindergartner who is ahead of grade level. It teaches, practises and assesses the skills, and grows with him from Kindergarten through Grade 2.
 
-**Live app:** https://sangamkar.github.io/assessment/ (passcode protected)
 
 > New here? Read **[`docs/OVERVIEW.md`](docs/OVERVIEW.md)**. It explains everything the app does in plain English, for parents.
 
@@ -68,4 +67,3 @@ When you add questions, append them to the end of a skill's `items` list. Questi
 
 Pushing to `main` deploys to GitHub Pages, but only after the typecheck, question validation and unit tests pass.
 
-The entry passcode comes from the **`CLASSROOM_PASSCODE`** repository secret (Settings → Secrets and variables → Actions). The deploy fails with a clear message if the secret is missing. The check runs in the browser, so the code ends up inside the published JavaScript. It keeps casual visitors out; it is not real security.

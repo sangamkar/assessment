@@ -1,6 +1,9 @@
 import type { Skill, SubjectId, SubjectMeta } from './types';
 import { MATH_SKILLS } from './math';
+import { MATH2_SKILLS } from './math2';
+import { MATH_EXTRA_SKILLS } from './mathExtra';
 import { READING_SKILLS } from './reading';
+import { READING2_SKILLS } from './reading2';
 import { SCIENCE_SKILLS } from './science';
 import { SOCIAL_SKILLS } from './social';
 import { REASONING_SKILLS } from './reasoning';
@@ -37,6 +40,7 @@ export const SUBJECTS: SubjectMeta[] = [
       { id: 'vocab', title: 'Vocabulary' },
       { id: 'lit', title: 'Comprehension: Literature' },
       { id: 'info', title: 'Comprehension: Informational' },
+      { id: 'writing', title: 'Writing & Grammar' },
     ],
   },
   {
@@ -116,7 +120,7 @@ export const LANGUAGES = [
 
 // India-only skills slot in next to their subject (they only show when India is switched on).
 const [moneyIN, ...indiaSocial] = [INDIA_SKILLS.find((s) => s.subject === 'math')!, ...INDIA_SKILLS.filter((s) => s.subject !== 'math')];
-export const ALL_SKILLS: Skill[] = [...MATH_SKILLS, moneyIN, ...READING_SKILLS, ...SCIENCE_SKILLS, ...SOCIAL_SKILLS, ...indiaSocial, ...REASONING_SKILLS, ...HINDI_SKILLS, ...KANNADA_SKILLS];
+export const ALL_SKILLS: Skill[] = [...MATH_SKILLS, ...MATH_EXTRA_SKILLS, ...MATH2_SKILLS, moneyIN, ...READING_SKILLS, ...READING2_SKILLS, ...SCIENCE_SKILLS, ...SOCIAL_SKILLS, ...indiaSocial, ...REASONING_SKILLS, ...HINDI_SKILLS, ...KANNADA_SKILLS];
 
 const BY_ID = new Map(ALL_SKILLS.map((s) => [s.id, s]));
 

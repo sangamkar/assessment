@@ -88,6 +88,42 @@ These rules come from auditing the original 127-item bank. The validator
 | Q10 | **No isolated phonemes via text-to-speech.** Speech engines can't say /b/ cleanly, so sound items use picture words ("starts like 🐻 bear"). | "Is it /b/, /d/, or /m/?" was read aloud as "slash b slash" |
 | Q11 | **Every item has a teaching explanation** used as feedback in practice. | None existed |
 
+## 4a. A child who is ahead
+
+Aarav already counts and writes past 100, adds 2-digit numbers, reads storybooks alone and
+writes sentences, so the app must never make him grind through basics:
+
+| Tool | Who uses it | What it does |
+|---|---|---|
+| **Find his level** (placement) | Parent, per subject | Tests upward through each strand with 2 hard questions per step, jumping 2 skills on a pass, backfilling once on a miss; max 24 questions. Passed skills are skipped. |
+| **⚡ Skip ahead** | Child, on any stone (even locked) | 3 hard questions; all right → skipped. |
+| **Knows it** / **Mark all Kindergarten known** | Parent, Skill map | Skip by judgement, one skill or a whole grade band. |
+
+Skipped skills count as mastered (they unlock what comes next) but return **once** as a review
+two weeks later; a miss puts them back into practice. Guesses and over-generous ticks self-correct.
+
+The ceiling was raised to match: **Grade 2 math** (place value to 1,000, 2–3-digit addition and
+subtraction with regrouping, skip counting, odd/even, equal groups, time to 5 minutes, US coins,
+two-step word problems) and **reading he does himself + writing** (vowel teams, independent
+passages, capitals, end punctuation, complete sentences, grammar), plus the **Sentence Builder** game.
+
+## 4a-2. Mock i-Ready and test prep
+
+Next school i-Ready: early December. The **i-Ready prep** tab gives:
+
+* **Mock i-Ready** (Math ~32 questions, Reading ~36): read aloud, no feedback, adaptive *within each
+  i-Ready domain* on a 9-step ladder (K / Grade 1 / Grade 2 × difficulty 1–3), big steps first and
+  then small ones. A stretch break every 12 questions; he can stop and resume another day. The
+  result is an estimated level per domain ("Mid Grade 1"), compared with where a Kindergartner is
+  expected to be at the test date, with a history table to show growth. When he answers the hardest
+  questions the app has in a domain, the label gets a “+” (the real level may be higher). These are
+  estimates from the app’s own questions, **not** i-Ready scale scores.
+* **Test date + schedule:** countdown; baseline mock now, a mid-point mock 3 weeks out, a final mock
+  1 week out, and a rest day before.
+* **Focus pins:** one pinned skill leads every daily Quest, rotating. One tap pins **time, money and
+  patterns** (his weaker areas): Day and week (K.PAR.6), Tell time, Time to 5 minutes, Coin names
+  (1.MDR.6), Coins, Patterns, Pattern rules (1.PAR.3) and Growing patterns.
+
 ## 4b. Brain Games
 
 Games are learning in disguise. Each one targets named skills and adapts on its own
@@ -96,6 +132,7 @@ level (two clean wins → harder, a loss → easier, solving with many hints →
 | Game | Like | Builds | Levels |
 |---|---|---|---|
 | **Mystery Word** | Hangman, without the hanging: a flower loses petals | Phonics encoding: hear each sound, pick its letter, left to right (RF.K.2, RF.K.3) | CVC → blends/digraphs/long vowels → 5-letter words; extra tiles include look-alike letters (b/d, m/n) |
+| **Sentence Builder** | Word-order puzzles | Writing: build a heard sentence word by word; capital first, end mark last; level 3 adds grammar traps (ran/run, mice/mouses) | 3–4 words → 5–6 → 7–8 with a trap tile |
 | **Number Path** | LinkedIn *Zip* | Number order (K.NR.2), planning ahead, spatial reasoning (gifted/Olympiad thinking) | 3×3 → 4×4 → 5×5 grids, more numbers |
 
 Puzzles are generated, and the validator proves every generated Number Path is solvable.

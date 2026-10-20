@@ -1,6 +1,7 @@
 import type { CurriculumId, Difficulty, LanguageCode } from '../content/types';
+import type { MockResult, MockRun } from './mock';
 
-export type Mode = 'quest' | 'skill' | 'checkup';
+export type Mode = 'quest' | 'skill' | 'checkup' | 'placement' | 'skip' | 'mock';
 
 export interface Attempt {
   itemId: string;
@@ -23,6 +24,8 @@ export interface SkillState {
   nextReview?: number;
   /** Shown as known in a Check-up, so Quests don't re-teach it from scratch. */
   credited?: boolean;
+  /** Skipped because he already knows it: marked by a parent, or tested out (placement / skip-ahead). */
+  known?: 'parent' | 'tested';
 }
 
 export interface StrandResult {
@@ -55,9 +58,13 @@ export interface Settings {
   primary: CurriculumId;
   /** Indian language tracks switched on (shown when India is on). */
   languages: LanguageCode[];
+  /** Skills a parent pinned for extra practice: one appears in every Quest. */
+  focus?: string[];
+  /** Date of the next school i-Ready diagnostic (YYYY-MM-DD). */
+  iReadyDate?: string;
 }
 
-export type GameId = 'mystery-word' | 'number-path';
+export type GameId = 'mystery-word' | 'number-path' | 'sentence-builder';
 export interface GameState {
   level: 1 | 2 | 3;
   played: number;
@@ -75,6 +82,10 @@ export interface AppState {
   days: string[];
   checkups: CheckupResult[];
   games: Partial<Record<GameId, GameState>>;
+  /** Finished mock i-Ready tests. */
+  mocks?: MockResult[];
+  /** A mock test paused part-way (resumable). */
+  mockRun?: MockRun;
 }
 
 const KEY = 'learning-quest:v1';
@@ -139,7 +150,7 @@ export function meetsMastery(list: Attempt[]): boolean {
 export function recordAttempt(state: AppState, attempt: Attempt): AppState {
   const prev = skillState(state, attempt.skill);
   const next: SkillState = { ...prev };
-  if (attempt.mode !== 'checkup') {
+  if (attempt.mode === 'quest' || attempt.mode === 'skill') {
     if (attempt.correct) {
       next.streak = prev.streak + 1;
       if (next.streak >= 2 && prev.level < 3) {
@@ -152,13 +163,18 @@ export function recordAttempt(state: AppState, attempt: Attempt): AppState {
     }
   }
   const attempts = [...state.attempts, attempt].slice(-MAX_ATTEMPTS);
+  const practice = attempt.mode === 'quest' || attempt.mode === 'skill';
   const list = attempts.filter((a) => a.skill === attempt.skill);
 
-  if (prev.mastered && prev.nextReview && attempt.ts >= prev.nextReview && attempt.mode !== 'checkup') {
+  if (prev.mastered && prev.nextReview && attempt.ts >= prev.nextReview && practice) {
     // A spaced review: success moves the next review further out, a miss brings it back.
     next.reviewStep = attempt.correct ? Math.min(prev.reviewStep + 1, REVIEW_DAYS.length - 1) : 0;
     next.nextReview = attempt.ts + REVIEW_DAYS[next.reviewStep] * DAY;
-    if (!attempt.correct && accuracy(list.slice(-4)) < 0.5) next.mastered = false;
+    if (!attempt.correct && accuracy(list.slice(-4)) < 0.5) {
+      next.mastered = false;
+      next.known = undefined; // a skipped skill he could not do goes back into practice
+      next.level = 2;
+    }
   } else if (!prev.mastered && meetsMastery(list)) {
     next.mastered = true;
     next.masteredAt = attempt.ts;
@@ -171,7 +187,7 @@ export function recordAttempt(state: AppState, attempt: Attempt): AppState {
     ...state,
     attempts,
     skills: { ...state.skills, [attempt.skill]: next },
-    stars: state.stars + (attempt.correct && attempt.mode !== 'checkup' ? 1 : 0),
+    stars: state.stars + (attempt.correct && practice ? 1 : 0),
     days: state.days.includes(day) ? state.days : [...state.days, day],
   };
 }
@@ -224,4 +240,26 @@ export function recordGame(state: AppState, id: GameId, result: 'win' | 'assiste
     stars: state.stars + (won ? 1 : 0),
     days: state.days.includes(day) ? state.days : [...state.days, day],
   };
+}
+
+/**
+ * Skip skills he already knows. They count as mastered (unlocking what comes
+ * next) but still come back once as spaced review in two weeks; failing that
+ * review returns them to practice, so a wrong guess about what he knows self-corrects.
+ */
+export function markKnown(state: AppState, ids: string[], source: 'parent' | 'tested', now = Date.now()): AppState {
+  const skills = { ...state.skills };
+  for (const id of ids) {
+    const s = skillState(state, id);
+    if (s.mastered && !s.known) continue; // already mastered through practice
+    skills[id] = { ...s, mastered: true, masteredAt: now, known: source, credited: true, level: 3, reviewStep: 2, nextReview: now + 14 * DAY };
+  }
+  return { ...state, skills };
+}
+
+export function unmarkKnown(state: AppState, id: string): AppState {
+  const s = skillState(state, id);
+  if (!s.known) return state;
+  const { known: _known, masteredAt: _at, nextReview: _next, ...rest } = s;
+  return { ...state, skills: { ...state.skills, [id]: { ...rest, mastered: false, credited: false, level: 1, reviewStep: 0 } } };
 }

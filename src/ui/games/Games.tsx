@@ -21,6 +21,15 @@ export const GAMES: { id: GameId; title: string; emoji: string; kid: string; bui
     color: '#7c3aed',
     soft: '#ede9fe',
   },
+  {
+    id: 'sentence-builder',
+    title: 'Sentence Builder',
+    emoji: '✍️',
+    kid: 'Listen to the sentence, then build it word by word!',
+    builds: 'Writing: word order, capital at the start, end punctuation; level 3 adds grammar traps (ran/run, mice/mouses).',
+    color: '#0891b2',
+    soft: '#cffafe',
+  },
 ];
 
 export function Games({ state, onPlay, onBack }: { state: AppState; onPlay: (id: GameId) => void; onBack: () => void }) {
@@ -33,7 +42,7 @@ export function Games({ state, onPlay, onBack }: { state: AppState; onPlay: (id:
         <span className="text-5xl">🎮</span>
         <h1 className="font-kid text-3xl font-bold text-slate-800">Brain Games</h1>
       </header>
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {GAMES.map((g) => {
           const st = gameState(state, g.id);
           return (

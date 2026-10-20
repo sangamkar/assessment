@@ -924,14 +924,14 @@ const shapes2d: Skill = {
       say: 'Which one is a square? Look carefully at every side and corner.',
       show: 'Which is a square?',
       choices: [
-        vis(shp({ kind: 'shape', shape: 'rhombus', color: C.teal }), undefined, 'shape_name_confusion'),
+        vis(shp({ kind: 'shape', shape: 'rectangle', color: C.teal, stretch: 2.4, rotate: 45, scale: 0.95 }), undefined, 'square_rectangle_confusion'),
         vis(shp({ kind: 'shape', shape: 'square', color: C.pink, rotate: 45, scale: 0.75 }), undefined),
         vis(shp({ kind: 'shape', shape: 'rectangle', color: C.green, stretch: 1.4 }), undefined, 'square_rectangle_confusion'),
         vis(shp({ kind: 'shape', shape: 'trapezoid', color: C.yellow }), undefined, 'shape_name_confusion'),
       ],
       speakChoices: false,
       hint: 'A square has four sides that are all the same length, and four square corners.',
-      explain: 'The square is turned onto its corner, but it is still a square: four equal sides and four square corners. The diamond shape is squished, so its corners are not square corners.',
+      explain: 'The square is turned onto its corner, but it is still a square: four equal sides and four square corners. The other turned shape is long and thin: its sides are not all the same length, so it is a rectangle.',
     },
   ]),
 };

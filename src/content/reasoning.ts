@@ -122,6 +122,58 @@ const analogy: Skill = {
       choices: [pic('⛄', 'snowman', 'opposite_not_relation'), pic('😎', 'sunglasses'), pic('☂️', 'umbrella', 'copied_first_pair'), pic('🌈', 'rainbow', 'association_not_relation')],
       explain: 'An umbrella protects you from rain. Sunglasses protect your eyes from bright sun.',
     },
+    {
+      difficulty: 1,
+      say: 'A car goes on a road. A boat goes on what?',
+      show: 'Car → road. Boat → ?',
+      visual: { kind: 'matrix', cols: 2, cells: [{ kind: 'emoji', emoji: '🚗' }, { kind: 'emoji', emoji: '🛣️' }, { kind: 'emoji', emoji: '⛵' }, null] },
+      choices: [pic('🛣️', 'road', 'copied_first_pair'), pic('🌊', 'water'), pic('⚓', 'anchor', 'association_not_relation'), pic('✈️', 'airplane', 'association_not_relation')],
+      explain: 'A car moves along a road. A boat moves along the water. Same connection: where it travels.',
+    },
+    {
+      difficulty: 1,
+      say: 'We clean our teeth with a toothbrush. We clean our hands with what?',
+      show: 'Teeth → toothbrush. Hands → ?',
+      visual: { kind: 'matrix', cols: 2, cells: [{ kind: 'emoji', emoji: '🦷' }, { kind: 'emoji', emoji: '🪥' }, { kind: 'emoji', emoji: '🙌' }, null] },
+      choices: [pic('🪥', 'toothbrush', 'copied_first_pair'), pic('🧤', 'gloves', 'association_not_relation'), pic('🧼', 'soap'), pic('🍎', 'apple', 'association_not_relation')],
+      explain: 'A toothbrush cleans teeth. Soap cleans hands. Gloves go on hands, but they do not clean them!',
+    },
+    {
+      difficulty: 2,
+      say: 'A seed grows into a flower. An egg grows into what?',
+      show: 'Seed → flower. Egg → ?',
+      visual: { kind: 'matrix', cols: 2, cells: [{ kind: 'emoji', emoji: '🌱' }, { kind: 'emoji', emoji: '🌻' }, { kind: 'emoji', emoji: '🥚' }, null] },
+      choices: [pic('🌻', 'flower', 'copied_first_pair'), pic('🍳', 'fried egg', 'association_not_relation'), pic('🐣', 'chick'), pic('🧺', 'basket', 'association_not_relation')],
+      explain: 'A little seed grows into a flower. A little egg hatches and grows into a chick. Same connection: what it grows into.',
+    },
+    {
+      difficulty: 2,
+      say: 'A red circle goes with a blue circle. A red square goes with what?',
+      show: 'Red circle → blue circle. Red square → ?',
+      visual: { kind: 'matrix', cols: 2, cells: [sv({ shape: 'circle', color: COLORS[0] }), sv({ shape: 'circle', color: COLORS[1] }), sv({ shape: 'square', color: COLORS[0] }), null] },
+      choices: [
+        vis(sv({ shape: 'square', color: COLORS[0] }), undefined, 'copied_c_term'),
+        vis(sv({ shape: 'circle', color: COLORS[1] }), undefined, 'copied_first_pair'),
+        vis(sv({ shape: 'square', color: COLORS[1] }), undefined),
+        vis(sv({ shape: 'square', color: COLORS[2] }), undefined, 'changed_wrong_attribute'),
+      ],
+      speakChoices: false,
+      explain: 'The circle stayed a circle but changed from red to blue. So the red square stays a square and changes to blue.',
+    },
+    {
+      difficulty: 3,
+      say: 'A flat square goes with a solid cube. A flat circle goes with what?',
+      show: 'Square → cube. Circle → ?',
+      visual: { kind: 'matrix', cols: 2, cells: [sv({ shape: 'square', color: COLORS[3] }), sv({ shape: 'cube', color: COLORS[3] }), sv({ shape: 'circle', color: COLORS[1] }), null] },
+      choices: [
+        vis(sv({ shape: 'circle', color: COLORS[1] }), undefined, 'copied_c_term'),
+        vis(sv({ shape: 'cube', color: COLORS[1] }), undefined, 'copied_first_pair'),
+        vis(sv({ shape: 'sphere', color: COLORS[1] }), undefined),
+        vis(sv({ shape: 'rect-prism', color: COLORS[1] }), undefined, 'solid_name_confusion'),
+      ],
+      speakChoices: false,
+      explain: 'A cube is like a square made solid: every side you look at is a square. A sphere is like a circle made solid: from every side it looks like a circle.',
+    },
   ]),
 };
 
@@ -351,6 +403,9 @@ const olympiad: Skill = {
     { difficulty: 3, say: 'There are 5 birds on a wire. 2 fly away. Then 1 comes back. How many birds are on the wire now?', show: '5 birds, 2 fly away, 1 comes back', visual: { kind: 'objects', emoji: '🐦', count: 5, arrange: 'line' }, choices: [num(3, 'ignored_second_step'), num(4), num(2, 'subtracted_both'), num(8, 'added_all')], explain: '5 take away 2 is 3. Then 1 comes back: 3 plus 1 is 4.' },
     { difficulty: 3, say: 'A pizza is cut into 4 slices. Three friends each eat 1 slice. How many slices are left?', show: '4 slices, 3 friends eat 1 each', visual: { kind: 'shape', shape: 'circle-fourths', color: '#f59e0b' }, choices: [num(1), num(3, 'answered_part_taken'), num(0, 'near_miss'), num(7, 'added_instead')], explain: '4 slices take away 3 slices leaves 1 slice.' },
     { difficulty: 3, say: 'How many triangles can you find? Count the big one too!', show: 'How many triangles?', visual: { kind: 'composite', preset: 'triangle-split' }, choices: [num(2, 'missed_overlapping_figure'), num(3), num(4, 'overcounted_figures')], explain: 'There are 2 small triangles. Together they make 1 big triangle. 2 plus 1 is 3 triangles.' },
+    { difficulty: 1, say: 'Mia has 3 balloons. Leo has 1 more balloon than Mia. How many balloons does Leo have?', show: 'Mia has 3. Leo has 1 more.', visual: { kind: 'objects', emoji: '🎈', count: 3, arrange: 'line' }, choices: [num(2, 'relation_reversed'), num(3, 'ignored_constraint'), num(4)], explain: 'Leo has the same as Mia and 1 more. 3 and 1 more is 4 balloons.' },
+    { difficulty: 1, say: 'Three children stand in a line. Ana is in the middle. How many children are standing right next to Ana?', show: 'Ana is in the middle of 3', visual: { kind: 'objects', emoji: '🧒', count: 3, arrange: 'line' }, choices: [num(1, 'missed_other_side'), num(2), num(3, 'counted_self')], explain: 'The middle child has one child on each side. 1 plus 1 is 2 children next to Ana. Ana does not count herself!' },
+    { difficulty: 2, say: 'A frog starts at zero. Each jump goes 2 steps forward. The frog jumps 3 times. What number does it land on?', show: 'Start at 0. Jump 2 steps, 3 times.', visual: { kind: 'sequence', items: ['0', '1', '2', '3', '4', '5', '6', '7', '8'], blank: -1 }, choices: [num(2, 'no_iteration'), num(3, 'counted_jumps_not_steps'), num(5, 'near_miss'), num(6)], explain: 'Jump 1 lands on 2. Jump 2 lands on 4. Jump 3 lands on 6.' },
   ]),
 };
 

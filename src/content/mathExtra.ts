@@ -30,6 +30,8 @@ const timePatterns: Skill = {
     { difficulty: 3, say: 'Today is Wednesday. What day was yesterday?', show: 'Today is Wednesday. Yesterday was…', choices: [txt('Thursday', 'before_after_confusion'), txt('Tuesday'), txt('Monday', 'days_order_unknown')], explain: 'Yesterday is the day before. The day before Wednesday is Tuesday.' },
     { difficulty: 3, say: 'Which month comes right after January?', show: 'After January comes…', choices: [txt('February'), txt('December', 'before_after_confusion'), txt('June', 'days_order_unknown')], explain: 'January, February, March… February comes after January.' },
     { difficulty: 3, say: 'Which takes the longest time?', show: 'Which takes the longest?', choices: [pic('🦷', 'brushing your teeth', 'duration_confusion'), pic('😴', 'a night of sleep'), pic('👏', 'clapping your hands', 'duration_confusion')], explain: 'A night of sleep takes many hours. Brushing teeth takes about two minutes, and a clap takes less than a second.' },
+    { difficulty: 1, say: 'When do most people eat breakfast?', show: 'When is breakfast?', choices: [pic('🌅', 'in the morning'), pic('🌙', 'at night', 'time_of_day_confusion'), pic('🌇', 'in the evening', 'time_of_day_confusion')], explain: 'Breakfast is the first meal of the day. We eat it in the morning, after we wake up.' },
+    { difficulty: 2, say: 'What day comes after Sunday?', show: 'What day comes after Sunday?', choices: [txt('Monday'), txt('Saturday', 'before_after_confusion'), txt('Wednesday', 'days_order_unknown')], explain: 'The days of the week go around and around. After Sunday, the week starts again with Monday.' },
   ]),
 };
 

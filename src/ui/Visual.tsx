@@ -517,6 +517,8 @@ function FitWidth({ children }: { children: React.ReactNode }) {
 }
 
 export function Visual({ v, size = 'lg' }: { v: V; size?: VSize }) {
+  // Passages wrap like normal text; shrinking them would make the words too small to read.
+  if (v.kind === 'story') return <VisualBody v={v} size={size} />;
   return (
     <FitWidth>
       <VisualBody v={v} size={size} />

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import type { Place, Visual as V } from '../content/types';
 import { CompositeSvg, ShapeSvg } from './ShapeSvg';
 
@@ -266,7 +266,7 @@ function PlaceScene({ thing, refEmoji, where, size }: { thing: string; refEmoji:
   );
 }
 
-export function Visual({ v, size = 'lg' }: { v: V; size?: VSize }) {
+function VisualBody({ v, size = 'lg' }: { v: V; size?: VSize }) {
   switch (v.kind) {
     case 'emoji': {
       const px = v.size === 'xl' ? EMOJI_PX[size] * 1.8 : v.size === 'md' ? EMOJI_PX[size] * 0.8 : EMOJI_PX[size] * 1.2;
@@ -371,7 +371,7 @@ export function Visual({ v, size = 'lg' }: { v: V; size?: VSize }) {
         <div className="grid gap-1.5 rounded-2xl bg-slate-200 p-1.5" style={{ gridTemplateColumns: `repeat(${v.cols}, ${cell}px)` }}>
           {v.cells.map((c, i) => (
             <div key={i} className={`flex items-center justify-center rounded-xl ${c ? 'bg-white' : 'border-4 border-dashed border-amber-400 bg-amber-50'}`} style={{ height: cell }}>
-              {c ? <Visual v={c} size="sm" /> : <span className="font-kid text-4xl font-bold text-amber-500">?</span>}
+              {c ? <VisualBody v={c} size="sm" /> : <span className="font-kid text-4xl font-bold text-amber-500">?</span>}
             </div>
           ))}
         </div>
@@ -472,10 +472,56 @@ export function Visual({ v, size = 'lg' }: { v: V; size?: VSize }) {
           {v.items.map((it, i) => (
             <React.Fragment key={i}>
               {i > 0 && v.sep && <span className="text-3xl font-black text-slate-400">{v.sep}</span>}
-              <Visual v={it} size={size === 'lg' ? 'md' : 'sm'} />
+              <VisualBody v={it} size={size === 'lg' ? 'md' : 'sm'} />
             </React.Fragment>
           ))}
         </div>
       );
   }
+}
+
+/**
+ * Shrinks a picture to fit the space it is given (a phone answer card, say),
+ * so objects never spill into a neighbouring card or scroll sideways.
+ * Never enlarges; the natural size is used whenever it fits.
+ */
+function FitWidth({ children }: { children: React.ReactNode }) {
+  const outer = useRef<HTMLDivElement>(null);
+  const inner = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState({ scale: 1, w: 0, h: 0 });
+  useLayoutEffect(() => {
+    const o = outer.current;
+    const i = inner.current;
+    if (!o || !i) return;
+    const fit = () => {
+      const w = i.offsetWidth;
+      const h = i.offsetHeight;
+      const avail = o.clientWidth;
+      const scale = w > avail && avail > 0 ? avail / w : 1;
+      setBox((b) => (b.scale === scale && b.w === w && b.h === h ? b : { scale, w, h }));
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(o);
+    ro.observe(i);
+    return () => ro.disconnect();
+  }, []);
+  const shrunk = box.scale < 1;
+  return (
+    <div ref={outer} className="flex w-full min-w-0 items-start justify-center" style={shrunk ? { height: box.h * box.scale } : undefined}>
+      <div ref={inner} className="w-max shrink-0 self-start" style={shrunk ? { transform: `scale(${box.scale})`, transformOrigin: 'top center' } : undefined}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export function Visual({ v, size = 'lg' }: { v: V; size?: VSize }) {
+  // Passages wrap like normal text; shrinking them would make the words too small to read.
+  if (v.kind === 'story') return <VisualBody v={v} size={size} />;
+  return (
+    <FitWidth>
+      <VisualBody v={v} size={size} />
+    </FitWidth>
+  );
 }

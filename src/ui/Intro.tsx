@@ -3,13 +3,13 @@ import type { Skill } from '../content/types';
 import { soundEngine } from '../utils/audio';
 import { Visual } from './Visual';
 import { SpeakButton } from './SpeakButton';
-import { localize } from '../content/curricula';
+import { localizeDeep } from '../content/curricula';
 
 /** "Let's learn" slides shown the first time a skill comes up. */
 export function Intro({ skill, color, locale, onDone }: { skill: Skill; color: string; locale: 'en-US' | 'en-IN'; onDone: () => void }) {
   const [i, setI] = useState(0);
   const raw = skill.intro[i];
-  const slide = { ...raw, say: localize(raw.say, locale) };
+  const slide = localizeDeep(raw, locale);
   const last = i === skill.intro.length - 1;
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export function Intro({ skill, color, locale, onDone }: { skill: Skill; color: s
           className="rounded-full px-8 py-4 font-kid text-2xl font-bold text-white shadow-lg transition active:scale-95"
           style={{ background: color }}
         >
-          {last ? 'Let’s practice! ▶' : 'Next ▶'}
+          {last ? (locale === 'en-IN' ? 'Let’s practise! ▶' : 'Let’s practice! ▶') : 'Next ▶'}
         </button>
       </div>
       <div className="flex gap-2">

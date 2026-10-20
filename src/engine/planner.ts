@@ -11,14 +11,21 @@ const rng = createRng();
 
 /** A prerequisite is satisfied once it is mastered, credited, or solidly being practised. */
 function prereqMet(state: AppState, id: string): boolean {
+  // A prerequisite from another curriculum (e.g. Georgia-only) never blocks this one.
+  if (!inRegion(state, getSkill(id))) return true;
   const s = skillState(state, id);
   if (s.mastered || s.credited) return true;
   const list = attemptsFor(state, id);
   return list.length >= 5 && accuracy(list.slice(-8)) >= 0.7;
 }
 
+/** True when a skill or item has no region limit, or one of its regions is switched on. */
+export function inRegion(state: AppState, thing?: { regions?: string[] }): boolean {
+  return !thing?.regions || thing.regions.some((r) => (state.settings.curricula as string[]).includes(r));
+}
+
 export function isVisible(state: AppState, skill: Skill): boolean {
-  if (skill.regions && !skill.regions.some((r) => state.settings.curricula.includes(r))) return false;
+  if (!inRegion(state, skill)) return false;
   if (skill.language && !(state.settings.languages ?? ['hi']).includes(skill.language)) return false;
   return skill.grade === 'K' || state.settings.showStretch;
 }
@@ -45,7 +52,8 @@ export function present(item: Item): Item {
 
 export function pickItem(state: AppState, skill: Skill, level: Difficulty, avoid: Set<string> = new Set()): Item {
   const recent = new Set(state.attempts.slice(-30).map((a) => a.itemId));
-  const written = (skill.items ?? []).filter((i) => !avoid.has(i.id));
+  const allowed = (skill.items ?? []).filter((i) => inRegion(state, i));
+  const written = allowed.filter((i) => !avoid.has(i.id));
   const useGenerator = skill.generate && (written.length === 0 || rng.next() < 0.6);
   if (useGenerator && skill.generate) {
     for (let tries = 0; tries < 8; tries++) {
@@ -54,7 +62,7 @@ export function pickItem(state: AppState, skill: Skill, level: Difficulty, avoid
     }
     return present(skill.generate(rng, level));
   }
-  const pool = written.length ? written : skill.items ?? [];
+  const pool = written.length ? written : allowed;
   const byDistance = [...pool].sort((a, b) => {
     const da = Math.abs(a.difficulty - level) + (recent.has(a.id) ? 2 : 0);
     const db = Math.abs(b.difficulty - level) + (recent.has(b.id) ? 2 : 0);
@@ -127,8 +135,8 @@ export function buildQuest(state: AppState, now = Date.now()): QuestStep[] {
   // Interleave focus skills (A, B, C, A, B, C) — mixed practice sticks better than blocks.
   for (let round = 0; round < 2; round++) focus.forEach((s) => take(s, 'focus'));
 
-  const due = ALL_SKILLS.filter((s) => skillStatus(state, s, now) === 'review');
-  const mastered = ALL_SKILLS.filter((s) => skillState(state, s.id).mastered);
+  const due = ALL_SKILLS.filter((s) => isVisible(state, s) && skillStatus(state, s, now) === 'review');
+  const mastered = ALL_SKILLS.filter((s) => isVisible(state, s) && skillState(state, s.id).mastered);
   const reviewPool = due.length ? due : mastered;
   if (reviewPool.length) take(rng.pick(reviewPool), 'review', 2);
 
@@ -289,7 +297,7 @@ export function topMisconceptions(state: AppState, sinceDays = 30, limit = 6) {
 
 export function weakestSkills(state: AppState, limit = 5) {
   return ALL_SKILLS.map((s) => ({ skill: s, list: attemptsFor(state, s.id) }))
-    .filter((x) => x.list.length >= 3 && !skillState(state, x.skill.id).mastered)
+    .filter((x) => x.list.length >= 3 && isVisible(state, x.skill) && !skillState(state, x.skill.id).mastered)
     .map((x) => ({ skill: x.skill, accuracy: accuracy(x.list.slice(-10)), attempts: x.list.length }))
     .sort((a, b) => a.accuracy - b.accuracy)
     .slice(0, limit);

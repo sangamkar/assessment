@@ -14,7 +14,7 @@ interface Props {
 }
 
 export function Home({ state, onQuest, onGames, onIsland, onGrownUps }: Props) {
-  const name = state.profile?.name ?? 'Explorer';
+  const name = state.profile?.name?.trim() || 'Explorer';
   const streak = dayStreak(state);
   return (
     <div className="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-4 py-6">

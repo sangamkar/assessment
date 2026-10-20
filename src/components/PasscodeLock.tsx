@@ -38,7 +38,7 @@ export function PasscodeLock({ onUnlock }: Props) {
             <GraduationCap className="w-10 h-10 text-white -rotate-3" />
           </div>
           <h1 className="text-3xl font-black text-slate-800 tracking-tight">
-            Assessment Hub
+            Learning Quest
           </h1>
           <p className="text-slate-500 mt-2 font-medium">
             Please enter the classroom passcode

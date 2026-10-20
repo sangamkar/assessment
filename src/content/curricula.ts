@@ -84,7 +84,18 @@ const EN_IN: [RegExp, string][] = [
   [/\bfavorite\b/gi, 'favourite'],
   [/\bgray\b/gi, 'grey'],
   [/\bcenter\b/gi, 'centre'],
-  [/\bmeters?\b/gi, 'metre'],
+  [/\bmeter(s)?\b/gi, 'metre$1'],
+  [/\bcentimeter(s)?\b/gi, 'centimetre$1'],
+  [/\bdollars\b/gi, 'rupees'],
+  [/\bdollar\b/gi, 'rupee'],
+  [/\bpennies\b/gi, 'coins'],
+  [/\bfirst grade\b/gi, 'Class 1'],
+  [/\bsecond grade\b/gi, 'Class 2'],
+  [/\bmom\b/gi, 'mum'],
+  [/\bmoms\b/gi, 'mums'],
+  [/^fall$/i, 'autumn'],
+  [/\bfall(?= comes| is| leaves)/gi, 'autumn'],
+  [/\b(in|and|summer,) fall\b/gi, '$1 autumn'],
   [/\bsoccer ball\b/gi, 'football'],
   [/\bflashlight\b/gi, 'torch'],
   [/\bcookies\b/gi, 'biscuits'],
@@ -102,4 +113,19 @@ function matchCase(src: string, out: string) {
 export function localize(text: string, locale: 'en-US' | 'en-IN'): string {
   if (locale === 'en-US' || !text) return text;
   return EN_IN.reduce((t, [re, rep]) => t.replace(re, (m, ...g) => matchCase(m, rep.replace('$1', typeof g[0] === 'string' ? g[0] : ''))), text);
+}
+
+/** Fields that hold codes, not words: never localized. */
+const RAW_KEYS = new Set(['id', 'kind', 'emoji', 'why', 'lang', 'color', 'shape', 'symbol', 'where', 'thing', 'ref', 'arrange', 'mode', 'roman', 'voice', 'choiceLang', 'regions']);
+
+/** Localizes every word a child sees or hears in a question: prompt, choices, pictures, passages. */
+export function localizeDeep<T>(value: T, locale: 'en-US' | 'en-IN'): T {
+  if (locale === 'en-US') return value;
+  const walk = (v: unknown): unknown => {
+    if (typeof v === 'string') return localize(v, locale);
+    if (Array.isArray(v)) return v.map(walk);
+    if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, RAW_KEYS.has(k) ? x : walk(x)]));
+    return v;
+  };
+  return walk(value) as T;
 }

@@ -98,7 +98,8 @@ export default function App() {
     const plan = planCheckup(stateRef.current, subjectId);
     session.current = { queue: [], index: 0, plan, answers: [] };
     const first = nextCheckupItem(stateRef.current, plan, []);
-    if (first) session.current.queue.push(first);
+    if (!first) return; // nothing visible to ask (e.g. a language that is switched off)
+    session.current.queue.push(first);
     const subject = getSubject(subjectId);
     const total = plan.strands.length * plan.perStrand;
     setView({ name: 'play', mode: 'checkup', title: `Check-up · ${subject.kidTitle}`, color: subject.color, total, first });
@@ -109,6 +110,10 @@ export default function App() {
     session.current = { queue: [], index: 0, placement: run, answers: [] };
     const first = placementNext(stateRef.current, run);
     const subject = getSubject(subjectId);
+    if (!first) {
+      window.alert(`Nothing left to place in ${subject.title}: every skill is already mastered or marked known.`);
+      return;
+    }
     setView({ name: 'play', mode: 'placement', title: `Find your level · ${subject.kidTitle}`, color: subject.color, total: PLACEMENT_CAP, first });
   };
 

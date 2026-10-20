@@ -108,6 +108,14 @@ for (const subject of SUBJECTS) {
   for (const s of skills) {
     const count = s.items?.length ?? 0;
     if (!s.generate && count < 4) warnings.push(`${s.id}: only ${count} items (target 8+)`);
+    // Region-tagged questions: every curriculum that shows this skill must still have enough to ask.
+    if (!s.generate) {
+      for (const region of s.regions ?? (['us-ga', 'in-cbse'] as const)) {
+        const n = (s.items ?? []).filter((i) => !i.regions || i.regions.includes(region)).length;
+        if (n < 3) errors.push(`${s.id}: only ${n} items for ${region}`);
+        else if (n < 6) warnings.push(`${s.id}: only ${n} items for ${region} (target 8+)`);
+      }
+    }
   }
 }
 

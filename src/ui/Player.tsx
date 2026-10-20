@@ -197,6 +197,11 @@ export function Player({ locale, mode, title, color, total, first, getNext, intr
         />
       ) : (
         <>
+          {mode === 'skip' && (
+            <div className="mt-4 rounded-2xl bg-amber-100 px-4 py-2 text-center font-kid text-lg font-bold text-amber-900">
+              ⚡ Skip test · get all {total} right to skip {step.skill.kidTitle}
+            </div>
+          )}
           {/* Prompt */}
           <div className="mt-5 flex items-center gap-4 rounded-[2rem] bg-white p-4 shadow-md">
             <SpeakButton text={L(item.say)} extra={item.voice} big />

@@ -23,7 +23,12 @@ export function Island({ state, subject, onBack, onPlay, onSkip }: { state: AppS
 
   const tap = (skill: Skill, status: SkillStatus) => {
     // In skip-ahead mode even locked stones can be tried: proving it unlocks the path.
-    if (skipMode && status !== 'mastered' && status !== 'review') {
+    // Stones already done can't be skipped, and must not fall through to practice.
+    if (skipMode) {
+      if (status === 'mastered' || status === 'review') {
+        soundEngine.speak('You already know this one! Tap a different stone to skip.');
+        return;
+      }
       soundEngine.playTap();
       onSkip(skill);
       return;
@@ -75,13 +80,14 @@ export function Island({ state, subject, onBack, onPlay, onSkip }: { state: AppS
                 {list.map((skill) => {
                   const status = skillStatus(state, skill);
                   const level = skillState(state, skill.id).level;
+                  const done = status === 'mastered' || status === 'review';
                   return (
-                    <button key={skill.id} onClick={() => tap(skill, status)} className="flex w-28 flex-col items-center gap-1.5">
+                    <button key={skill.id} onClick={() => tap(skill, status)} className={`flex w-28 flex-col items-center gap-1.5 transition ${skipMode && done ? 'opacity-35' : ''}`}>
                       <span
                         className={`relative flex h-20 w-20 items-center justify-center rounded-full text-4xl shadow-md transition active:scale-90 ${STATUS_STYLE[status]}`}
                         style={status === 'learning' ? ({ '--tw-ring-color': meta.color } as React.CSSProperties) : undefined}
                       >
-                        {status === 'locked' ? '🔒' : skill.icon}
+                        {status === 'locked' && !skipMode ? '🔒' : skill.icon}
                         {skill.grade !== 'K' && <span className="absolute -left-1 -top-1 rounded-full bg-slate-700 px-1.5 text-[10px] font-bold text-white">{curriculum.gradeBadge[skill.grade]}</span>}
                         {skill.regions?.includes('in-cbse') && <span className="absolute -right-1 -top-1 text-sm">🇮🇳</span>}
                         {(state.settings.focus ?? []).includes(skill.id) && <span className="absolute -right-2 top-5 text-lg">📌</span>}

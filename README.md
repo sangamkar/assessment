@@ -4,6 +4,7 @@ Audio-first learning, practice and adaptive check-ups for a kindergartner, built
 Covers math, reading, science/STEM, social studies & geography, and reasoning puzzles, aligned to
 Georgia standards and the i-Ready domains, with an India (CBSE/NCERT + Hindi) overlay.
 
+- **What we have built (plain-English overview): [`docs/OVERVIEW.md`](docs/OVERVIEW.md)**
 - Product vision, design rules and question-writing rules: [`docs/VISION.md`](docs/VISION.md)
 - India readiness plan (CBSE/NCERT, Hindi): [`docs/INDIA.md`](docs/INDIA.md) · Going-public checklist: [`docs/PUBLIC-LAUNCH.md`](docs/PUBLIC-LAUNCH.md)
 - Content (skill map + questions): `src/content/` — one file per subject

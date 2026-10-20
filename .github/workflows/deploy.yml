@@ -29,6 +29,15 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Typecheck
+        run: npm run lint
+
+      - name: Validate question bank
+        run: npm run validate
+
+      - name: Unit tests
+        run: npm test
+
       - name: Build project
         run: npm run build
 

@@ -176,52 +176,77 @@ class SoundEngine {
     }
   }
 
+  private locale = 'en-US';
+  private sequence = 0;
+
+  /** English accent for the active curriculum (en-US or en-IN). */
+  public setLocale(locale: string) {
+    this.locale = locale;
+  }
+
+  private pickVoice(lang: string): SpeechSynthesisVoice | undefined {
+    const voices = window.speechSynthesis.getVoices();
+    const prefix = lang.split('-')[0];
+    const friendly = (v: SpeechSynthesisVoice) => /Natural|Samantha|Google|Karen|Victoria|Lekha|Veena|Rishi/.test(v.name);
+    return (
+      voices.find((v) => v.lang.replace('_', '-') === lang && friendly(v)) ||
+      voices.find((v) => v.lang.replace('_', '-') === lang) ||
+      (prefix === 'en' ? voices.find((v) => v.lang.startsWith('en') && friendly(v)) : undefined) ||
+      voices.find((v) => v.lang.startsWith(prefix))
+    );
+  }
+
+  /** True when the device has a voice for this language (e.g. 'hi' for Hindi). */
+  public hasVoice(prefix: string): boolean {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return false;
+    return window.speechSynthesis.getVoices().some((v) => v.lang.startsWith(prefix));
+  }
+
   /**
    * Text-To-Speech with Kindergarten-friendly tempo and friendly voice
    */
-  public speak(text: string, onEnd?: () => void) {
-    if (this.isMuted) {
-      if (onEnd) onEnd();
-      return;
-    }
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+  public speak(text: string, onEnd?: () => void, lang?: string) {
+    this.speakParts([{ text, lang }], onEnd);
+  }
+
+  /** Speaks several parts in a row, each in its own language (English prompt, then a Hindi word). */
+  public speakParts(parts: { text: string; lang?: string; roman?: string }[], onEnd?: () => void) {
+    if (this.isMuted || typeof window === 'undefined' || !('speechSynthesis' in window)) {
       if (onEnd) onEnd();
       return;
     }
     this.stopSpeech();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.88;
-    utterance.pitch = 1.05;
-
-    const voices = window.speechSynthesis.getVoices();
-    const friendlyVoice =
-      voices.find(
-        (v) =>
-          (v.name.includes('Natural') ||
-            v.name.includes('Samantha') ||
-            v.name.includes('Google') ||
-            v.name.includes('Karen') ||
-            v.name.includes('Victoria')) &&
-          v.lang.startsWith('en')
-      ) || voices.find((v) => v.lang.startsWith('en'));
-
-    if (friendlyVoice) {
-      utterance.voice = friendlyVoice;
-    }
-
-    utterance.onend = () => {
-      this.currentUtterance = null;
-      if (onEnd) onEnd();
+    const run = ++this.sequence;
+    const next = (i: number) => {
+      if (run !== this.sequence) return;
+      if (i >= parts.length) {
+        this.currentUtterance = null;
+        if (onEnd) onEnd();
+        return;
+      }
+      let lang = parts[i].lang ?? this.locale;
+      let text = parts[i].text;
+      // No voice for this language (common for Kannada): say the romanized form in English instead.
+      if (!lang.startsWith('en') && !this.hasVoice(lang.split('-')[0]) && parts[i].roman) {
+        text = parts[i].roman!;
+        lang = this.locale;
+      }
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = lang;
+      utterance.rate = lang.startsWith('hi') ? 0.8 : 0.88;
+      utterance.pitch = 1.05;
+      const voice = this.pickVoice(lang);
+      if (voice) utterance.voice = voice;
+      utterance.onend = () => next(i + 1);
+      utterance.onerror = () => next(i + 1);
+      this.currentUtterance = utterance;
+      window.speechSynthesis.speak(utterance);
     };
-    utterance.onerror = () => {
-      this.currentUtterance = null;
-      if (onEnd) onEnd();
-    };
-    this.currentUtterance = utterance;
-    window.speechSynthesis.speak(utterance);
+    next(0);
   }
 
   public stopSpeech() {
+    this.sequence++;
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       this.currentUtterance = null;

@@ -147,14 +147,21 @@ export function buildQuest(state: AppState, now = Date.now()): QuestStep[] {
   return [...core.slice(0, mid), ...extras, ...core.slice(mid)];
 }
 
-export function buildSkillSession(state: AppState, skill: Skill, length = 6): QuestStep[] {
+/** Up to `length` different items; a small pool gives a shorter session, never a repeat. */
+function distinctSteps(state: AppState, skill: Skill, level: Difficulty, length: number): QuestStep[] {
   const used = new Set<string>();
-  const level = skillState(state, skill.id).level;
-  return Array.from({ length }, () => {
+  const steps: QuestStep[] = [];
+  while (steps.length < length) {
     const item = pickItem(state, skill, level, used);
+    if (used.has(item.id)) break;
     used.add(item.id);
-    return { skill, item, role: 'focus' as const };
-  });
+    steps.push({ skill, item, role: 'focus' });
+  }
+  return steps;
+}
+
+export function buildSkillSession(state: AppState, skill: Skill, length = 6): QuestStep[] {
+  return distinctSteps(state, skill, skillState(state, skill.id).level, length);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -379,10 +386,5 @@ export function placementAnswer(run: PlacementRun, correct: boolean) {
 
 /** Skip-ahead challenge: 3 hard questions on one skill; all right → skip it. */
 export function buildSkipChallenge(state: AppState, skill: Skill): QuestStep[] {
-  const used = new Set<string>();
-  return Array.from({ length: 3 }, () => {
-    const item = pickItem(state, skill, 3, used);
-    used.add(item.id);
-    return { skill, item, role: 'focus' as const };
-  });
+  return distinctSteps(state, skill, 3, 3);
 }

@@ -10,14 +10,16 @@ export function PasscodeLock({ onUnlock }: Props) {
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState(false);
 
-  // Use the environment variable if set, otherwise fallback to a default
-  const expectedPasscode = (import.meta as any).env.VITE_CLASSROOM_PASSCODE || 'TEACHER24';
+  // Production builds get the passcode from the CLASSROOM_PASSCODE repository secret
+  // (see .github/workflows/deploy.yml). Local dev falls back to a dev-only code.
+  const env = (import.meta as unknown as { env: { VITE_CLASSROOM_PASSCODE?: string; DEV?: boolean } }).env;
+  const expectedPasscode = env.VITE_CLASSROOM_PASSCODE || (env.DEV ? 'DEV' : '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     // Simple case-insensitive check
-    if (passcode.trim().toUpperCase() === expectedPasscode.toUpperCase()) {
+    if (expectedPasscode && passcode.trim().toUpperCase() === expectedPasscode.toUpperCase()) {
       setError(false);
       onUnlock();
     } else {

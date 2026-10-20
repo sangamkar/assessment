@@ -4,7 +4,7 @@ import { soundEngine } from '../utils/audio';
 import type { Mode } from '../engine/progress';
 
 export function Results({ correct, total, mode, note, onHome, onAgain }: { correct: number; total: number; mode: Mode; note?: string; onHome: () => void; onAgain?: () => void }) {
-  const tested = mode === 'checkup' || mode === 'placement' || mode === 'skip';
+  const tested = mode === 'checkup' || mode === 'placement' || mode === 'skip' || mode === 'mock';
   const stars = tested ? 0 : correct + (mode === 'quest' ? 3 : 1);
   useEffect(() => {
     soundEngine.playCorrectChime();

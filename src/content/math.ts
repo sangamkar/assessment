@@ -105,18 +105,21 @@ const subitize: Skill = {
     { say: 'A ten frame holds ten. A full top row is five.', visual: { kind: 'tenFrame', filled: 5 } },
   ],
   generate: (rng, d) => {
-    const n = d === 1 ? rng.int(1, 4) : d === 2 ? rng.int(5, 6) : rng.int(6, 10);
-    const visual: Visual = d === 3 ? { kind: 'tenFrame', filled: n } : { kind: 'objects', emoji: '🔴', count: n, arrange: 'dice' };
-    return makeItem('m.subitize', `${n}${d}`, d, {
+    // Level 2 mixes dice patterns 4–6 with small ten frames, so it is not the same two pictures.
+    const frame = d === 3 || (d === 2 && rng.next() < 0.5);
+    const n = d === 1 ? rng.int(1, 4) : d === 2 ? (frame ? rng.int(3, 5) : rng.int(4, 6)) : rng.int(6, 10);
+    const dot = rng.pick(['🔴', '🔵', '🟢']);
+    const visual: Visual = frame ? { kind: 'tenFrame', filled: n } : { kind: 'objects', emoji: dot, count: n, arrange: 'dice' };
+    return makeItem('m.subitize', `${frame ? 'f' : dot}${n}${d}`, d, {
       say: 'Quick look! How many dots?',
       show: 'How many dots?',
       visual,
       choices: numberChoices(rng, n, [
         { n: n - 1, why: 'count_skipped_one' },
         { n: n + 1, why: 'count_double_tap' },
-        ...(d === 3 ? [{ n: 10 - n, why: 'counted_empty_boxes' }] : []),
+        ...(frame ? [{ n: 10 - n, why: 'counted_empty_boxes' }] : []),
       ], { min: 1, max: 10 }),
-      explain: d === 3 ? `The top row has 5. Then count on: ${countUp(n).split(', ').slice(5).join(', ') || 'none more'}. That makes ${n}.` : `This is the ${n} pattern. There are ${n} dots.`,
+      explain: frame && n > 5 ? `The top row has 5. Then count on: ${countUp(n).split(', ').slice(5).join(', ') || 'none more'}. That makes ${n}.` : frame ? `Count the dots in the frame: ${countUp(n)}. There are ${n}.` : `This is the ${n} pattern. There are ${n} dots.`,
     });
   },
 };

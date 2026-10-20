@@ -3,7 +3,7 @@ import { ALL_SKILLS, SUBJECTS, getSkill } from '../src/content';
 import type { Difficulty } from '../src/content/types';
 import type { AppState, Attempt } from '../src/engine/progress';
 import { dayKey, dayStreak, emptyState, gameState, markIntroSeen, meetsMastery, recordAttempt, recordGame, skillState } from '../src/engine/progress';
-import { buildQuest, buildSkillSession, creditFromCheckup, isVisible, nextCheckupItem, planCheckup, present, QUEST_LENGTH, scoreCheckup, skillStatus } from '../src/engine/planner';
+import { buildQuest, buildSkillSession, buildSkipChallenge, creditFromCheckup, isVisible, nextCheckupItem, planCheckup, present, QUEST_LENGTH, scoreCheckup, skillStatus } from '../src/engine/planner';
 import type { CheckupAnswer } from '../src/engine/planner';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -139,6 +139,16 @@ describe("Today's Quest", () => {
   it('skill sessions stay on one skill', () => {
     const q = buildSkillSession(emptyState(), getSkill('r.cvc')!);
     expect(q.every((x) => x.skill.id === 'r.cvc')).toBe(true);
+  });
+
+  it('never repeats a question within a skill session or skip test', () => {
+    for (const skill of ALL_SKILLS) {
+      for (const steps of [buildSkillSession(emptyState(), skill), buildSkipChallenge(emptyState(), skill)]) {
+        const ids = steps.map((x) => x.item.id);
+        expect(new Set(ids).size, skill.id).toBe(ids.length);
+        expect(ids.length, skill.id).toBeGreaterThan(0);
+      }
+    }
   });
 });
 

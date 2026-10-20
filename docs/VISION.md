@@ -63,7 +63,7 @@ documents before relying on them for reporting.
 6. **Effort rewards, not speed.** Stars for finishing and for careful work; no
    timers in practice.
 7. **Mastery means it stuck.** A skill is *mastered* when, across its recent
-   attempts, accuracy ≥ 85% at difficulty ≥ 2 **on at least 3 different days**.
+   attempts, accuracy ≥ 85% at difficulty ≥ 2 **with correct answers on at least 3 different days within the last 3 weeks**.
    Mastered skills come back as spaced review (1, 3, 7, 14, 30 days).
 8. **Mixed review.** Each Quest mixes the focus skill with 2 review items and 1
    stretch item.

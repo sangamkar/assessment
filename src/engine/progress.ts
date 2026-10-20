@@ -93,22 +93,58 @@ const MAX_ATTEMPTS = 6000;
 export const REVIEW_DAYS = [1, 3, 7, 14, 30];
 const DAY = 24 * 60 * 60 * 1000;
 
-export const MASTERY = { window: 8, minAttempts: 6, accuracy: 0.85, minHardAttempts: 3, minDays: 3 };
+export const MASTERY = { window: 8, minAttempts: 6, accuracy: 0.85, minHardAttempts: 3, minDays: 3, dayWindow: 21 };
 
 export function emptyState(): AppState {
   return { version: 1, settings: { muted: false, unlockAll: false, showStretch: true, curricula: ['us-ga'], primary: 'us-ga', languages: ['hi'] }, skills: {}, attempts: [], stars: 0, days: [], checkups: [], games: {} };
 }
 
-export function loadState(): AppState {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return emptyState();
-    const parsed = JSON.parse(raw) as AppState;
-    if (parsed.version !== 1) return emptyState();
-    return { ...emptyState(), ...parsed, settings: { ...emptyState().settings, ...parsed.settings } };
-  } catch {
-    return emptyState();
+export const STATE_VERSION = 1;
+
+/**
+ * Upgrades saved progress from version n to n + 1. When the saved shape changes,
+ * bump STATE_VERSION and add a step here; never drop old progress.
+ */
+const MIGRATIONS: Record<number, (s: Record<string, unknown>) => Record<string, unknown>> = {};
+
+export type UpgradeResult = { ok: true; state: AppState } | { ok: false; reason: 'not-progress' | 'newer-version' | 'no-migration' };
+
+/** Reads saved progress or a backup file, upgrading older versions. */
+export function upgradeState(data: unknown): UpgradeResult {
+  if (!data || typeof data !== 'object') return { ok: false, reason: 'not-progress' };
+  let s = data as Record<string, unknown>;
+  const version = typeof s.version === 'number' ? s.version : NaN;
+  if (!Number.isInteger(version) || version < 1 || !Array.isArray(s.attempts) || !s.skills || typeof s.skills !== 'object') return { ok: false, reason: 'not-progress' };
+  if (version > STATE_VERSION) return { ok: false, reason: 'newer-version' };
+  for (let v = version; v < STATE_VERSION; v++) {
+    const step = MIGRATIONS[v];
+    if (!step) return { ok: false, reason: 'no-migration' };
+    s = { ...step(s), version: v + 1 };
   }
+  const parsed = s as unknown as AppState;
+  const base = emptyState();
+  return { ok: true, state: { ...base, ...parsed, settings: { ...base.settings, ...parsed.settings } } };
+}
+
+/** Saved progress that could not be read is copied aside instead of being overwritten. */
+export const UNREADABLE_KEY = `${KEY}:unreadable`;
+
+export function loadState(): AppState {
+  let raw: string | null = null;
+  try {
+    raw = localStorage.getItem(KEY);
+    if (!raw) return emptyState();
+    const result = upgradeState(JSON.parse(raw));
+    if (result.ok) return result.state;
+  } catch {
+    // Corrupt JSON or blocked storage: fall through.
+  }
+  try {
+    if (raw && !localStorage.getItem(UNREADABLE_KEY)) localStorage.setItem(UNREADABLE_KEY, raw);
+  } catch {
+    // Nothing more we can do; at least we never throw on start-up.
+  }
+  return emptyState();
 }
 
 export function saveState(state: AppState) {
@@ -135,14 +171,17 @@ export function accuracy(list: Attempt[]): number {
 
 /**
  * Mastery = it stuck: over the most recent attempts, ≥85% first-try accuracy,
- * several at difficulty ≥ 2, correct answers on at least 3 different days.
+ * several at difficulty ≥ 2, and correct answers on at least 3 different days
+ * within the last 3 weeks. Old successes don't count: a strong session today
+ * after weeks away is not evidence that it stuck.
  */
 export function meetsMastery(list: Attempt[]): boolean {
   const recent = list.slice(-MASTERY.window);
   if (recent.length < MASTERY.minAttempts) return false;
   if (accuracy(recent) < MASTERY.accuracy) return false;
   if (recent.filter((a) => a.d >= 2).length < MASTERY.minHardAttempts) return false;
-  const days = new Set(list.filter((a) => a.correct).map((a) => dayKey(a.ts)));
+  const since = recent[recent.length - 1].ts - MASTERY.dayWindow * DAY;
+  const days = new Set(list.filter((a) => a.correct && a.ts >= since).map((a) => dayKey(a.ts)));
   return days.size >= MASTERY.minDays;
 }
 

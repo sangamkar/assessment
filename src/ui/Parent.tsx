@@ -7,7 +7,7 @@ import { describeMisconception } from '../content/misconceptions';
 import { PLACEMENT_CAP, focusSkills, isVisible, skillStatus, subjectSummary, topMisconceptions, weakestSkills } from '../engine/planner';
 import type { SkillStatus } from '../engine/planner';
 import type { AppState, Band } from '../engine/progress';
-import { MASTERY, accuracy, attemptsFor, dayKey, emptyState, gameState, markKnown, skillState, unmarkKnown } from '../engine/progress';
+import { MASTERY, accuracy, attemptsFor, dayKey, emptyState, gameState, markKnown, skillState, unmarkKnown, upgradeState } from '../engine/progress';
 import { GAMES } from './games/Games';
 import { AVATARS } from './Setup';
 import { QuestionBank } from './QuestionBank';
@@ -112,7 +112,7 @@ function Overview({ state }: { state: AppState }) {
         </div>
       </Card>
       <p className="text-xs text-slate-500">
-        Bars show skills mastered. Percent is first-try accuracy over the last 30 practice questions in that strand. Mastery rule: ≥{pct(MASTERY.accuracy)} over the last {MASTERY.window} tries, at least {MASTERY.minHardAttempts} at level 2+, correct on {MASTERY.minDays}+ different days.
+        Bars show skills mastered. Percent is first-try accuracy over the last 30 practice questions in that strand. Mastery rule: ≥{pct(MASTERY.accuracy)} over the last {MASTERY.window} tries, at least {MASTERY.minHardAttempts} at level 2+, correct on {MASTERY.minDays}+ different days within the last {MASTERY.dayWindow} days.
       </p>
     </div>
   );
@@ -373,9 +373,12 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
   };
   const importData = async (file: File) => {
     try {
-      const parsed = JSON.parse(await file.text()) as AppState;
-      if (parsed.version !== 1 || !Array.isArray(parsed.attempts)) throw new Error('not a backup');
-      setState({ ...emptyState(), ...parsed });
+      const result = upgradeState(JSON.parse(await file.text()));
+      if (!result.ok) {
+        setMsg(result.reason === 'newer-version' ? 'This backup comes from a newer version of the app. Reload the page to update, then try again.' : 'That file is not a Learning Quest backup.');
+        return;
+      }
+      setState(result.state);
       setMsg('Backup restored.');
     } catch {
       setMsg('That file is not a Learning Quest backup.');

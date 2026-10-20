@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Choice } from '../content/types';
 import type { QuestStep } from '../engine/planner';
 import type { Mode } from '../engine/progress';
 import { soundEngine } from '../utils/audio';
-import { localize } from '../content/curricula';
+import { localize, localizeDeep } from '../content/curricula';
 import { Intro } from './Intro';
 import { SpeakButton } from './SpeakButton';
 import { Visual } from './Visual';
@@ -50,7 +50,8 @@ export function Player({ locale, mode, title, color, total, first, getNext, intr
   // Check-ups, placement and skip-ahead challenges give no hints or feedback.
   const practice = mode === 'quest' || mode === 'skill';
 
-  const item = step?.item;
+  // Every word on screen and in speech follows the curriculum's English (choices and pictures too).
+  const item = useMemo(() => (step?.item ? localizeDeep(step.item, locale) : undefined), [step?.item, locale]);
   const L = (t: string) => localize(t, locale);
   const speakItem = () => item && soundEngine.speakParts(item.voice ? [{ text: L(item.say) }, item.voice] : [{ text: L(item.say) }]);
 
@@ -136,7 +137,17 @@ export function Player({ locale, mode, title, color, total, first, getNext, intr
   const correctId = item.choices.find((c) => c.correct)?.id;
   const reveal = phase === 'right' || phase === 'explain';
   const textOnly = item.choices.every((c) => !c.visual);
-  const cols = item.choices.length === 4 && !textOnly ? 'grid-cols-2 lg:grid-cols-4' : item.choices.length === 4 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3';
+  const longest = Math.max(...item.choices.map((c) => (c.visual ? 0 : (c.text ?? '').length)));
+  // Phones: three long words or wide pictures don't fit side by side, so stack them.
+  const wideVisual = item.choices.some((c) => c.visual && WIDE_KINDS.has(c.visual.kind));
+  const cols =
+    item.choices.length === 4
+      ? textOnly
+        ? 'grid-cols-2 sm:grid-cols-4'
+        : 'grid-cols-2 lg:grid-cols-4'
+      : (textOnly && longest > 7) || wideVisual
+        ? 'grid-cols-1 min-[480px]:grid-cols-3'
+        : 'grid-cols-3';
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 pb-8 pt-4">
@@ -219,7 +230,7 @@ export function Player({ locale, mode, title, color, total, first, getNext, intr
 
           {/* Stimulus */}
           {item.visual && (
-            <div className="mt-4 flex justify-center overflow-x-auto rounded-[2rem] bg-white/70 p-4">
+            <div className="mt-4 flex justify-center rounded-[2rem] bg-white/70 p-4">
               <Visual v={item.visual} />
             </div>
           )}
@@ -237,13 +248,13 @@ export function Player({ locale, mode, title, color, total, first, getNext, intr
                   disabled={isGone || reveal || phase === 'moving'}
                   aria-label={c.say ?? c.text ?? 'choice'}
                   lang={item.choiceLang}
-                  className={`relative flex min-h-[110px] items-center justify-center rounded-[1.75rem] bg-white p-3 shadow-md transition-all duration-200 ${
+                  className={`relative flex min-h-[110px] min-w-0 items-center justify-center rounded-[1.75rem] bg-white p-3 shadow-md transition-all duration-200 ${
                     isRight ? 'scale-105 ring-8 ring-emerald-400' : isSel ? 'scale-105 ring-8 ring-sky-400' : 'ring-2 ring-slate-200 hover:ring-sky-200'
                   } ${isGone ? 'opacity-25 grayscale' : ''}`}
                 >
                   {c.visual && <Visual v={c.visual} size="md" />}
                   {c.text && !c.visual && (
-                    <span className={`${/^[\d: ]+$/.test(c.text) ? 'font-kid text-5xl' : c.text.length > 14 ? 'font-reader text-xl' : 'font-reader text-4xl'} font-bold text-slate-800`}>{c.text}</span>
+                    <span className={`${choiceTextClass(c.text)} min-w-0 font-bold text-slate-800 [overflow-wrap:anywhere]`}>{c.text}</span>
                   )}
                   {isRight && <span className="absolute -right-2 -top-2 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 text-2xl text-white">✓</span>}
                   {isGone && <span className="absolute inset-0 flex items-center justify-center text-6xl text-rose-400">✕</span>}
@@ -309,4 +320,18 @@ export function Player({ locale, mode, title, color, total, first, getNext, intr
       )}
     </div>
   );
+}
+
+/** Pictures that are wide (rows of objects, charts): stacked on phones when there are 3 choices. */
+const WIDE_KINDS = new Set(['objects', 'groups', 'row', 'crossed', 'tenFrame', 'tally', 'lengths', 'measure', 'coins', 'baseTen', 'sequence', 'shapeRow', 'balance', 'graph']);
+
+/** Text size by length so a word always fits its card, smaller on phones. */
+function choiceTextClass(text: string) {
+  if (/^[\d: ]+$/.test(text)) return text.length > 5 ? 'font-kid text-3xl sm:text-5xl' : 'font-kid text-5xl';
+  const n = text.length;
+  if (n <= 4) return 'font-reader text-4xl';
+  if (n <= 7) return 'font-reader text-3xl sm:text-4xl';
+  if (n <= 10) return 'font-reader text-2xl sm:text-3xl';
+  if (n <= 14) return 'font-reader text-xl sm:text-3xl';
+  return 'font-reader text-lg sm:text-xl';
 }

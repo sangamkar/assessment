@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { ALL_SKILLS, CURRICULA, LANGUAGES, SUBJECTS, getSkill, getSubject } from '../content';
+import { ALL_SKILLS, CURRICULA, LANGUAGES, SUBJECTS, getSkill, getSubject, localize } from '../content';
 import type { CurriculumId } from '../content/types';
 import { soundEngine } from '../utils/audio';
 import type { SubjectId } from '../content/types';
@@ -34,6 +34,12 @@ const BAND_STYLE: Record<Band, string> = {
 };
 const STATUS_LABEL: Record<SkillStatus, string> = { locked: 'Locked', ready: 'Ready', learning: 'Learning', mastered: 'Mastered', review: 'Review due' };
 
+/** Subject and skill names in the curriculum's English (Math → Maths for India). */
+const tr = (state: AppState, text: string) => localize(text, CURRICULA[state.settings.primary].locale);
+/** "Kindergarten" in the US, "UKG" in India. */
+const kLabel = (state: AppState) => (state.settings.primary === 'us-ga' ? 'Kindergarten' : CURRICULA[state.settings.primary].gradeBadge.K);
+const childName = (state: AppState) => state.profile?.name?.trim() || 'your child';
+
 function Card({ title, children, right }: { title: string; children: React.ReactNode; right?: React.ReactNode }) {
   return (
     <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
@@ -50,7 +56,7 @@ function Overview({ state }: { state: AppState }) {
   const week = Date.now() - 7 * 24 * 60 * 60 * 1000;
   const recent = state.attempts.filter((a) => a.ts >= week && a.mode !== 'checkup');
   const daysThisWeek = new Set(recent.map((a) => dayKey(a.ts))).size;
-  const mastered = ALL_SKILLS.filter((s) => skillState(state, s.id).mastered).length;
+  const mastered = ALL_SKILLS.filter((s) => isVisible(state, s) && skillState(state, s.id).mastered).length;
   const stats = [
     { label: 'Days practised (7d)', value: `${daysThisWeek}/7` },
     { label: 'Questions (7d)', value: recent.length },
@@ -71,7 +77,7 @@ function Overview({ state }: { state: AppState }) {
         const sum = subjectSummary(state, subject.id);
         if (!sum.total) return null;
         return (
-          <Card key={subject.id} title={`${subject.icon} ${subject.title}`} right={<span className="text-xs font-semibold text-slate-500">{sum.mastered} mastered · {sum.learning} learning · {sum.ready} ready · {sum.locked} locked</span>}>
+          <Card key={subject.id} title={`${subject.icon} ${tr(state, subject.title)}`} right={<span className="text-xs font-semibold text-slate-500">{sum.mastered} mastered · {sum.learning} learning · {sum.ready} ready · {sum.locked} locked</span>}>
             <div className="flex flex-col gap-2">
               {subject.strands.map((st) => {
                 const skills = ALL_SKILLS.filter((s) => s.subject === subject.id && s.strand === st.id && isVisible(state, s));
@@ -133,11 +139,11 @@ function Focus({ state }: { state: AppState }) {
               <li key={w.skill.id} className="text-sm">
                 <div className="flex justify-between font-semibold text-slate-800">
                   <span>
-                    {w.skill.icon} {w.skill.title}
+                    {w.skill.icon} {tr(state, w.skill.title)}
                   </span>
                   <span className="text-rose-600">{pct(w.accuracy)}</span>
                 </div>
-                <div className="text-slate-500">Try at home: {w.skill.parentTip}</div>
+                <div className="text-slate-500">Try at home: {tr(state, w.skill.parentTip)}</div>
               </li>
             ))}
           </ul>
@@ -157,7 +163,7 @@ function Focus({ state }: { state: AppState }) {
                     <span className="text-slate-500">×{t.count}</span>
                   </div>
                   <div className="text-xs text-slate-500">In: {t.skills.map((s) => getSkill(s)?.kidTitle).join(', ')}</div>
-                  {info.fix && <div className="text-slate-600">Fix: {info.fix}</div>}
+                  {info.fix && <div className="text-slate-600">Fix: {tr(state, info.fix)}</div>}
                 </li>
               );
             })}
@@ -171,9 +177,9 @@ function Focus({ state }: { state: AppState }) {
               <span>{s.icon}</span>
               <div>
                 <div className="font-semibold text-slate-800">
-                  {s.title} <span className="text-xs font-normal text-slate-400">{getSubject(s.subject).title} · {CURRICULA[state.settings.primary].gradeLabel[s.grade]}</span>
+                  {tr(state, s.title)} <span className="text-xs font-normal text-slate-400">{tr(state, getSubject(s.subject).title)} · {CURRICULA[state.settings.primary].gradeLabel[s.grade]}</span>
                 </div>
-                <div className="text-slate-500">{s.parentTip}</div>
+                <div className="text-slate-500">{tr(state, s.parentTip)}</div>
               </div>
             </li>
           ))}
@@ -192,9 +198,9 @@ function Checkups({ state, onStart, onPlacement }: { state: AppState; onStart: (
           About 12 adaptive questions, no hints or feedback — like the i-Ready Diagnostic format. Hand the device to your child after tapping a subject. Results are a practice signal, not an official score.
         </p>
         <div className="flex flex-wrap gap-2">
-          {SUBJECTS.map((s) => (
+          {SUBJECTS.filter((s) => subjectSummary(state, s.id).total).map((s) => (
             <button key={s.id} onClick={() => onStart(s.id)} className="rounded-xl px-4 py-2 text-sm font-bold text-white" style={{ background: s.color }}>
-              {s.icon} {s.title}
+              {s.icon} {tr(state, s.title)}
             </button>
           ))}
         </div>
@@ -203,7 +209,7 @@ function Checkups({ state, onStart, onPlacement }: { state: AppState; onStart: (
       {[...state.checkups].reverse().map((c) => {
         const subject = getSubject(c.subject as SubjectId);
         return (
-          <Card key={c.id} title={`${subject.icon} ${subject.title} · ${new Date(c.ts).toLocaleDateString()}`} right={<span className="text-sm font-semibold text-slate-600">{c.correct}/{c.total} correct</span>}>
+          <Card key={c.id} title={`${subject.icon} ${tr(state, subject.title)} · ${new Date(c.ts).toLocaleDateString()}`} right={<span className="text-sm font-semibold text-slate-600">{c.correct}/{c.total} correct</span>}>
             <div className="flex flex-wrap gap-2">
               {c.strands.map((s) => (
                 <span key={s.strand} className={`rounded-full px-3 py-1 text-xs font-bold ${BAND_STYLE[s.band]}`}>
@@ -232,14 +238,14 @@ function Checkups({ state, onStart, onPlacement }: { state: AppState; onStart: (
 
 function PlacementCard({ state, onPlacement }: { state: AppState; onPlacement: (s: SubjectId) => void }) {
   return (
-    <Card title="⚡ Find his level (placement)">
+    <Card title={`⚡ Find ${childName(state)}’s level (placement)`}>
       <p className="mb-3 text-sm text-slate-600">
-        For a child who is ahead. It tests upward through each area with 2 hard questions per step and skips everything he proves he knows (up to {PLACEMENT_CAP} questions, no hints). Skipped skills come back once as a review in two weeks, so a lucky guess fixes itself.
+        For a child who is ahead. It tests upward through each area with 2 hard questions per step and skips everything already proven (up to {PLACEMENT_CAP} questions, no hints). Skipped skills come back once as a review in two weeks, so a lucky guess fixes itself.
       </p>
       <div className="flex flex-wrap gap-2">
         {SUBJECTS.filter((s) => subjectSummary(state, s.id).total).map((s) => (
           <button key={s.id} onClick={() => onPlacement(s.id)} className="rounded-xl px-4 py-2 text-sm font-bold text-white" style={{ background: s.color }}>
-            ⚡ {s.title}
+            ⚡ {tr(state, s.title)}
           </button>
         ))}
       </div>
@@ -251,25 +257,25 @@ function SkillMap({ state, setState, onPlacement }: { state: AppState; setState:
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-slate-600">
-        Tick <b>Knows it</b> to skip a skill he already has. Skipped skills unlock what comes next and return once as a review in two weeks; if he misses it then, it goes back into practice.
+        Tick <b>Knows it</b> to skip a skill that is already known. Skipped skills unlock what comes next and return once as a review in two weeks; if it is missed then, it goes back into practice.
       </p>
       {SUBJECTS.filter((subject) => subjectSummary(state, subject.id).total).map((subject) => (
         <Card
           key={subject.id}
-          title={`${subject.icon} ${subject.title}`}
+          title={`${subject.icon} ${tr(state, subject.title)}`}
           right={
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => {
                   const ids = ALL_SKILLS.filter((k) => k.subject === subject.id && k.grade === 'K' && isVisible(state, k) && !skillState(state, k.id).mastered).map((k) => k.id);
-                  if (ids.length && window.confirm(`Mark ${ids.length} ${subject.title} Kindergarten skills as known?`)) setState(markKnown(state, ids, 'parent'));
+                  if (ids.length && window.confirm(`Mark ${ids.length} ${tr(state, subject.title)} ${kLabel(state)} skills as known?`)) setState(markKnown(state, ids, 'parent'));
                 }}
                 className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700"
               >
-                Mark all Kindergarten known
+                Mark all {kLabel(state)} known
               </button>
               <button onClick={() => onPlacement(subject.id)} className="rounded-lg px-3 py-1.5 text-xs font-bold text-white" style={{ background: subject.color }}>
-                ⚡ Find his level
+                ⚡ Find {childName(state)}’s level
               </button>
             </div>
           }
@@ -300,7 +306,7 @@ function SkillMap({ state, setState, onPlacement }: { state: AppState; setState:
                   return (
                     <tr key={s.id} className="border-t border-slate-100">
                       <td className="py-1.5 pr-2 font-medium text-slate-800">
-                        {s.icon} {s.title}
+                        {s.icon} {tr(state, s.title)}
                       </td>
                       <td className="pr-2 text-slate-500">{CURRICULA[state.settings.primary].gradeBadge[s.grade]}</td>
                       {state.settings.curricula.map((c) => (
@@ -353,6 +359,8 @@ function SkillMap({ state, setState, onPlacement }: { state: AppState; setState:
 function Settings({ state, setState }: { state: AppState; setState: (s: AppState) => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState('');
+  // The name field may be empty while typing, but an empty name is never saved.
+  const [nameDraft, setNameDraft] = useState(state.profile?.name ?? '');
   const set = (patch: Partial<AppState['settings']>) => setState({ ...state, settings: { ...state.settings, ...patch } });
   const toggle = (label: string, hint: string, key: 'muted' | 'unlockAll' | 'showStretch') => (
     <label className="flex items-start justify-between gap-4 py-2">
@@ -390,8 +398,13 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
         <label className="block text-sm font-semibold text-slate-600">
           Name
           <input
-            value={state.profile?.name ?? ''}
-            onChange={(e) => setState({ ...state, profile: { avatar: '🦁', createdAt: Date.now(), ...state.profile, name: e.target.value } })}
+            value={nameDraft}
+            onChange={(e) => {
+              setNameDraft(e.target.value);
+              const name = e.target.value.trim();
+              if (name) setState({ ...state, profile: { avatar: '🦁', createdAt: Date.now(), ...state.profile, name } });
+            }}
+            onBlur={() => setNameDraft(state.profile?.name ?? '')}
             className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 outline-none focus:border-indigo-500"
           />
         </label>
@@ -481,7 +494,7 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
       </Card>
       <Card title="Learning">
         {toggle('Show Grade 1–2 stretch skills', 'Stretch skills still unlock only after their prerequisites.', 'showStretch')}
-        {toggle('Unlock every skill', 'Skip prerequisites (useful if he already knows earlier skills).', 'unlockAll')}
+        {toggle('Unlock every skill', 'Skip prerequisites (useful when earlier skills are already known).', 'unlockAll')}
         {toggle('Mute sound', 'Turns off speech and sound effects. Not recommended for non-readers.', 'muted')}
       </Card>
       <Card title="Backup">
@@ -528,7 +541,7 @@ export function Parent({ state, setState, onClose, onStartCheckup, onStartPlacem
       <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
           <span className="text-2xl">{state.profile?.avatar}</span>
-          <h1 className="flex-1 text-lg font-bold text-slate-800">{state.profile?.name ?? 'Child'} · Parent dashboard</h1>
+          <h1 className="flex-1 text-lg font-bold text-slate-800">{state.profile?.name?.trim() || 'Child'} · Parent dashboard</h1>
           <button onClick={onClose} className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-bold text-white">
             Back to kid mode
           </button>
@@ -547,7 +560,7 @@ export function Parent({ state, setState, onClose, onStartCheckup, onStartPlacem
         {tab === 'focus' && <Focus state={state} />}
         {tab === 'checkups' && <Checkups state={state} onStart={onStartCheckup} onPlacement={onStartPlacement} />}
         {tab === 'skills' && <SkillMap state={state} setState={setState} onPlacement={onStartPlacement} />}
-        {tab === 'bank' && <QuestionBank />}
+        {tab === 'bank' && <QuestionBank locale={CURRICULA[state.settings.primary].locale} />}
         {tab === 'settings' && <Settings state={state} setState={setState} />}
       </main>
     </div>

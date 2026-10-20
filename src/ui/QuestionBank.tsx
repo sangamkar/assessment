@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { ALL_SKILLS, SUBJECTS } from '../content';
+import { ALL_SKILLS, CURRICULA, SUBJECTS } from '../content';
+import { localizeDeep } from '../content/curricula';
 import type { Difficulty, Item, SubjectId } from '../content/types';
 import { describeMisconception } from '../content/misconceptions';
 import { createRng } from '../engine/rng';
@@ -7,7 +8,7 @@ import { SpeakButton } from './SpeakButton';
 import { Visual } from './Visual';
 
 /** Parent/teacher review of every question: prompt, picture, correct answer, and what each wrong answer reveals. */
-export function QuestionBank() {
+export function QuestionBank({ locale = 'en-US' }: { locale?: 'en-US' | 'en-IN' }) {
   const [subject, setSubject] = useState<SubjectId>('math');
   const skills = ALL_SKILLS.filter((s) => s.subject === subject);
   const [skillId, setSkillId] = useState(skills[0].id);
@@ -27,8 +28,8 @@ export function QuestionBank() {
         }
       });
     }
-    return out.sort((a, b) => a.item.difficulty - b.item.difficulty);
-  }, [skill, seed]);
+    return out.map((x) => ({ ...x, item: localizeDeep(x.item, locale) })).sort((a, b) => a.item.difficulty - b.item.difficulty);
+  }, [skill, seed, locale]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -78,6 +79,7 @@ export function QuestionBank() {
           <div className="mb-2 flex flex-wrap items-center gap-2 text-xs font-semibold">
             <span className="rounded-full bg-slate-800 px-2 py-0.5 text-white">Level {item.difficulty}</span>
             <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">{generated ? 'Generated' : 'Written'}</span>
+            {item.regions && <span className="rounded-full bg-sky-100 px-2 py-0.5 text-sky-800">{item.regions.map((r) => CURRICULA[r].short).join(', ')} only</span>}
             {item.speakChoices === false && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">Choices not read aloud</span>}
             <span className="text-slate-400">{item.id}</span>
           </div>

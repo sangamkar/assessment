@@ -119,6 +119,8 @@ export interface Item {
   speakChoices?: boolean;
   /** Keep authored order instead of shuffling (e.g. ordered scales). */
   keepOrder?: boolean;
+  /** Only shown for these curricula (e.g. a question about Georgia); default: everyone who sees the skill. */
+  regions?: CurriculumId[];
   /** Spoken right after `say` in another language — e.g. the Hindi letter or word being asked about. */
   voice?: { text: string; lang: string; roman?: string };
   /** Language for speaking choice names (default: the app's English locale). */

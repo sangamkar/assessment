@@ -23,6 +23,8 @@ anyone outside the family uses it, so today's decisions don't block that path.
 4. Human-recorded audio for phonics and Hindi; content review of every item by a second educator.
 5. Wording: describe check-ups as "diagnostic-style practice". Do not use i-Ready, CogAT,
    CAT4 or Olympiad trademarks in marketing or imply affiliation.
+6. Make parent copy neutral. Parent tips, misconception fixes and a few prompts say "him/he"
+   because the app was written for one child. Use the child's name, or "your child", instead.
 
 ## Before public launch
 1. Measure outcomes from the trial (mastery growth, check-up gains, weekly use).

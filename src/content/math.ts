@@ -1498,6 +1498,34 @@ const halves: Skill = {
       choices: [txt('smaller'), txt('bigger', 'more_parts_bigger_pieces'), txt('the same', 'more_parts_bigger_pieces')],
       explain: 'Cutting into more parts makes each part smaller. A fourth is smaller than a half.',
     },
+    {
+      difficulty: 1,
+      say: 'Which rectangle is cut into two equal parts?',
+      show: 'Two equal parts',
+      choices: [
+        vis({ kind: 'shape', shape: 'rect-unequal', color: C.green }, undefined, 'unequal_parts_accepted'),
+        vis({ kind: 'shape', shape: 'rect-halves', color: C.green }, undefined),
+        vis({ kind: 'shape', shape: 'rect-fourths', color: C.green }, undefined, 'halves_fourths_confusion'),
+      ],
+      speakChoices: false,
+      explain: 'Two equal parts are called halves. Only one rectangle has two parts that are the same size.',
+    },
+    {
+      difficulty: 2,
+      say: 'This circle is cut into equal parts. How many equal parts are there?',
+      show: 'How many equal parts?',
+      visual: { kind: 'shape', shape: 'circle-fourths', color: C.purple },
+      choices: [num(2, 'halves_fourths_confusion'), num(3, 'count_skipped_one'), num(4)],
+      explain: 'Count the parts: 1, 2, 3, 4. Four equal parts are called fourths, or quarters.',
+    },
+    {
+      difficulty: 3,
+      say: 'This rectangle is cut into four equal parts. What is one part called?',
+      show: 'One of four equal parts is a…',
+      visual: { kind: 'shape', shape: 'rect-fourths', color: C.teal },
+      choices: [txt('a fourth'), txt('a half', 'halves_fourths_confusion'), txt('a whole', 'part_whole_confusion')],
+      explain: 'When a whole is cut into four equal parts, each part is one fourth. Four fourths make the whole.',
+    },
   ]),
 };
 

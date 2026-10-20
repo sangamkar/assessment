@@ -30,13 +30,17 @@ interface Props {
   onAnswer: (e: AnswerEvent) => void;
   onFinish: (summary: { correct: number; total: number }) => void;
   onExit: () => void;
+  /** Question number to start at (resuming a paused mock test). */
+  startAt?: number;
+  /** Offer a stretch break after this many questions (mock test). */
+  breakEvery?: number;
 }
 
-type Phase = 'intro' | 'ask' | 'retry' | 'right' | 'explain' | 'moving';
+type Phase = 'intro' | 'ask' | 'retry' | 'right' | 'explain' | 'moving' | 'break';
 
-export function Player({ locale, mode, title, color, total, first, getNext, introSeen, onIntroDone, onAnswer, onFinish, onExit }: Props) {
+export function Player({ locale, mode, title, color, total, first, getNext, introSeen, onIntroDone, onAnswer, onFinish, onExit, startAt = 1, breakEvery }: Props) {
   const [step, setStep] = useState<QuestStep | null>(first);
-  const [n, setN] = useState(1);
+  const [n, setN] = useState(startAt);
   const [phase, setPhase] = useState<Phase>(first && (mode === 'quest' || mode === 'skill') && !introSeen(first.skill.id) ? 'intro' : 'ask');
   const [selected, setSelected] = useState<string | null>(null);
   const [eliminated, setEliminated] = useState<string[]>([]);
@@ -68,8 +72,13 @@ export function Player({ locale, mode, title, color, total, first, getNext, intr
     setSelected(null);
     setEliminated([]);
     setMessage('');
+    if (breakEvery && n % breakEvery === 0) {
+      setPhase('break');
+      soundEngine.speak('Great work! Time for a stretch break. Stand up, reach for the sky, and wiggle!');
+      return;
+    }
     setPhase(practice && !introSeen(next.skill.id) ? 'intro' : 'ask');
-  }, [getNext, introSeen, onFinish, practice]);
+  }, [getNext, introSeen, onFinish, practice, breakEvery, n]);
 
   if (!step || !item) return null;
 
@@ -147,7 +156,36 @@ export function Player({ locale, mode, title, color, total, first, getNext, intr
         </div>
       </div>
 
-      {phase === 'intro' ? (
+      {phase === 'break' ? (
+        <div className="flex min-h-[70vh] flex-col items-center justify-center gap-6 text-center">
+          <div className="text-8xl">🧘</div>
+          <h2 className="font-kid text-4xl font-bold text-slate-800">Stretch break!</h2>
+          <p className="max-w-md font-kid text-xl text-slate-600">
+            You answered {n - 1} questions. Stand up, reach for the sky, and wiggle!
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            <button
+              onClick={() => {
+                setPhase('ask');
+                soundEngine.speak(L(item.say));
+              }}
+              className="rounded-full px-10 py-4 font-kid text-2xl font-bold text-white shadow-lg"
+              style={{ background: color }}
+            >
+              Keep going ▶
+            </button>
+            <button
+              onClick={() => {
+                soundEngine.stopSpeech();
+                onExit();
+              }}
+              className="rounded-full bg-white px-8 py-4 font-kid text-2xl font-bold text-slate-700 shadow-lg"
+            >
+              Stop for today 💾
+            </button>
+          </div>
+        </div>
+      ) : phase === 'intro' ? (
         <Intro
           skill={step.skill}
           color={color}

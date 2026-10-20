@@ -45,6 +45,8 @@ const NCERT_MATH_1: Record<string, string[]> = {
   'm1.compare100': ['JM1 Ch8 Fun with Numbers'],
   'm1.tenmore': ['JM1 Ch8 Fun with Numbers'],
   'm.pattern': ['JM1 Ch9 Utsav'],
+  'm1.patternrule': ['JM1 Ch9 Utsav'],
+  'm.timepatterns': ['JM1 Ch10 How do I Spend my Day?'],
   'm1.growpattern': ['JM1 Ch9 Utsav'],
   'm1.time': ['JM1 Ch10 How do I Spend my Day?'],
   'q.balance': ['JM1 Ch11 How Many Times? (equal groups)'],

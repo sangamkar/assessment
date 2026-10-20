@@ -107,6 +107,23 @@ subtraction with regrouping, skip counting, odd/even, equal groups, time to 5 mi
 two-step word problems) and **reading he does himself + writing** (vowel teams, independent
 passages, capitals, end punctuation, complete sentences, grammar), plus the **Sentence Builder** game.
 
+## 4a-2. Mock i-Ready and test prep
+
+Next school i-Ready: early December. The **i-Ready prep** tab gives:
+
+* **Mock i-Ready** (Math ~32 questions, Reading ~36): read aloud, no feedback, adaptive *within each
+  i-Ready domain* on a 9-step ladder (K / Grade 1 / Grade 2 × difficulty 1–3), big steps first and
+  then small ones. A stretch break every 12 questions; he can stop and resume another day. The
+  result is an estimated level per domain ("Mid Grade 1"), compared with where a Kindergartner is
+  expected to be at the test date, with a history table to show growth. When he answers the hardest
+  questions the app has in a domain, the label gets a “+” (the real level may be higher). These are
+  estimates from the app’s own questions, **not** i-Ready scale scores.
+* **Test date + schedule:** countdown; baseline mock now, a mid-point mock 3 weeks out, a final mock
+  1 week out, and a rest day before.
+* **Focus pins:** one pinned skill leads every daily Quest, rotating. One tap pins **time, money and
+  patterns** (his weaker areas): Day and week (K.PAR.6), Tell time, Time to 5 minutes, Coin names
+  (1.MDR.6), Coins, Patterns, Pattern rules (1.PAR.3) and Growing patterns.
+
 ## 4b. Brain Games
 
 Games are learning in disguise. Each one targets named skills and adapts on its own

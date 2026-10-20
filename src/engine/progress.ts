@@ -1,6 +1,7 @@
 import type { CurriculumId, Difficulty, LanguageCode } from '../content/types';
+import type { MockResult, MockRun } from './mock';
 
-export type Mode = 'quest' | 'skill' | 'checkup' | 'placement' | 'skip';
+export type Mode = 'quest' | 'skill' | 'checkup' | 'placement' | 'skip' | 'mock';
 
 export interface Attempt {
   itemId: string;
@@ -57,6 +58,10 @@ export interface Settings {
   primary: CurriculumId;
   /** Indian language tracks switched on (shown when India is on). */
   languages: LanguageCode[];
+  /** Skills a parent pinned for extra practice: one appears in every Quest. */
+  focus?: string[];
+  /** Date of the next school i-Ready diagnostic (YYYY-MM-DD). */
+  iReadyDate?: string;
 }
 
 export type GameId = 'mystery-word' | 'number-path' | 'sentence-builder';
@@ -77,6 +82,10 @@ export interface AppState {
   days: string[];
   checkups: CheckupResult[];
   games: Partial<Record<GameId, GameState>>;
+  /** Finished mock i-Ready tests. */
+  mocks?: MockResult[];
+  /** A mock test paused part-way (resumable). */
+  mockRun?: MockRun;
 }
 
 const KEY = 'learning-quest:v1';

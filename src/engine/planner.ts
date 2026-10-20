@@ -117,6 +117,13 @@ export function buildQuest(state: AppState, now = Date.now()): QuestStep[] {
   }
   for (const c of candidates) if (focus.length < 3 && !focus.includes(c)) focus.push(c);
 
+  // A parent-pinned skill (e.g. time, money, patterns before an i-Ready test) leads every Quest, rotating daily.
+  const pinned = (state.settings.focus ?? []).map((id) => getSkill(id)).filter((k): k is Skill => !!k && isVisible(state, k));
+  if (pinned.length) {
+    const pick = pinned[Math.floor(now / (24 * 60 * 60 * 1000)) % pinned.length];
+    focus.splice(0, focus.length, pick, ...focus.filter((f) => f.id !== pick.id).slice(0, 2));
+  }
+
   // Interleave focus skills (A, B, C, A, B, C) — mixed practice sticks better than blocks.
   for (let round = 0; round < 2; round++) focus.forEach((s) => take(s, 'focus'));
 

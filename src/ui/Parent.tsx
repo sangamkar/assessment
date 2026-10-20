@@ -11,8 +11,10 @@ import { MASTERY, accuracy, attemptsFor, dayKey, emptyState, gameState, markKnow
 import { GAMES } from './games/Games';
 import { AVATARS } from './Setup';
 import { QuestionBank } from './QuestionBank';
+import { IReadyPrep } from './IReadyPrep';
+import type { MockSubject } from '../engine/mock';
 
-type Tab = 'overview' | 'focus' | 'checkups' | 'skills' | 'bank' | 'settings';
+type Tab = 'overview' | 'iready' | 'focus' | 'checkups' | 'skills' | 'bank' | 'settings';
 
 interface Props {
   state: AppState;
@@ -20,6 +22,7 @@ interface Props {
   onClose: () => void;
   onStartCheckup: (subject: SubjectId) => void;
   onStartPlacement: (subject: SubjectId) => void;
+  onStartMock: (subject: MockSubject) => void;
 }
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
@@ -286,7 +289,8 @@ function SkillMap({ state, setState, onPlacement }: { state: AppState; setState:
                   <th className="pr-2">Level</th>
                   <th className="pr-2">Tries</th>
                   <th className="pr-2">Accuracy</th>
-                  <th>Knows it</th>
+                  <th className="pr-2">Knows it</th>
+                  <th>Focus</th>
                 </tr>
               </thead>
               <tbody>
@@ -320,6 +324,18 @@ function SkillMap({ state, setState, onPlacement }: { state: AppState; setState:
                           disabled={st.mastered && !st.known}
                           title={st.mastered && !st.known ? 'Mastered through practice' : undefined}
                           onChange={(e) => setState(e.target.checked ? markKnown(state, [s.id], 'parent') : unmarkKnown(state, s.id))}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="checkbox"
+                          aria-label={`${s.title}: focus`}
+                          className="h-4 w-4 accent-amber-500"
+                          checked={(state.settings.focus ?? []).includes(s.id)}
+                          onChange={(e) => {
+                            const cur = state.settings.focus ?? [];
+                            setState({ ...state, settings: { ...state.settings, focus: e.target.checked ? [...cur, s.id] : cur.filter((x) => x !== s.id) } });
+                          }}
                         />
                       </td>
                     </tr>
@@ -493,10 +509,11 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
   );
 }
 
-export function Parent({ state, setState, onClose, onStartCheckup, onStartPlacement }: Props) {
+export function Parent({ state, setState, onClose, onStartCheckup, onStartPlacement, onStartMock }: Props) {
   const [tab, setTab] = useState<Tab>('overview');
   const tabs: { id: Tab; label: string }[] = [
     { id: 'overview', label: 'Overview' },
+    { id: 'iready', label: 'i-Ready prep' },
     { id: 'focus', label: 'Focus areas' },
     { id: 'checkups', label: 'Check-ups' },
     { id: 'skills', label: 'Skill map' },
@@ -523,6 +540,7 @@ export function Parent({ state, setState, onClose, onStartCheckup, onStartPlacem
       </header>
       <main className="mx-auto max-w-6xl px-4 py-5">
         {tab === 'overview' && <Overview state={state} />}
+        {tab === 'iready' && <IReadyPrep state={state} setState={setState} onStartMock={onStartMock} />}
         {tab === 'focus' && <Focus state={state} />}
         {tab === 'checkups' && <Checkups state={state} onStart={onStartCheckup} onPlacement={onStartPlacement} />}
         {tab === 'skills' && <SkillMap state={state} setState={setState} onPlacement={onStartPlacement} />}

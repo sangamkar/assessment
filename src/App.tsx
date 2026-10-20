@@ -4,6 +4,8 @@ import type { SubjectId } from './content/types';
 import type { CheckupAnswer, CheckupPlan, QuestStep } from './engine/planner';
 import { PLACEMENT_CAP, buildQuest, buildSkillSession, buildSkipChallenge, creditFromCheckup, nextCheckupItem, placementAnswer, placementNext, planCheckup, scoreCheckup, startPlacement } from './engine/planner';
 import type { PlacementRun } from './engine/planner';
+import type { MockRun, MockSubject } from './engine/mock';
+import { MOCK_BREAK_EVERY, mockTitle, mockTotal, newMockRun, nextMockStep, scoreMock } from './engine/mock';
 import type { AppState, Attempt, GameId, Mode } from './engine/progress';
 import { gameState, loadState, markIntroSeen, markKnown, recordAttempt, recordGame, saveState, skillState } from './engine/progress';
 import { Games } from './ui/games/Games';
@@ -24,7 +26,7 @@ import { Setup } from './ui/Setup';
 type View =
   | { name: 'home' }
   | { name: 'island'; subject: SubjectId }
-  | { name: 'play'; mode: Mode; title: string; color: string; total: number; first: QuestStep | null; again?: () => void }
+  | { name: 'play'; mode: Mode; title: string; color: string; total: number; first: QuestStep | null; again?: () => void; startAt?: number }
   | { name: 'results'; mode: Mode; correct: number; total: number; note?: string; again?: () => void }
   | { name: 'games' }
   | { name: 'game'; id: GameId; level: 1 | 2 | 3; run: number }
@@ -36,6 +38,7 @@ interface Session {
   index: number;
   plan?: CheckupPlan;
   placement?: PlacementRun;
+  mock?: MockRun;
   answers: (CheckupAnswer & Attempt)[];
 }
 
@@ -116,8 +119,25 @@ export default function App() {
     setView({ name: 'play', mode: 'skip', title: `⚡ Skip ahead · ${queue[0].skill.kidTitle}`, color: subject.color, total: queue.length, first: queue[0] });
   };
 
+  const startMock = (subject: MockSubject) => {
+    const saved = stateRef.current.mockRun;
+    const run: MockRun = saved && saved.subject === subject ? { ...saved, answers: [...saved.answers] } : newMockRun(subject);
+    session.current = { queue: [], index: 0, mock: run, answers: [] };
+    if (!saved || saved.subject !== subject) update((s) => ({ ...s, mockRun: run }));
+    const first = nextMockStep(stateRef.current, run);
+    if (!first) {
+      // Every question was already answered before a pause: just score it.
+      const result = scoreMock(run);
+      update((s) => ({ ...s, mocks: [...(s.mocks ?? []), result], mockRun: undefined }));
+      setView({ name: 'parent' });
+      return;
+    }
+    setView({ name: 'play', mode: 'mock', title: mockTitle(subject), color: '#4f46e5', total: mockTotal(subject), first, startAt: run.answers.length + 1 });
+  };
+
   const getNext = (): QuestStep | null => {
     const s = session.current;
+    if (s.mock) return nextMockStep(stateRef.current, s.mock);
     if (s.placement) return placementNext(stateRef.current, s.placement);
     if (s.plan) {
       const next = nextCheckupItem(stateRef.current, s.plan, s.answers);
@@ -131,6 +151,13 @@ export default function App() {
   const onAnswer = (e: AnswerEvent, mode: Mode) => {
     const attempt: Attempt = { itemId: e.step.item.id, skill: e.step.skill.id, d: e.step.item.difficulty, correct: e.correct, why: e.why, ts: Date.now(), mode };
     if (mode === 'placement' && session.current.placement) placementAnswer(session.current.placement, e.correct);
+    if (mode === 'mock' && session.current.mock) {
+      const run = session.current.mock;
+      const step = e.step as QuestStep & { strand: string; level: number; target: number };
+      run.answers.push({ strand: step.strand, skill: step.skill.id, itemId: step.item.id, level: step.level, target: step.target, correct: e.correct, why: e.why, ts: attempt.ts });
+      const snapshot = { ...run, answers: [...run.answers] };
+      update((s) => ({ ...s, mockRun: snapshot })); // saved after every answer, so a paused test resumes
+    }
     if (mode === 'checkup') {
       const strand = (e.step as QuestStep & { strand?: string }).strand ?? e.step.skill.strand;
       session.current.answers.push({ ...attempt, strand, skill: attempt.skill, itemId: attempt.itemId });
@@ -142,6 +169,11 @@ export default function App() {
     if (mode === 'checkup' && session.current.plan) {
       const result = scoreCheckup(session.current.plan, session.current.answers);
       update((s) => creditFromCheckup({ ...s, checkups: [...s.checkups, result] }, session.current.answers));
+    } else if (mode === 'mock' && session.current.mock) {
+      const result = scoreMock(session.current.mock);
+      update((s) => ({ ...s, mocks: [...(s.mocks ?? []), result], mockRun: undefined }));
+      setView({ name: 'results', mode, ...summary, note: 'All done! You worked so hard. A grown-up can see your results.' });
+      return;
     } else if (mode === 'placement' && session.current.placement) {
       const known = session.current.placement.known;
       update((s) => markKnown(s, known, 'tested'));
@@ -196,7 +228,9 @@ export default function App() {
           onIntroDone={(id) => update((s) => markIntroSeen(s, id))}
           onAnswer={(e) => onAnswer(e, view.mode)}
           onFinish={(summary) => onFinish(view.mode, summary, view.again)}
-          onExit={() => setView(view.mode === 'checkup' || view.mode === 'placement' ? { name: 'parent' } : { name: 'home' })}
+          startAt={view.startAt}
+          breakEvery={view.mode === 'mock' ? MOCK_BREAK_EVERY : undefined}
+          onExit={() => setView(view.mode === 'checkup' || view.mode === 'placement' || view.mode === 'mock' ? { name: 'parent' } : { name: 'home' })}
         />
       );
     case 'results':
@@ -204,7 +238,7 @@ export default function App() {
     case 'gate':
       return <Gate onPass={() => setView({ name: 'parent' })} onCancel={() => setView({ name: 'home' })} />;
     case 'parent':
-      return <Parent state={state} setState={(s) => update(() => s)} onClose={() => setView({ name: 'home' })} onStartCheckup={startCheckup} onStartPlacement={startPlacementRun} />;
+      return <Parent state={state} setState={(s) => update(() => s)} onClose={() => setView({ name: 'home' })} onStartCheckup={startCheckup} onStartPlacement={startPlacementRun} onStartMock={startMock} />;
   }
 }
 

@@ -1,5 +1,5 @@
 import type { Choice, Skill, Visual } from './types';
-import { makeItem, numberChoices } from './helpers';
+import { items, makeItem, num, numberChoices, txt, vis } from './helpers';
 
 /* Grade 2 math (Georgia K-12 Mathematics Standards, 2nd grade). */
 
@@ -340,7 +340,7 @@ const usMoney: Skill = {
   kidTitle: 'Coins',
   icon: '🪙',
   standards: ['2.MDR.6'],
-  prereqs: ['m2.skipcount'],
+  prereqs: ['m1.coins', 'm2.skipcount'],
   parentTip: 'Empty your pocket change and sort it. A dime is smaller than a nickel but worth more — great conversation starter!',
   intro: [{ say: 'A penny is one cent. A nickel is five cents. A dime is ten cents, even though it is small. A quarter is twenty five cents.', visual: coinVisual([1, 5, 10, 25]) }],
   regions: ['us-ga'],
@@ -417,4 +417,70 @@ const wordProblems: Skill = {
   },
 };
 
-export const MATH2_SKILLS: Skill[] = [placeValue, compare1000, skipCount, oddEven, add2d, sub2d, groups, wordProblems, time5, usMoney];
+const shapes2: Skill = {
+  id: 'm2.shapes',
+  subject: 'math',
+  strand: 'geometry',
+  grade: '2',
+  title: 'Shape attributes: angles, faces, quadrilaterals; rows and columns',
+  kidTitle: 'Shape detective',
+  icon: '🔷',
+  standards: ['2.GSR.7'],
+  prereqs: ['m.shapeattr', 'm1.halves'],
+  parentTip: 'Count corners (angles) and faces on real boxes and cans. Tear a paper into 2 rows and 3 columns and count the squares.',
+  intro: [{ say: 'An angle is a corner where two sides meet. A pentagon has five sides and five angles. A cube has six flat faces.', visual: { kind: 'shapeRow', shapes: [{ shape: 'pentagon', color: '#8b5cf6' }, { shape: 'cube', color: '#f59e0b' }] } }],
+  items: items('m2.shapes', [
+    {
+      difficulty: 1,
+      say: 'Which shape has exactly five angles?',
+      show: 'Which has 5 angles?',
+      choices: [
+        vis({ kind: 'shape', shape: 'hexagon', color: '#3b82f6' }, undefined, 'side_count_confusion'),
+        vis({ kind: 'shape', shape: 'pentagon', color: '#ef4444' }, undefined),
+        vis({ kind: 'shape', shape: 'square', color: '#10b981' }, undefined, 'side_count_confusion'),
+        vis({ kind: 'shape', shape: 'triangle', color: '#f59e0b' }, undefined, 'side_count_confusion'),
+      ],
+      speakChoices: false,
+      explain: 'A pentagon has 5 sides and 5 angles (corners).',
+    },
+    {
+      difficulty: 2,
+      say: 'How many flat faces does a cube have?',
+      show: 'Faces on a cube',
+      visual: { kind: 'shape', shape: 'cube', color: '#f59e0b' },
+      choices: [num(3, 'counted_visible_faces'), num(4, 'counted_visible_faces'), num(6), num(8, 'faces_vertices_confusion')],
+      keepOrder: true,
+      explain: 'A cube has 6 faces: top, bottom, front, back, left and right. In a picture you can only see 3 of them!',
+    },
+    {
+      difficulty: 2,
+      say: 'What do we call any shape with four straight sides?',
+      show: 'Any shape with 4 sides is a…',
+      choices: [txt('quadrilateral'), txt('pentagon', 'shape_name_confusion'), txt('hexagon', 'shape_name_confusion')],
+      explain: 'Quad means four. Squares, rectangles, rhombuses and trapezoids are all quadrilaterals.',
+    },
+    {
+      difficulty: 3,
+      say: 'This rectangle is split into rows and columns of equal squares. How many squares are there?',
+      show: 'How many squares?',
+      visual: { kind: 'map', rows: 2, cols: 3, cells: [] },
+      choices: [num(3, 'counted_one_row'), num(5, 'count_skipped_one'), num(6), num(2, 'counted_one_column')],
+      keepOrder: true,
+      explain: '2 rows of 3 squares: 3 plus 3 is 6 squares.',
+    },
+    {
+      difficulty: 3,
+      say: 'Which shape has more angles?',
+      show: 'Which has more angles?',
+      choices: [
+        vis({ kind: 'shape', shape: 'hexagon', color: '#ec4899' }, 'hexagon'),
+        vis({ kind: 'shape', shape: 'pentagon', color: '#14b8a6' }, 'pentagon', 'side_count_confusion'),
+        txt('They have the same', 'side_count_confusion'),
+      ],
+      keepOrder: true,
+      explain: 'A hexagon has 6 angles and a pentagon has 5. Six is more.',
+    },
+  ]),
+};
+
+export const MATH2_SKILLS: Skill[] = [shapes2, placeValue, compare1000, skipCount, oddEven, add2d, sub2d, groups, wordProblems, time5, usMoney];

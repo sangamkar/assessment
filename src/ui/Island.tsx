@@ -84,6 +84,7 @@ export function Island({ state, subject, onBack, onPlay, onSkip }: { state: AppS
                         {status === 'locked' ? '🔒' : skill.icon}
                         {skill.grade !== 'K' && <span className="absolute -left-1 -top-1 rounded-full bg-slate-700 px-1.5 text-[10px] font-bold text-white">{curriculum.gradeBadge[skill.grade]}</span>}
                         {skill.regions?.includes('in-cbse') && <span className="absolute -right-1 -top-1 text-sm">🇮🇳</span>}
+                        {(state.settings.focus ?? []).includes(skill.id) && <span className="absolute -right-2 top-5 text-lg">📌</span>}
                         {status === 'mastered' && <span className="absolute -bottom-1 -right-1 text-2xl">{skillState(state, skill.id).known ? '⚡' : '⭐'}</span>}
                         {status === 'review' && <span className="absolute -bottom-1 -right-1 rounded-full bg-sky-500 px-1 text-sm text-white">↻</span>}
                       </span>

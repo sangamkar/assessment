@@ -20,3 +20,11 @@ npm run build
 
 Grown-ups: tap **🔒 Grown-ups** on the home screen for the dashboard (progress, focus areas,
 check-ups, full skill map, question-bank review, settings and backup).
+
+## Deploy & passcode
+
+Pushing to `main` deploys to GitHub Pages after the typecheck, question validation and unit tests pass.
+The app's entry passcode comes from the **`CLASSROOM_PASSCODE`** repository secret
+(Settings → Secrets and variables → Actions → New repository secret). The deploy fails with a clear
+message if the secret is missing. Note: the check runs in the browser, so the code ends up inside the
+published JavaScript. It keeps casual visitors out; it is not real security.

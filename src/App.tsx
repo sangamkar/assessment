@@ -2,12 +2,14 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CURRICULA, getSkill, getSubject } from './content';
 import type { SubjectId } from './content/types';
 import type { CheckupAnswer, CheckupPlan, QuestStep } from './engine/planner';
-import { buildQuest, buildSkillSession, creditFromCheckup, nextCheckupItem, planCheckup, scoreCheckup } from './engine/planner';
+import { PLACEMENT_CAP, buildQuest, buildSkillSession, buildSkipChallenge, creditFromCheckup, nextCheckupItem, placementAnswer, placementNext, planCheckup, scoreCheckup, startPlacement } from './engine/planner';
+import type { PlacementRun } from './engine/planner';
 import type { AppState, Attempt, GameId, Mode } from './engine/progress';
-import { gameState, loadState, markIntroSeen, recordAttempt, recordGame, saveState, skillState } from './engine/progress';
+import { gameState, loadState, markIntroSeen, markKnown, recordAttempt, recordGame, saveState, skillState } from './engine/progress';
 import { Games } from './ui/games/Games';
 import { MysteryWord } from './ui/games/MysteryWord';
 import { NumberPath } from './ui/games/NumberPath';
+import { SentenceBuilder } from './ui/games/SentenceBuilder';
 import { PasscodeLock } from './components/PasscodeLock';
 import { soundEngine } from './utils/audio';
 import { Gate } from './ui/Gate';
@@ -23,7 +25,7 @@ type View =
   | { name: 'home' }
   | { name: 'island'; subject: SubjectId }
   | { name: 'play'; mode: Mode; title: string; color: string; total: number; first: QuestStep | null; again?: () => void }
-  | { name: 'results'; mode: Mode; correct: number; total: number; again?: () => void }
+  | { name: 'results'; mode: Mode; correct: number; total: number; note?: string; again?: () => void }
   | { name: 'games' }
   | { name: 'game'; id: GameId; level: 1 | 2 | 3; run: number }
   | { name: 'gate' }
@@ -33,6 +35,7 @@ interface Session {
   queue: QuestStep[];
   index: number;
   plan?: CheckupPlan;
+  placement?: PlacementRun;
   answers: (CheckupAnswer & Attempt)[];
 }
 
@@ -98,8 +101,24 @@ export default function App() {
     setView({ name: 'play', mode: 'checkup', title: `Check-up · ${subject.kidTitle}`, color: subject.color, total, first });
   };
 
+  const startPlacementRun = (subjectId: SubjectId) => {
+    const run = startPlacement(stateRef.current, subjectId);
+    session.current = { queue: [], index: 0, placement: run, answers: [] };
+    const first = placementNext(stateRef.current, run);
+    const subject = getSubject(subjectId);
+    setView({ name: 'play', mode: 'placement', title: `Find your level · ${subject.kidTitle}`, color: subject.color, total: PLACEMENT_CAP, first });
+  };
+
+  const startSkip = (skillId: string) => {
+    const queue = buildSkipChallenge(stateRef.current, getSkillOrThrow(skillId));
+    session.current = { queue, index: 0, answers: [] };
+    const subject = getSubject(queue[0].skill.subject);
+    setView({ name: 'play', mode: 'skip', title: `⚡ Skip ahead · ${queue[0].skill.kidTitle}`, color: subject.color, total: queue.length, first: queue[0] });
+  };
+
   const getNext = (): QuestStep | null => {
     const s = session.current;
+    if (s.placement) return placementNext(stateRef.current, s.placement);
     if (s.plan) {
       const next = nextCheckupItem(stateRef.current, s.plan, s.answers);
       if (next) s.queue.push(next);
@@ -111,6 +130,7 @@ export default function App() {
 
   const onAnswer = (e: AnswerEvent, mode: Mode) => {
     const attempt: Attempt = { itemId: e.step.item.id, skill: e.step.skill.id, d: e.step.item.difficulty, correct: e.correct, why: e.why, ts: Date.now(), mode };
+    if (mode === 'placement' && session.current.placement) placementAnswer(session.current.placement, e.correct);
     if (mode === 'checkup') {
       const strand = (e.step as QuestStep & { strand?: string }).strand ?? e.step.skill.strand;
       session.current.answers.push({ ...attempt, strand, skill: attempt.skill, itemId: attempt.itemId });
@@ -122,6 +142,25 @@ export default function App() {
     if (mode === 'checkup' && session.current.plan) {
       const result = scoreCheckup(session.current.plan, session.current.answers);
       update((s) => creditFromCheckup({ ...s, checkups: [...s.checkups, result] }, session.current.answers));
+    } else if (mode === 'placement' && session.current.placement) {
+      const known = session.current.placement.known;
+      update((s) => markKnown(s, known, 'tested'));
+      const note = known.length
+        ? `Amazing! You can skip ${known.length} thing${known.length > 1 ? 's' : ''} you already know.`
+        : 'Thank you! Now we know where to start.';
+      setView({ name: 'results', mode, ...summary, note });
+      return;
+    } else if (mode === 'skip') {
+      const skill = session.current.queue[0]?.skill;
+      const passed = summary.correct === summary.total;
+      if (passed && skill) update((s) => markKnown(s, [skill.id], 'tested'));
+      setView({
+        name: 'results',
+        mode,
+        ...summary,
+        note: passed ? 'You already know this one! Skipped ahead. ⚡' : `${summary.correct} of ${summary.total} right. Let’s practise this one together!`,
+      });
+      return;
     } else {
       update((s) => ({ ...s, stars: s.stars + (mode === 'quest' ? 3 : 1) }));
     }
@@ -136,10 +175,12 @@ export default function App() {
     case 'game': {
       // Level is fixed for a session; the next session starts at the updated level.
       const props = { level: view.level, onRound: (r: 'win' | 'assisted' | 'loss') => update((s) => recordGame(s, view.id, r)), onExit: () => setView({ name: 'games' }) };
-      return view.id === 'mystery-word' ? <MysteryWord key={view.run} {...props} /> : <NumberPath key={view.run} {...props} />;
+      if (view.id === 'mystery-word') return <MysteryWord key={view.run} {...props} />;
+      if (view.id === 'sentence-builder') return <SentenceBuilder key={view.run} {...props} />;
+      return <NumberPath key={view.run} {...props} />;
     }
     case 'island':
-      return <Island state={state} subject={view.subject} onBack={() => setView({ name: 'home' })} onPlay={(skill) => startSkill(skill.id)} />;
+      return <Island state={state} subject={view.subject} onBack={() => setView({ name: 'home' })} onPlay={(skill) => startSkill(skill.id)} onSkip={(skill) => startSkip(skill.id)} />;
     case 'play':
       return (
         <Player
@@ -155,15 +196,15 @@ export default function App() {
           onIntroDone={(id) => update((s) => markIntroSeen(s, id))}
           onAnswer={(e) => onAnswer(e, view.mode)}
           onFinish={(summary) => onFinish(view.mode, summary, view.again)}
-          onExit={() => setView(view.mode === 'checkup' ? { name: 'parent' } : { name: 'home' })}
+          onExit={() => setView(view.mode === 'checkup' || view.mode === 'placement' ? { name: 'parent' } : { name: 'home' })}
         />
       );
     case 'results':
-      return <Results correct={view.correct} total={view.total} mode={view.mode} onHome={() => setView({ name: 'home' })} onAgain={view.again} />;
+      return <Results correct={view.correct} total={view.total} mode={view.mode} note={view.note} onHome={() => setView({ name: 'home' })} onAgain={view.again} />;
     case 'gate':
       return <Gate onPass={() => setView({ name: 'parent' })} onCancel={() => setView({ name: 'home' })} />;
     case 'parent':
-      return <Parent state={state} setState={(s) => update(() => s)} onClose={() => setView({ name: 'home' })} onStartCheckup={startCheckup} />;
+      return <Parent state={state} setState={(s) => update(() => s)} onClose={() => setView({ name: 'home' })} onStartCheckup={startCheckup} onStartPlacement={startPlacementRun} />;
   }
 }
 

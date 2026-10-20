@@ -84,7 +84,8 @@ export type Visual =
   | { kind: 'measure'; emoji: string; units: number; unit: string }
   | { kind: 'bond'; whole: number | '?'; a: number | '?'; b: number | '?' }
   | { kind: 'place'; thing: string; ref: string; where: Place }
-  | { kind: 'coins'; values: number[]; symbol: string }
+  | { kind: 'coins'; values: number[]; symbol: string; labels?: string[] }
+  | { kind: 'baseTen'; hundreds: number; tens: number; ones: number }
   | { kind: 'row'; items: Visual[]; sep?: string };
 
 export interface Choice {

@@ -37,13 +37,14 @@ type Phase = 'intro' | 'ask' | 'retry' | 'right' | 'explain' | 'moving';
 export function Player({ locale, mode, title, color, total, first, getNext, introSeen, onIntroDone, onAnswer, onFinish, onExit }: Props) {
   const [step, setStep] = useState<QuestStep | null>(first);
   const [n, setN] = useState(1);
-  const [phase, setPhase] = useState<Phase>(first && mode !== 'checkup' && !introSeen(first.skill.id) ? 'intro' : 'ask');
+  const [phase, setPhase] = useState<Phase>(first && (mode === 'quest' || mode === 'skill') && !introSeen(first.skill.id) ? 'intro' : 'ask');
   const [selected, setSelected] = useState<string | null>(null);
   const [eliminated, setEliminated] = useState<string[]>([]);
   const [message, setMessage] = useState('');
   const [confirmExit, setConfirmExit] = useState(false);
   const score = useRef({ correct: 0, total: 0 });
-  const practice = mode !== 'checkup';
+  // Check-ups, placement and skip-ahead challenges give no hints or feedback.
+  const practice = mode === 'quest' || mode === 'skill';
 
   const item = step?.item;
   const L = (t: string) => localize(t, locale);

@@ -293,3 +293,89 @@ export function subjectSummary(state: AppState, subject: SubjectId) {
 }
 
 export { SUBJECTS };
+
+/* ------------------------------------------------------------------------ */
+/* Placement ("find his level") and Skip-ahead                              */
+/* ------------------------------------------------------------------------ */
+
+/**
+ * Placement walks each strand from easy to hard. It probes every second skill
+ * with 2 hard questions: pass both → that skill and everything easier in the
+ * strand are skipped, and it jumps ahead; a miss → it checks the skill just
+ * below once, then stops the strand there (his frontier). Capped so a 5-year-old
+ * is never stuck in a long test.
+ */
+export interface PlacementRun {
+  subject: SubjectId;
+  strands: { strand: string; title: string; skills: Skill[] }[];
+  strandIndex: number;
+  idx: number;
+  lastPassed: number;
+  backfill: boolean;
+  inSkill: number;
+  asked: number;
+  seen: Set<string>;
+  known: string[];
+  frontier: string[];
+  current?: QuestStep & { strand: string };
+}
+
+export const PLACEMENT_CAP = 24;
+
+export function startPlacement(state: AppState, subject: SubjectId): PlacementRun {
+  const strands = planCheckup(state, subject).strands.map((st) => ({ ...st, skills: st.skills.filter((s) => !skillState(state, s.id).mastered) })).filter((st) => st.skills.length);
+  return { subject, strands, strandIndex: 0, idx: Math.min(1, (strands[0]?.skills.length ?? 1) - 1), lastPassed: -1, backfill: false, inSkill: 0, asked: 0, seen: new Set(), known: [], frontier: [] };
+}
+
+export function placementNext(state: AppState, run: PlacementRun): (QuestStep & { strand: string }) | null {
+  const st = run.strands[run.strandIndex];
+  if (!st || run.asked >= PLACEMENT_CAP) return null;
+  const skill = st.skills[run.idx];
+  const item = pickItem(state, skill, 3, run.seen);
+  run.seen.add(item.id);
+  run.current = { skill, item, role: 'focus', strand: st.strand };
+  return run.current;
+}
+
+function nextStrand(run: PlacementRun) {
+  run.strandIndex++;
+  const st = run.strands[run.strandIndex];
+  run.idx = st ? Math.min(1, st.skills.length - 1) : 0;
+  run.lastPassed = -1;
+  run.backfill = false;
+  run.inSkill = 0;
+}
+
+export function placementAnswer(run: PlacementRun, correct: boolean) {
+  const st = run.strands[run.strandIndex];
+  run.asked++;
+  run.inSkill++;
+  if (correct && run.inSkill < 2) return; // ask the second question on this skill
+  run.inSkill = 0;
+  if (correct) {
+    for (let i = run.lastPassed + 1; i <= run.idx; i++) run.known.push(st.skills[i].id);
+    run.lastPassed = run.idx;
+    if (run.backfill || run.idx >= st.skills.length - 1) {
+      if (run.idx + 1 < st.skills.length) run.frontier.push(st.skills[run.idx + 1].id);
+      nextStrand(run);
+    } else run.idx = Math.min(run.idx + 2, st.skills.length - 1);
+    return;
+  }
+  if (!run.backfill && run.idx - 1 > run.lastPassed) {
+    run.backfill = true;
+    run.idx--;
+    return;
+  }
+  run.frontier.push(st.skills[run.idx].id);
+  nextStrand(run);
+}
+
+/** Skip-ahead challenge: 3 hard questions on one skill; all right → skip it. */
+export function buildSkipChallenge(state: AppState, skill: Skill): QuestStep[] {
+  const used = new Set<string>();
+  return Array.from({ length: 3 }, () => {
+    const item = pickItem(state, skill, 3, used);
+    used.add(item.id);
+    return { skill, item, role: 'focus' as const };
+  });
+}

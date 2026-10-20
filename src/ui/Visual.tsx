@@ -416,22 +416,53 @@ export function Visual({ v, size = 'lg' }: { v: V; size?: VSize }) {
       return <CompositeSvg preset={v.preset} size={size === 'lg' ? 200 : 96} />;
     case 'coins': {
       const base = (size === 'lg' ? 64 : size === 'md' ? 48 : 30) * (v.values.length === 1 ? 1.5 : 1);
+      // US coins keep their real relative sizes (a dime is smaller than a penny!) and show names, not values.
+      const US: Record<number, { scale: number; gold: boolean }> = { 1: { scale: 0.95, gold: true }, 5: { scale: 1.05, gold: false }, 10: { scale: 0.88, gold: false }, 25: { scale: 1.2, gold: false } };
       return (
         <div className="flex flex-wrap items-center justify-center gap-2">
           {v.values.map((value, i) => {
-            const d = base * (0.8 + Math.min(value, 10) * 0.03);
-            const gold = value >= 10 || value === 2;
+            const us = v.labels ? US[value] : undefined;
+            const d = us ? base * us.scale : base * (0.8 + Math.min(value, 10) * 0.03);
+            const gold = us ? us.gold : value >= 10 || value === 2;
             return (
               <div
                 key={i}
-                className={`flex items-center justify-center rounded-full border-4 font-kid font-bold shadow ${gold ? 'border-amber-500 bg-amber-200 text-amber-900' : 'border-slate-400 bg-slate-200 text-slate-800'}`}
-                style={{ width: d, height: d, fontSize: d * 0.32 }}
+                className={`flex items-center justify-center rounded-full border-4 text-center font-kid font-bold leading-none shadow ${gold ? 'border-amber-600 bg-amber-300 text-amber-900' : 'border-slate-400 bg-slate-200 text-slate-800'}`}
+                style={{ width: d, height: d, fontSize: d * (v.labels ? 0.2 : 0.32) }}
               >
-                {v.symbol}
-                {value}
+                {v.labels ? v.labels[i] : `${v.symbol}${value}`}
               </div>
             );
           })}
+        </div>
+      );
+    }
+    case 'baseTen': {
+      const u = size === 'lg' ? 9 : size === 'md' ? 6 : 4;
+      const cell = (k: number) => <div key={k} className="border border-sky-700 bg-sky-300" style={{ width: u, height: u }} />;
+      return (
+        <div className="flex flex-wrap items-end justify-center gap-3">
+          {Array.from({ length: v.hundreds }, (_, h) => (
+            <div key={`h${h}`} className="grid grid-cols-10 border-2 border-sky-800" aria-label="hundred">
+              {Array.from({ length: 100 }, (_, k) => cell(k))}
+            </div>
+          ))}
+          {v.tens > 0 && (
+            <div className="flex gap-1">
+              {Array.from({ length: v.tens }, (_, t) => (
+                <div key={`t${t}`} className="grid grid-cols-1 border-2 border-sky-800" aria-label="ten">
+                  {Array.from({ length: 10 }, (_, k) => cell(k))}
+                </div>
+              ))}
+            </div>
+          )}
+          {v.ones > 0 && (
+            <div className="grid grid-cols-3 gap-1" aria-label="ones">
+              {Array.from({ length: v.ones }, (_, k) => (
+                <div key={k} className="border-2 border-sky-800 bg-sky-300" style={{ width: u * 1.4, height: u * 1.4 }} />
+              ))}
+            </div>
+          )}
         </div>
       );
     }

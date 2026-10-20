@@ -7,6 +7,7 @@ import type { Difficulty, Item, Skill } from '../src/content/types';
 import { createRng } from '../src/engine/rng';
 import { canStep, isSolved, makePuzzle } from '../src/games/numberPath';
 import { MYSTERY_WORDS, letterTiles } from '../src/games/words';
+import { SENTENCES, sentenceTiles } from '../src/games/sentences';
 
 const errors: string[] = [];
 const warnings: string[] = [];
@@ -128,6 +129,13 @@ for (const level of [1, 2, 3] as const) {
     if (!/^[a-z]+$/.test(w.word)) err(`mystery-word ${w.word}`, 'must be lowercase a–z');
     const tiles = letterTiles(w.word, 4, (l) => createRng(7).shuffle(l));
     if (!w.word.split('').every((ch) => tiles.includes(ch))) err(`mystery-word ${w.word}`, 'tiles missing a letter');
+  }
+  for (const b of SENTENCES[level]) {
+    const where = `sentence-builder "${b.words.join(' ')}"`;
+    if (!/^[A-Z]/.test(b.words[0])) err(where, 'must start with a capital');
+    if (!/^[.?!]$/.test(b.words[b.words.length - 1])) err(where, 'must end with . ? or !');
+    if (level === 3 && (!b.trap || b.words.includes(b.trap))) err(where, 'level 3 needs a trap word that is not in the sentence');
+    if (sentenceTiles(b, level, (l) => [...l]).length !== b.words.length + (level === 3 ? 1 : 0)) err(where, 'tile count mismatch');
   }
 }
 

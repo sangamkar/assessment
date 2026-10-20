@@ -46,7 +46,7 @@ export function Home({ state, onQuest, onGames, onIsland, onGrownUps }: Props) {
         >
           <div className="absolute -bottom-4 -right-4 text-[7rem] opacity-30">🧩</div>
           <div className="font-kid text-sm font-bold uppercase tracking-widest text-white/80">Brain Games</div>
-          <div className="mt-1 font-kid text-3xl font-bold leading-tight text-white">Mystery Word &amp; Number Path</div>
+          <div className="mt-1 font-kid text-3xl font-bold leading-tight text-white">Word, number &amp; sentence puzzles</div>
           <div className="mt-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-white text-3xl shadow-lg">🎮</div>
         </button>
       </div>

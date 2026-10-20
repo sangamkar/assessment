@@ -4,10 +4,10 @@ import type { CurriculumId } from '../content/types';
 import { soundEngine } from '../utils/audio';
 import type { SubjectId } from '../content/types';
 import { describeMisconception } from '../content/misconceptions';
-import { focusSkills, isVisible, skillStatus, subjectSummary, topMisconceptions, weakestSkills } from '../engine/planner';
+import { PLACEMENT_CAP, focusSkills, isVisible, skillStatus, subjectSummary, topMisconceptions, weakestSkills } from '../engine/planner';
 import type { SkillStatus } from '../engine/planner';
 import type { AppState, Band } from '../engine/progress';
-import { MASTERY, accuracy, attemptsFor, dayKey, emptyState, gameState, skillState } from '../engine/progress';
+import { MASTERY, accuracy, attemptsFor, dayKey, emptyState, gameState, markKnown, skillState, unmarkKnown } from '../engine/progress';
 import { GAMES } from './games/Games';
 import { AVATARS } from './Setup';
 import { QuestionBank } from './QuestionBank';
@@ -19,6 +19,7 @@ interface Props {
   setState: (s: AppState) => void;
   onClose: () => void;
   onStartCheckup: (subject: SubjectId) => void;
+  onStartPlacement: (subject: SubjectId) => void;
 }
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
@@ -179,9 +180,10 @@ function Focus({ state }: { state: AppState }) {
   );
 }
 
-function Checkups({ state, onStart }: { state: AppState; onStart: (s: SubjectId) => void }) {
+function Checkups({ state, onStart, onPlacement }: { state: AppState; onStart: (s: SubjectId) => void; onPlacement: (s: SubjectId) => void }) {
   return (
     <div className="flex flex-col gap-4">
+      <PlacementCard state={state} onPlacement={onPlacement} />
       <Card title="Start a Check-up">
         <p className="mb-3 text-sm text-slate-600">
           About 12 adaptive questions, no hints or feedback — like the i-Ready Diagnostic format. Hand the device to your child after tapping a subject. Results are a practice signal, not an official score.
@@ -225,11 +227,50 @@ function Checkups({ state, onStart }: { state: AppState; onStart: (s: SubjectId)
   );
 }
 
-function SkillMap({ state }: { state: AppState }) {
+function PlacementCard({ state, onPlacement }: { state: AppState; onPlacement: (s: SubjectId) => void }) {
+  return (
+    <Card title="⚡ Find his level (placement)">
+      <p className="mb-3 text-sm text-slate-600">
+        For a child who is ahead. It tests upward through each area with 2 hard questions per step and skips everything he proves he knows (up to {PLACEMENT_CAP} questions, no hints). Skipped skills come back once as a review in two weeks, so a lucky guess fixes itself.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {SUBJECTS.filter((s) => subjectSummary(state, s.id).total).map((s) => (
+          <button key={s.id} onClick={() => onPlacement(s.id)} className="rounded-xl px-4 py-2 text-sm font-bold text-white" style={{ background: s.color }}>
+            ⚡ {s.title}
+          </button>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function SkillMap({ state, setState, onPlacement }: { state: AppState; setState: (s: AppState) => void; onPlacement: (s: SubjectId) => void }) {
   return (
     <div className="flex flex-col gap-4">
+      <p className="text-sm text-slate-600">
+        Tick <b>Knows it</b> to skip a skill he already has. Skipped skills unlock what comes next and return once as a review in two weeks; if he misses it then, it goes back into practice.
+      </p>
       {SUBJECTS.filter((subject) => subjectSummary(state, subject.id).total).map((subject) => (
-        <Card key={subject.id} title={`${subject.icon} ${subject.title}`}>
+        <Card
+          key={subject.id}
+          title={`${subject.icon} ${subject.title}`}
+          right={
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  const ids = ALL_SKILLS.filter((k) => k.subject === subject.id && k.grade === 'K' && isVisible(state, k) && !skillState(state, k.id).mastered).map((k) => k.id);
+                  if (ids.length && window.confirm(`Mark ${ids.length} ${subject.title} Kindergarten skills as known?`)) setState(markKnown(state, ids, 'parent'));
+                }}
+                className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700"
+              >
+                Mark all Kindergarten known
+              </button>
+              <button onClick={() => onPlacement(subject.id)} className="rounded-lg px-3 py-1.5 text-xs font-bold text-white" style={{ background: subject.color }}>
+                ⚡ Find his level
+              </button>
+            </div>
+          }
+        >
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead className="text-xs uppercase text-slate-400">
@@ -244,7 +285,8 @@ function SkillMap({ state }: { state: AppState }) {
                   <th className="pr-2">Status</th>
                   <th className="pr-2">Level</th>
                   <th className="pr-2">Tries</th>
-                  <th>Accuracy</th>
+                  <th className="pr-2">Accuracy</th>
+                  <th>Knows it</th>
                 </tr>
               </thead>
               <tbody>
@@ -262,10 +304,24 @@ function SkillMap({ state }: { state: AppState }) {
                           {CURRICULA[c].codes(s).join(', ') || '—'}
                         </td>
                       ))}
-                      <td className="pr-2">{STATUS_LABEL[skillStatus(state, s)]}{st.credited && !st.mastered ? ' (credited)' : ''}</td>
+                      <td className="pr-2">
+                        {STATUS_LABEL[skillStatus(state, s)]}
+                        {st.known ? (st.known === 'tested' ? ' (tested out)' : ' (marked known)') : st.credited && !st.mastered ? ' (credited)' : ''}
+                      </td>
                       <td className="pr-2">{st.level}</td>
                       <td className="pr-2">{list.length}</td>
-                      <td>{list.length ? pct(accuracy(list.slice(-10))) : '—'}</td>
+                      <td className="pr-2">{list.length ? pct(accuracy(list.slice(-10))) : '—'}</td>
+                      <td>
+                        <input
+                          type="checkbox"
+                          aria-label={`${s.title}: knows it`}
+                          className="h-4 w-4"
+                          checked={!!st.known || st.mastered}
+                          disabled={st.mastered && !st.known}
+                          title={st.mastered && !st.known ? 'Mastered through practice' : undefined}
+                          onChange={(e) => setState(e.target.checked ? markKnown(state, [s.id], 'parent') : unmarkKnown(state, s.id))}
+                        />
+                      </td>
                     </tr>
                   );
                 })}
@@ -437,7 +493,7 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
   );
 }
 
-export function Parent({ state, setState, onClose, onStartCheckup }: Props) {
+export function Parent({ state, setState, onClose, onStartCheckup, onStartPlacement }: Props) {
   const [tab, setTab] = useState<Tab>('overview');
   const tabs: { id: Tab; label: string }[] = [
     { id: 'overview', label: 'Overview' },
@@ -468,8 +524,8 @@ export function Parent({ state, setState, onClose, onStartCheckup }: Props) {
       <main className="mx-auto max-w-6xl px-4 py-5">
         {tab === 'overview' && <Overview state={state} />}
         {tab === 'focus' && <Focus state={state} />}
-        {tab === 'checkups' && <Checkups state={state} onStart={onStartCheckup} />}
-        {tab === 'skills' && <SkillMap state={state} />}
+        {tab === 'checkups' && <Checkups state={state} onStart={onStartCheckup} onPlacement={onStartPlacement} />}
+        {tab === 'skills' && <SkillMap state={state} setState={setState} onPlacement={onStartPlacement} />}
         {tab === 'bank' && <QuestionBank />}
         {tab === 'settings' && <Settings state={state} setState={setState} />}
       </main>

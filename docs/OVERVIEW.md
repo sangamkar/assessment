@@ -93,7 +93,7 @@ All topics map to standards: Georgia GSE and Common Core for the USA, NCERT *Joy
 ## 5. How the app decides what to teach (the engine)
 
 - **Levels:** each topic has 3 difficulty levels. 2 right in a row → level up; a miss → level down.
-- **Mastery:** at least 85% correct over the last 8 tries, including at least 3 at level 2 or higher, spread over at least 3 different days. One good day isn't enough.
+- **Mastery:** at least 85% correct over the last 8 tries, including at least 3 at level 2 or higher, with correct answers on at least 3 different days within the last 3 weeks. One good day isn’t enough, and old successes from long ago don’t count.
 - **Spaced review:** a mastered topic comes back after 1, 3, 7, 14 and 30 days so it sticks.
 - **Unlocking:** topics unlock when their prerequisites are mastered or skipped.
 - **Misconception tracking:** every wrong answer carries a tag such as "reverses teen digits". The Focus areas tab groups them into patterns with a fix.

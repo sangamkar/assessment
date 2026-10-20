@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ALL_SKILLS, SUBJECTS, getSkill } from '../src/content';
 import type { Difficulty } from '../src/content/types';
 import type { AppState, Attempt } from '../src/engine/progress';
-import { dayKey, dayStreak, emptyState, gameState, markIntroSeen, meetsMastery, recordAttempt, recordGame, skillState } from '../src/engine/progress';
+import { STATE_VERSION, UNREADABLE_KEY, dayKey, dayStreak, emptyState, gameState, loadState, markIntroSeen, meetsMastery, recordAttempt, recordGame, skillState, upgradeState } from '../src/engine/progress';
 import { buildQuest, buildSkillSession, buildSkipChallenge, creditFromCheckup, isVisible, nextCheckupItem, planCheckup, present, QUEST_LENGTH, scoreCheckup, skillStatus } from '../src/engine/planner';
 import type { CheckupAnswer } from '../src/engine/planner';
 
@@ -25,6 +25,20 @@ describe('mastery', () => {
 
     const sloppy = threeDays.map((a, i) => ({ ...a, correct: i % 3 !== 0 }));
     expect(meetsMastery(sloppy)).toBe(false);
+  });
+
+  it('ignores old successes: one strong session after weeks away is not mastery', () => {
+    const longAgo = [0, 1, 2].map((day) => attempt('m.count10', true, T0 + day * DAY));
+    const today = Array.from({ length: 8 }, (_, i) => attempt('m.count10', true, T0 + 40 * DAY + i * 1000));
+    expect(meetsMastery([...longAgo, ...today])).toBe(false);
+    // Two earlier days inside the 3-week window plus today is enough.
+    const recentDays = [30, 35].map((day) => attempt('m.count10', true, T0 + day * DAY));
+    expect(meetsMastery([...longAgo, ...recentDays, ...today])).toBe(true);
+  });
+
+  it('a skill practised in short daily Quest bursts can still be mastered', () => {
+    const daily = Array.from({ length: 4 }, (_, day) => [0, 1].map((i) => attempt('m.count10', true, T0 + day * DAY + i * 1000))).flat();
+    expect(meetsMastery(daily)).toBe(true);
   });
 
   it('marks the skill mastered and schedules a review', () => {
@@ -217,5 +231,53 @@ describe('intro slides', () => {
     const s = markIntroSeen(emptyState(), 'm.add');
     expect(skillState(s, 'm.add').introSeen).toBe(true);
     expect(skillState(s, 'm.sub').introSeen).toBe(false);
+  });
+});
+
+describe('loading saved progress', () => {
+  const store = new Map<string, string>();
+  const fake = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v), removeItem: (k: string) => void store.delete(k) };
+  const withStorage = (fn: () => void) => {
+    const g = globalThis as { localStorage?: unknown };
+    const prev = g.localStorage;
+    g.localStorage = fake;
+    store.clear();
+    try {
+      fn();
+    } finally {
+      g.localStorage = prev;
+    }
+  };
+  const saved = () => play(emptyState(), [attempt('m.count10', true, T0)]);
+
+  it('reads current progress and fills in new settings with defaults', () => {
+    withStorage(() => {
+      const s = saved();
+      store.set('learning-quest:v1', JSON.stringify({ ...s, settings: { muted: true } }));
+      const loaded = loadState();
+      expect(loaded.attempts).toHaveLength(1);
+      expect(loaded.settings.muted).toBe(true);
+      expect(loaded.settings.primary).toBe('us-ga');
+    });
+  });
+
+  it('never silently discards progress it cannot read', () => {
+    withStorage(() => {
+      const future = JSON.stringify({ ...saved(), version: STATE_VERSION + 1 });
+      store.set('learning-quest:v1', future);
+      expect(loadState().attempts).toHaveLength(0);
+      expect(store.get(UNREADABLE_KEY)).toBe(future); // kept aside for recovery
+      store.set('learning-quest:v1', '{broken');
+      loadState();
+      expect(store.get(UNREADABLE_KEY)).toBe(future); // the first copy is not overwritten
+    });
+  });
+
+  it('rejects files that are not progress, and explains newer backups', () => {
+    expect(upgradeState({ hello: 1 })).toEqual({ ok: false, reason: 'not-progress' });
+    expect(upgradeState(null)).toEqual({ ok: false, reason: 'not-progress' });
+    expect(upgradeState({ ...saved(), version: STATE_VERSION + 1 })).toEqual({ ok: false, reason: 'newer-version' });
+    const ok = upgradeState(JSON.parse(JSON.stringify(saved())));
+    expect(ok.ok && ok.state.attempts).toHaveLength(1);
   });
 });

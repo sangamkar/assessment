@@ -2,6 +2,8 @@ import type { CurriculumId, Difficulty, LanguageCode } from '../content/types';
 import type { MockResult, MockRun } from './mock';
 import { emptyGrowth, normalizeGrowth } from './growth';
 import type { GrowthState } from './growth';
+import { normalizeAirport } from '../games/airport';
+import type { AirportState } from '../games/airport';
 
 export type Mode = 'quest' | 'skill' | 'checkup' | 'placement' | 'skip' | 'mock';
 
@@ -77,6 +79,7 @@ export interface GameState {
 export interface AppState {
   version: 2;
   growth: GrowthState;
+  airport?: AirportState;
   profile?: { name: string; avatar: string; createdAt: number };
   settings: Settings;
   skills: Record<string, SkillState>;
@@ -128,7 +131,7 @@ export function upgradeState(data: unknown): UpgradeResult {
   }
   const parsed = s as unknown as AppState;
   const base = emptyState();
-  return { ok: true, state: { ...base, ...parsed, growth: normalizeGrowth(parsed.growth), settings: { ...base.settings, ...parsed.settings } } };
+  return { ok: true, state: { ...base, ...parsed, growth: normalizeGrowth(parsed.growth), airport: normalizeAirport(parsed.airport), settings: { ...base.settings, ...parsed.settings } } };
 }
 
 /** Saved progress that could not be read is copied aside instead of being overwritten. */

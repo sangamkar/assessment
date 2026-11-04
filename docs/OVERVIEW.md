@@ -2,9 +2,11 @@
 
 *Academic feature summary as of 20 October 2026*
 
-**Growth missions added:** the home screen now leads with child-chosen missions,
-mostly offline activities, a discovery journal and parent observations. See
-[the growth guide](GROWTH.md) for the current experience and backup migration.
+**Current direction: screen time only.** Airport Designer now provides five
+interactive build/test/revise challenges, a design journal and parent screen-time
+progress. It replaces the offline mission entry points. Earlier records remain
+read-only in the parent area. See [the current guide](GROWTH.md).
+
 
 Learning Quest is a private learning app for Aarav, a kindergartner in Forsyth County, Georgia. It teaches, practises and assesses the skills behind i-Ready, gifted screening, olympiads and STEM challenges. It is built to grow with him from Kindergarten through Grade 2 and beyond. If the family moves, an India (CBSE/NCERT) track with Hindi and Kannada is ready.
 

@@ -1,72 +1,58 @@
-# Growth missions: first release
+# Screen-time design lab
 
-The home screen now starts with a choice of missions. Academic practice, games,
-subject islands, placement and i-Ready preparation remain available.
+The portal is for on-screen play and learning. Offline parenting activities are
+outside its scope. Airport Designer replaces the earlier activity-card entry
+points; neither offline missions nor parent observation tasks appear in child mode.
 
-## What is included
+## Airport Designer
 
-- **Run an airport**, **Make a neighborhood**, and **Open a pretend café**:
-  four short activities each, across making/thinking, communication,
-  independence, movement and cooperation. Most happen away from the screen.
-- Each activity has materials, three steps, an example, a clue, another way to
-  try, a reflection, parent guidance, supervision requirements and something
-  concrete to observe. Related academic practice is optional.
-- Children can keep a simple sketch or up to 500 characters of reflection.
-  A grown-up can transcribe the child's words. Neither is required.
-- Activities save as drafts and resume. Trying again creates a separate entry;
-  switching missions retains earlier work. No schedule or daily streak is required.
-- **My discoveries** is the child-facing journal. **Grown-ups → Growth review**
-  contains observations, history per capability, a journal filter and a monthly
-  conversation prompt. The academic overview remains separate.
+Choose a building tool, then tap a square on the 6×6 map. Tap Gate A or Gate B
+and a new position to move a gate. Taxi paths join orthogonally; runway tiles
+must connect to the fixed exit on the left. Gates sit beside the terminal on the
+right. Pond and terminal cells cannot be built on. Undo reverses the last change.
 
-## What the records mean
+Five challenges are available without a test or prerequisite gate:
 
-`I tried it` is the child's report of an experience, not proof of competence.
-There is no automatic mastery, star award, personality score or academic credit
-for a growth activity. Opening a coaching prompt does not measure adult help.
+1. First flight: connect the runway exit to Gate A.
+2. A bigger plane: extend the joined runway to three tiles.
+3. Around the pond: route around blocked cells.
+4. Two gates, one airport: connect both gates with at most nine taxi tiles.
+5. My own airport: create another layout for two gates and a four-tile runway.
 
-Parent observations require written evidence and distinguish support from the
-stage observed: Exposure, Exploration, Foundational competence, Independent
-application, and Mastery / specialization where useful. Stages describe a
-specific capability in context, not a permanent judgment of the child. Earlier
-observations remain available even when a later observation is at an earlier
-stage. Shared capability names allow observations from different activities
-(for example, pretend-trip packing and school-bag packing) to appear together.
+Test flights checks the current layout. Feedback identifies a short runway,
+missing gate, disconnected route or excess taxi tiles. Working routes animate
+planes in sequence. This is an abstract planning puzzle, not an aviation or
+traffic simulation. Reduced-motion users see static route traces.
 
-Counts reflect app records only. A zero does not mean a child lacks opportunities
-outside the app. Keep documenting optional; a brief occasional observation is enough.
+There are multiple valid layouts. Clues are optional, and failure does not cost
+points or reset the design. Children can explore any challenge and revisit solved
+ones. Editing or undoing invalidates the old flight check until the design is
+retested; a historical solved marker remains separate from current success.
 
-## Storage and compatibility
+## Saved designs and screen-time progress
 
-- State schema version 2 adds `growth` to existing progress. Version 1 backups
-  are upgraded in place without changing attempts, stars, skills or settings.
-- The existing storage key `learning-quest:v1` is retained intentionally so
-  existing users' data is discovered. It names the storage location, not the schema.
-- Backup / Restore includes mission choices, draft sessions, sketches, reflections
-  and observations. Import sanitizes growth records without discarding academics.
-- Everything stays in browser storage. There is no photo/voice upload, account,
-  cloud sync, AI chatbot or external analytics in this release.
-- Storage failures show a banner directing the parent to export a backup while
-  the current state is still in memory. Clear browser data only after backing up.
-- An older app cannot import a version 2 backup. Keep a pre-upgrade backup if
-  testing an older build. Sketches are bounded per session; repeated sessions can
-  eventually fill browser storage, making regular backups useful.
+- Layouts, selected challenge, edit count (including undo), test count, up to three
+  distinct clues opened, undo history (last 30 layouts), first solved date and an
+  optional short explanation save automatically on this device.
+- My airport designs shows current layouts and whether they have been checked.
+- Grown-ups → Screen-time progress reports puzzle activity without inferring
+  real-world independence, general ability, social competence or academic mastery.
+- Airport play does not change academic accuracy, stars, skill mastery or streaks.
+- Settings → Backup / Restore includes these records. Existing version 1/2
+  academic progress and earlier portfolios are retained. Airport data is an
+  optional additive field in schema 2; old backups load with an empty design lab.
+- Earlier offline portfolio entries are read-only in the parent area when present.
+  They remain in backups, including sketches and observations. No new offline
+  entries or observations can be created through the routed UI.
 
-## Implementation
+## Accessibility and scope
 
-- `src/content/missions.ts`: typed activity catalog, five opportunity domains.
-- `src/engine/growth.ts`: session lifecycle, parent evidence and import normalization.
-- `src/ui/growth/`: mission selection, activity player, drawing pad and portfolio.
-- `tests/growth.test.ts`: migration, evidence boundaries, resumption, revisits,
-  backup round trips, input normalization and working academic links.
+Tap/click building works on phones and tablets; dragging is not required. Grid
+buttons have row, column and content labels. Arrow keys move between cells, and
+Enter/Space uses the chosen tool. Goals, feedback and clues have read-aloud
+controls; choosing a tool also speaks its instructions when sound is enabled.
 
-New missions are authored content, not runtime-generated advice. They are designed
-for this family's early-elementary context; these activity records are not a
-validated developmental assessment.
-
-## Family trial
-
-Choose one mission and try one activity at a time within existing family time.
-Over two weeks, notice whether the child chooses to return, contributes his own
-ideas, uses a skill with fewer prompts, and whether parent effort stays manageable.
-Use that feedback before adding more themes or more complex recording features.
+No timer, leaderboard, chatbot, cloud sync, voice recording or new external
+service is involved. The existing academic engine and three Brain Games remain
+available alongside the lab. The earlier authoring code is retained for backup
+compatibility, with no child route to those offline screens.

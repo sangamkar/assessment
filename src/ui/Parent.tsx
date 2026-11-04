@@ -13,8 +13,9 @@ import { AVATARS } from './Setup';
 import { QuestionBank } from './QuestionBank';
 import { IReadyPrep } from './IReadyPrep';
 import type { MockSubject } from '../engine/mock';
+import { GrowthReview } from './growth/Portfolio';
 
-type Tab = 'overview' | 'iready' | 'focus' | 'checkups' | 'skills' | 'bank' | 'settings';
+type Tab = 'growth' | 'overview' | 'iready' | 'focus' | 'checkups' | 'skills' | 'bank' | 'settings';
 
 interface Props {
   state: AppState;
@@ -498,7 +499,7 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
         {toggle('Mute sound', 'Turns off speech and sound effects. Not recommended for non-readers.', 'muted')}
       </Card>
       <Card title="Backup">
-        <p className="mb-3 text-sm text-slate-600">Progress is saved in this browser only. Download a backup now and then, and restore it on a new device.</p>
+        <p className="mb-3 text-sm text-slate-600">Academic progress, discoveries, sketches and observations are saved in this browser only. Download a backup now and then, and restore it on a new device.</p>
         <div className="flex flex-wrap gap-2">
           <button onClick={exportData} className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white">
             Download backup
@@ -511,7 +512,7 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
         {msg && <p className="mt-2 text-sm font-semibold text-slate-600">{msg}</p>}
       </Card>
       <Card title="Reset">
-        <p className="mb-3 text-sm text-slate-600">Erases all progress, stars and check-ups on this device.</p>
+        <p className="mb-3 text-sm text-slate-600">Erases all academic progress, discoveries, sketches, observations, stars and check-ups on this device.</p>
         <button
           onClick={() => {
             if (window.confirm('Erase all progress? This cannot be undone.')) setState({ ...emptyState(), profile: state.profile });
@@ -526,9 +527,10 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
 }
 
 export function Parent({ state, setState, onClose, onStartCheckup, onStartPlacement, onStartMock }: Props) {
-  const [tab, setTab] = useState<Tab>('overview');
+  const [tab, setTab] = useState<Tab>('growth');
   const tabs: { id: Tab; label: string }[] = [
-    { id: 'overview', label: 'Overview' },
+    { id: 'growth', label: 'Growth review' },
+    { id: 'overview', label: 'Academic overview' },
     { id: 'iready', label: 'i-Ready prep' },
     { id: 'focus', label: 'Focus areas' },
     { id: 'checkups', label: 'Check-ups' },
@@ -555,6 +557,7 @@ export function Parent({ state, setState, onClose, onStartCheckup, onStartPlacem
         </nav>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-5">
+        {tab === 'growth' && <GrowthReview state={state} setState={setState} />}
         {tab === 'overview' && <Overview state={state} />}
         {tab === 'iready' && <IReadyPrep state={state} setState={setState} onStartMock={onStartMock} />}
         {tab === 'focus' && <Focus state={state} />}

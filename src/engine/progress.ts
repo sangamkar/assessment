@@ -1,5 +1,7 @@
 import type { CurriculumId, Difficulty, LanguageCode } from '../content/types';
 import type { MockResult, MockRun } from './mock';
+import { emptyGrowth, normalizeGrowth } from './growth';
+import type { GrowthState } from './growth';
 
 export type Mode = 'quest' | 'skill' | 'checkup' | 'placement' | 'skip' | 'mock';
 
@@ -73,7 +75,8 @@ export interface GameState {
 }
 
 export interface AppState {
-  version: 1;
+  version: 2;
+  growth: GrowthState;
   profile?: { name: string; avatar: string; createdAt: number };
   settings: Settings;
   skills: Record<string, SkillState>;
@@ -96,16 +99,18 @@ const DAY = 24 * 60 * 60 * 1000;
 export const MASTERY = { window: 8, minAttempts: 6, accuracy: 0.85, minHardAttempts: 3, minDays: 3, dayWindow: 21 };
 
 export function emptyState(): AppState {
-  return { version: 1, settings: { muted: false, unlockAll: false, showStretch: true, curricula: ['us-ga'], primary: 'us-ga', languages: ['hi'] }, skills: {}, attempts: [], stars: 0, days: [], checkups: [], games: {} };
+  return { version: 2, growth: emptyGrowth(), settings: { muted: false, unlockAll: false, showStretch: true, curricula: ['us-ga'], primary: 'us-ga', languages: ['hi'] }, skills: {}, attempts: [], stars: 0, days: [], checkups: [], games: {} };
 }
 
-export const STATE_VERSION = 1;
+export const STATE_VERSION = 2;
 
 /**
  * Upgrades saved progress from version n to n + 1. When the saved shape changes,
  * bump STATE_VERSION and add a step here; never drop old progress.
  */
-const MIGRATIONS: Record<number, (s: Record<string, unknown>) => Record<string, unknown>> = {};
+const MIGRATIONS: Record<number, (s: Record<string, unknown>) => Record<string, unknown>> = {
+  1: (state) => ({ ...state, growth: emptyGrowth() }),
+};
 
 export type UpgradeResult = { ok: true; state: AppState } | { ok: false; reason: 'not-progress' | 'newer-version' | 'no-migration' };
 
@@ -123,7 +128,7 @@ export function upgradeState(data: unknown): UpgradeResult {
   }
   const parsed = s as unknown as AppState;
   const base = emptyState();
-  return { ok: true, state: { ...base, ...parsed, settings: { ...base.settings, ...parsed.settings } } };
+  return { ok: true, state: { ...base, ...parsed, growth: normalizeGrowth(parsed.growth), settings: { ...base.settings, ...parsed.settings } } };
 }
 
 /** Saved progress that could not be read is copied aside instead of being overwritten. */
@@ -150,8 +155,10 @@ export function loadState(): AppState {
 export function saveState(state: AppState) {
   try {
     localStorage.setItem(KEY, JSON.stringify(state));
+    return true;
   } catch {
-    // Storage full or blocked: progress for this session still lives in memory.
+    // The UI offers backup while progress is still available in memory.
+    return false;
   }
 }
 

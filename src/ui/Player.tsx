@@ -8,7 +8,7 @@ import { Intro } from './Intro';
 import { SpeakButton } from './SpeakButton';
 import { Visual } from './Visual';
 
-const PRAISE = ['You got it!', 'Great thinking!', 'Awesome!', 'Super smart!', 'Way to go!', 'Yes! Nice work!'];
+const PRAISE = ['That answer fits. Let’s keep exploring.', 'You found it. Ready for another?', 'That’s right. Keep trying your ideas.'];
 const NEUTRAL = ['Thank you!', 'Okay, next one!', 'Here comes another!'];
 
 export interface AnswerEvent {

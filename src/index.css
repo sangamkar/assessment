@@ -19,3 +19,24 @@ button {
   touch-action: manipulation;
   user-select: none;
 }
+
+/* Growth activities share the existing kid typeface and work on small touch screens. */
+.growth-page { max-width: 72rem; margin: 0 auto; padding: 2rem 1rem 4rem; }
+.growth-eyebrow { color: #526d69; font-size: .7rem; line-height: 1.5; font-weight: 800; text-transform: uppercase; letter-spacing: .13em; margin-bottom: .4rem; }
+.growth-feature { border: 1px solid #e2ddcf; border-radius: 1.75rem; background: #fffcf3; padding: clamp(1.25rem, 4vw, 2.25rem); box-shadow: 0 8px 25px #3b605307; }
+.growth-card, .growth-mission-card, .growth-activity-card { border: 1px solid #dce6df; border-radius: 1.5rem; background: #fffffff2; padding: 1.5rem; }
+.growth-mission-card { background: #fffcf5; }
+.growth-activity-card:hover, button.growth-mission-card:hover { border-color: #136f78; box-shadow: 0 4px 16px #136f7812; }
+.growth-primary, .growth-secondary { display: inline-flex; align-items: center; justify-content: center; border-radius: .85rem; min-height: 48px; padding: .75rem 1.1rem; font-weight: 700; font-size: .95rem; line-height: 1.4; transition: background .15s; }
+.growth-primary { background: #136f78; color: white; border: 1px solid #136f78; }
+.growth-primary:hover { background: #0e5961; }
+.growth-secondary { background: white; color: #195d63; border: 1px solid #c4d8d3; }
+.growth-secondary:hover { background: #eff7f3; }
+.growth-text-button { min-height: 44px; padding: .5rem .15rem; font-size: .875rem; font-weight: 700; color: #195d63; text-align: left; }
+.growth-pill { display: inline-block; border-radius: 2rem; background: #edf3ec; color: #345951; padding: .3rem .65rem; font-size: .7rem; line-height: 1.5; font-weight: 700; }
+.growth-back { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 48px; height: 48px; background: white; color: #195d63; border: 1px solid #dce6df; border-radius: 50%; font-size: 1.5rem; }
+.growth-input { display: block; width: 100%; min-width: 0; min-height: 46px; border-radius: .75rem; padding: .75rem; border: 1px solid #bfd0c9; color: #243e3b; background: white; font-size: 1rem; font-weight: 400; }
+.growth-label { display: block; font-size: .875rem; font-weight: 600; color: #354d48; }
+button:not(:disabled) { cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid #d38b34; outline-offset: 4px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }

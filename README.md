@@ -1,6 +1,13 @@
 # Learning Quest
 
-A private, audio-first learning app for a kindergartner who is ahead of grade level. It teaches, practises and assesses the skills, and grows with him from Kindergarten through Grade 2.
+A private, audio-first growth and learning app for a kindergartner. Child-chosen
+missions connect creating, explaining, everyday independence, movement and
+cooperation with academic foundations from Kindergarten through Grade 2.
+
+**New: growth missions.** Choose Airport, Neighborhood or Pretend Café. Try one of
+12 mostly offline activities, keep a sketch or reflection, and build a discovery
+journal. Grown-ups can record specific observations separately from academic
+scores. Existing progress is upgraded automatically. See [the growth guide](docs/GROWTH.md).
 
 
 > New here? Read **[`docs/OVERVIEW.md`](docs/OVERVIEW.md)**. It explains everything the app does in plain English, for parents.
@@ -19,7 +26,8 @@ A private, audio-first learning app for a kindergartner who is ahead of grade le
 - **Brain Games:** Mystery Word (hangman), Number Path (LinkedIn Zip style), Sentence Builder.
 - **Two curricula:** USA · Georgia + i-Ready, and India · CBSE/NCERT, which switches to Indian English and ₹ and adds India topics and the Hindi and Kannada tracks.
 - **Grown-up dashboard** (🔒 Grown-ups), with these tabs:
-  - Overview
+  - Growth review and discovery journal
+  - Academic overview
   - i-Ready prep
   - Focus areas
   - Check-ups

@@ -115,6 +115,17 @@ describe("Airport Designer", () => {
     const old = upgradeState({ ...state, airport: undefined });
     expect(old.ok && old.state.airport?.drafts).toEqual({});
   });
+  it("keeps tutorial completion across backups without changing saved designs", () => {
+    const original = { ...newDraft(), layout: valid(), reflection: "Keep my design" };
+    const state = { ...emptyState(), airport: { selected: "first-flight", tutorialSeen: true, drafts: { "first-flight": original } } };
+    const restored = upgradeState(JSON.parse(JSON.stringify(state)));
+    expect(restored.ok).toBe(true);
+    if (!restored.ok) return;
+    expect(restored.state.airport?.tutorialSeen).toBe(true);
+    expect(restored.state.airport?.drafts["first-flight"]).toEqual(original);
+    expect(restored.state.attempts).toEqual([]);
+    expect(normalizeAirport({ tutorialSeen: "true" }).tutorialSeen).toBeUndefined();
+  });
   it("sanitizes imported maps, counters and claimed flight success", () => {
     const c = CHALLENGES[3];
     const clean = normalizeLayout(

@@ -35,7 +35,7 @@ describe("growth missions and real evidence", () => {
     );
     expect(migrated.ok).toBe(true);
     if (!migrated.ok) return;
-    expect(migrated.state.version).toBe(2);
+    expect(migrated.state.version).toBe(3);
     expect(migrated.state.attempts).toEqual(academic.attempts);
     expect(migrated.state.skills).toEqual(academic.skills);
     expect(migrated.state.stars).toBe(academic.stars);

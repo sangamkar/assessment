@@ -184,8 +184,7 @@ export function nextMockStep(
       dist(a) - dist(b) ||
       (usedSkills.get(a.id) ?? 0) - (usedSkills.get(b.id) ?? 0),
   );
-  // Historical practice/checkups and this sitting are all exposure. Never silently
-  // fall back to a practiced item when the held-out pool is exhausted.
+  // Prefer new tasks; repeats are allowed only inside the reserved mock pool.
   const seen = new Set([
     ...state.attempts.map((a) => a.itemId),
     ...run.answers.map((a) => a.itemId),
@@ -214,44 +213,66 @@ export function nextMockStep(
       run.answers.length * 1009 +
       run.id.split("").reduce((n, c) => n + c.charCodeAt(0), 0),
   );
-  for (const skill of ordered) {
-    const written = poolItems(skill, "mock")
-      .filter((i) => (!i.regions || i.regions.includes("us-ga")) && unseen(i))
-      .sort((a, b) => Math.abs(a.difficulty - d) - Math.abs(b.difficulty - d));
-    // Draw at the intended difficulty first; use another authored level only if needed.
-    if (written[0] && written[0].difficulty === d)
-      return {
-        skill,
-        item: present(written[0]),
-        role: "focus",
-        strand: domain.strand,
-        level: ladderOf(skill.grade, written[0].difficulty),
-        target,
-      };
-    if (skill.generate)
-      for (let tries = 0; tries < 240; tries++) {
-        const item = skill.generate(rng, d);
-        if (isMockItem(item) && unseen(item))
-          return {
-            skill,
-            item: present(item),
-            role: "focus",
-            strand: domain.strand,
-            level: ladderOf(skill.grade, item.difficulty),
-            target,
-          };
-      }
-    if (written[0])
-      return {
-        skill,
-        item: present(written[0]),
-        role: "focus",
-        strand: domain.strand,
-        level: ladderOf(skill.grade, written[0].difficulty),
-        target,
-      };
-  }
-  return null;
+  const currentIds = new Set(run.answers.map((a) => a.itemId));
+  const currentSignatures = new Set(
+    run.answers.map((a) => a.fingerprint).filter((x): x is string => !!x),
+  );
+  const currentLegacyFamilies = new Set(
+    run.answers
+      .filter((a) => !a.fingerprint)
+      .map((a) => legacyItemFamily(a.itemId)),
+  );
+  const notInThisRun = (item: Item) =>
+    !currentIds.has(item.id) &&
+    !currentLegacyFamilies.has(legacyItemFamily(item.id)) &&
+    !currentSignatures.has(itemFingerprint(item));
+  const select = (
+    accept: (item: Item) => boolean,
+  ): (QuestStep & { strand: string; level: number; target: number }) | null => {
+    for (const skill of ordered) {
+      const written = poolItems(skill, "mock")
+        .filter((i) => (!i.regions || i.regions.includes("us-ga")) && accept(i))
+        .sort(
+          (a, b) => Math.abs(a.difficulty - d) - Math.abs(b.difficulty - d),
+        );
+      // Draw at the intended difficulty first; use another authored level only if needed.
+      if (written[0] && written[0].difficulty === d)
+        return {
+          skill,
+          item: present(written[0]),
+          role: "focus",
+          strand: domain.strand,
+          level: ladderOf(skill.grade, written[0].difficulty),
+          target,
+        };
+      if (skill.generate)
+        for (let tries = 0; tries < 240; tries++) {
+          const item = skill.generate(rng, d);
+          if (isMockItem(item) && accept(item))
+            return {
+              skill,
+              item: present(item),
+              role: "focus",
+              strand: domain.strand,
+              level: ladderOf(skill.grade, item.difficulty),
+              target,
+            };
+        }
+      if (written[0])
+        return {
+          skill,
+          item: present(written[0]),
+          role: "focus",
+          strand: domain.strand,
+          level: ladderOf(skill.grade, written[0].difficulty),
+          target,
+        };
+    }
+    return null;
+  };
+  // Prefer never-seen questions, then prior-test questions not used in this sitting.
+  // If even those run out, allow a repeat so the full test can finish.
+  return select(unseen) ?? select(notInThisRun) ?? select(() => true);
 }
 
 /** Estimate = average level of the last 4 questions, nudged by how many of them were right. */

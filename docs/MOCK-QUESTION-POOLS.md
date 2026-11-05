@@ -16,7 +16,7 @@ estimates, not validated or official i-Ready scores.
 - Twenty-six new mock-only items add vocabulary, informational passages, story
   comprehension, independent reading and coin comparisons. These address thin
   reserved pools while using new contexts, not renamed question IDs.
-- Mock selection rejects item IDs and fingerprints already present in available
+- Mock selection first avoids item IDs and fingerprints already present in available
   attempt history or the current mock. Old authored signatures can be recovered
   from IDs; conservative reading-generator ID families cover legacy sight-word
   and letter/sound attempts that predate fingerprint storage.
@@ -24,12 +24,15 @@ estimates, not validated or official i-Ready scores.
   progress are retained. Mock adaptation uses the difficulty of the item actually
   served, including any fallback to a nearby difficulty/grade.
 
-If a domain has no unseen reserved item left, the mock pauses. Answers remain in
-its resumable run and no incomplete result is scored. It never fills a shortage
-with a practice item. An exhausted area needs fresh authored content; deleting
-or resetting progress is not the solution. There is a finite reading bank, and
-this is not a promise of unlimited new tests. Exposure checks use the app's
-existing retained attempt history (up to 6,000 attempts), not a server archive.
+If a domain has no unseen reserved item left, the mock repeats questions from
+its own reserved pool. It first prefers a question not yet used in the current
+sitting; if even those are exhausted, a within-test repeat is allowed so the
+full test can finish. It never fills a shortage with a current practice-pool
+item. There is a finite reading bank, not unlimited new tests. Exposure checks
+use retained attempt history (up to 6,000 attempts), not a server archive.
+A domain with no mock content at all still cannot produce a valid question;
+the defensive incomplete-score guard remains for that content error.
+
 
 This change applies to Mock i-Ready. Short check-ups, placement and skip-ahead
 checks still use the teaching/practice bank. Parent question-bank browsing is
@@ -39,5 +42,5 @@ not treated as child exposure.
 
 Tests enforce disjoint authored pools, generated pool membership, fingerprint
 stability, legacy-reading ID handling, full math/reading mocks after simulated
-practice, and safe exhaustion. Fresh mock-only items pass the content validator.
+practice, and full-length completion using reserved repeats. Fresh mock-only items pass the content validator.
 The existing mock scoring/coverage tests also remain in the suite.

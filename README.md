@@ -18,7 +18,7 @@ See [Brain Games](docs/BRAIN-GAMES.md).
 
 **Mock questions are separate from practice:** held-out selection and new reading
 contexts test the same skills with different tasks. See [question pools](docs/MOCK-QUESTION-POOLS.md)
-for exposure tracking and the finite-bank limit.
+for exposure tracking and the repeat fallback when unseen items run out.
 
 ## What's inside
 

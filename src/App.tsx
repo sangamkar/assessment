@@ -139,7 +139,7 @@ export default function App() {
     if (!saved || saved.subject !== subject) update((s) => ({ ...s, mockRun: run }));
     const first = nextMockStep(stateRef.current, run);
     if (!first && run.answers.length < mockTotal(subject)) {
-      window.alert('There are not enough unseen mock questions in this area. Your test progress is saved. Add fresh questions before continuing; no partial result has been scored.');
+      window.alert('No mock questions are available in this area. Your test progress is saved; no partial result has been scored.');
       return;
     }
     if (!first) {
@@ -189,7 +189,7 @@ export default function App() {
     } else if (mode === 'mock' && session.current.mock) {
       if (session.current.mock.answers.length < mockTotal(session.current.mock.subject)) {
         setView({ name: 'parent' });
-        window.alert('This mock is paused because there are not enough unseen questions in an area. Your answers are saved; no partial result has been scored.');
+        window.alert('This mock could not continue because an area has no mock questions available. Your answers are saved; no partial result has been scored.');
         return;
       }
       const result = scoreMock(session.current.mock);

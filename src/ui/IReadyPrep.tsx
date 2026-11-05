@@ -87,7 +87,7 @@ export function IReadyPrep({ state, setState, onStartMock }: { state: AppState; 
 
       <Card title="📝 Mock i-Ready test">
         <p className="mb-3 text-sm text-slate-600">
-          Works like the real diagnostic: read aloud, no hints or feedback, and adaptive within each i-Ready area (harder after right answers, easier after misses). About {mockTotal('math')} Math or {mockTotal('reading')} Reading questions, with a stretch break every 12. He can stop at a break and continue another day. The result is an estimated level from this app’s questions, not an official i-Ready score. Mock questions are held apart from practice. If an area has no unseen questions left, the mock pauses and keeps the answers without producing a partial score.
+          Works like the real diagnostic: read aloud, no hints or feedback, and adaptive within each i-Ready area (harder after right answers, easier after misses). About {mockTotal('math')} Math or {mockTotal('reading')} Reading questions, with a stretch break every 12. He can stop at a break and continue another day. The result is an estimated level from this app’s questions, not an official i-Ready score. Mock questions are held apart from practice. Unseen questions are preferred. If those run out, the mock repeats questions from its own pool so the test can finish.
         </p>
         <div className="flex flex-wrap gap-2">
           {(['math', 'reading'] as const).map((subject) => {

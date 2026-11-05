@@ -142,7 +142,7 @@ describe("practice versus mock transfer questions", () => {
       }
       expect(run.answers).toHaveLength(mockTotal(subject));
     });
-  it("remembers pre-update authored exposure and pauses instead of leaking practice on exhaustion", () => {
+  it("finishes with reserved mock repeats after all authored questions were previously seen", () => {
     let state = emptyState();
     const info = getSkill("r.info")!;
     for (const item of [
@@ -170,7 +170,19 @@ describe("practice versus mock transfer questions", () => {
       });
       step = nextMockStep(state, run);
     }
-    expect(run.answers.length).toBeLessThan(mockTotal("reading"));
+    expect(run.answers.length).toBe(mockTotal("reading"));
+    expect(run.answers.filter((a) => a.strand === "info")).toHaveLength(6);
+    expect(
+      new Set(
+        run.answers.filter((a) => a.strand === "info").map((a) => a.itemId),
+      ).size,
+    ).toBe(6);
+    const reserved = new Set(poolItems(info, "mock").map((i) => i.id));
+    expect(
+      run.answers
+        .filter((a) => a.strand === "info")
+        .every((a) => reserved.has(a.itemId)),
+    ).toBe(true);
   });
   it("authors complete new questions with a single answer, feedback and no duplicate visible task", () => {
     const fps = new Set(

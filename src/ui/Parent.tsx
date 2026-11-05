@@ -13,9 +13,10 @@ import { AVATARS } from './Setup';
 import { QuestionBank } from './QuestionBank';
 import { IReadyPrep } from './IReadyPrep';
 import type { MockSubject } from '../engine/mock';
-import { GrowthReview } from './growth/Portfolio';
+import { getActivity } from '../content/missions';
+import { AirportJournal } from './airport/AirportDesigner';
 
-type Tab = 'growth' | 'overview' | 'iready' | 'focus' | 'checkups' | 'skills' | 'bank' | 'settings';
+type Tab = 'airport' | 'growth' | 'overview' | 'iready' | 'focus' | 'checkups' | 'skills' | 'bank' | 'settings';
 
 interface Props {
   state: AppState;
@@ -527,9 +528,10 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
 }
 
 export function Parent({ state, setState, onClose, onStartCheckup, onStartPlacement, onStartMock }: Props) {
-  const [tab, setTab] = useState<Tab>('growth');
+  const [tab, setTab] = useState<Tab>('airport');
   const tabs: { id: Tab; label: string }[] = [
-    { id: 'growth', label: 'Growth review' },
+    { id: 'airport', label: 'Screen-time progress' },
+    ...(state.growth.sessions.length ? [{ id: 'growth' as const, label: 'Earlier records' }] : []),
     { id: 'overview', label: 'Academic overview' },
     { id: 'iready', label: 'i-Ready prep' },
     { id: 'focus', label: 'Focus areas' },
@@ -557,7 +559,8 @@ export function Parent({ state, setState, onClose, onStartCheckup, onStartPlacem
         </nav>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-5">
-        {tab === 'growth' && <GrowthReview state={state} setState={setState} />}
+        {tab === 'airport' && <AirportJournal state={state} parent />}
+        {tab === 'growth' && <section className="growth-card"><h2 className="text-lg font-bold text-slate-800">Earlier portfolio records</h2><p className="mt-2 text-sm text-slate-600">These records were saved before the portal moved to on-screen activities. They remain in your backup.</p><div className="mt-5 space-y-4">{state.growth.sessions.map((session) => <article key={session.id} className="rounded-xl bg-slate-50 p-4"><h3 className="font-semibold text-slate-800">{getActivity(session.activityId)?.title ?? 'Earlier activity'}</h3>{session.reflection && <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">{session.reflection}</p>}{session.drawing.length > 0 && <svg viewBox="0 0 600 300" aria-label="Earlier sketch" role="img" className="mt-3 max-w-sm rounded-xl bg-white">{session.drawing.map((d, i) => <path key={i} d={d} fill="none" stroke="#136f78" strokeWidth="4" />)}</svg>}{state.growth.observations.filter((o) => o.sessionId === session.id).map((o) => <p key={o.id} className="mt-2 whitespace-pre-wrap text-sm text-slate-600">{new Date(o.ts).toLocaleDateString()} · {o.stage}: {o.note}</p>)}</article>)}</div></section>}
         {tab === 'overview' && <Overview state={state} />}
         {tab === 'iready' && <IReadyPrep state={state} setState={setState} onStartMock={onStartMock} />}
         {tab === 'focus' && <Focus state={state} />}

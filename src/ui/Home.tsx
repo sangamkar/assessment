@@ -3,20 +3,19 @@ import { SUBJECTS } from '../content';
 import type { SubjectId } from '../content/types';
 import { subjectSummary } from '../engine/planner';
 import type { AppState } from '../engine/progress';
-import { MissionHome } from './growth/Missions';
+import { AirportHome } from './airport/AirportDesigner';
 
 interface Props {
   state: AppState;
   onQuest: () => void;
-  onMissions: (id?: string) => void;
-  onActivity: (id: string) => void;
+  onAirport: () => void;
   onPassport: () => void;
   onGames: () => void;
   onIsland: (id: SubjectId) => void;
   onGrownUps: () => void;
 }
 
-export function Home({ state, onQuest, onGames, onIsland, onGrownUps, onMissions, onActivity, onPassport }: Props) {
+export function Home({ state, onQuest, onGames, onIsland, onGrownUps, onAirport, onPassport }: Props) {
   const name = state.profile?.name?.trim() || 'Explorer';
   return (
     <div className="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-4 py-6">
@@ -29,7 +28,7 @@ export function Home({ state, onQuest, onGames, onIsland, onGrownUps, onMissions
 
       </header>
 
-      <MissionHome state={state} onMissions={onMissions} onActivity={onActivity} onPassport={onPassport} />
+      <AirportHome state={state} onPlay={onAirport} onJournal={onPassport} />
 
       <div className="mt-2"><p className="growth-eyebrow">Keep growing your foundations</p><h2 className="font-kid text-2xl font-semibold text-teal-950">A little practice, a little play</h2></div>
       <div className="grid gap-4 sm:grid-cols-3">

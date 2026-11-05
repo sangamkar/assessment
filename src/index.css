@@ -40,3 +40,26 @@ button {
 button:not(:disabled) { cursor: pointer; }
 button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid #d38b34; outline-offset: 4px; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+.airport-tool { min-height: 44px; display: inline-flex; align-items: center; gap: .4rem; padding: .6rem .75rem; border: 1px solid #bad2c8; border-radius: .7rem; background: white; color: #315e58; font-size: .85rem; font-weight: 700; }
+.airport-tool-selected { background: #136f78; border-color: #136f78; color: white; }
+.airport-board-shell { position: relative; border-radius: 1.2rem; background: #bbd3bd; border: 3px solid #aac5ad; padding: 4px; }
+.airport-board { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px; }
+.airport-cell { aspect-ratio: 1; min-width: 0; position: relative; display: flex; justify-content: center; align-items: center; border-radius: .4rem; color: #2c6654; border: 1px solid #bed4bd; }
+.airport-cell-grass { background: #e1edda; }
+.airport-cell-grass:hover { background: #c4dfb8; }
+.airport-cell-taxi { background: #abc1bb; border-color: #8aa59e; }
+.airport-cell-runway { background: #475569; border-color: #475569; }
+.airport-cell-pond { background: #9bd4de; color: #357f94; font-size: 2rem; }
+.airport-cell-terminal { background: #e6cfac; color: #92734b; border-color: #d3b88f; }
+.airport-cell-gate { background: #cce8ef; border: 2px solid #368da1; font-size: clamp(1rem,3vw,1.8rem); font-weight: 800; }
+.airport-gate-b { color: #ab6019; }
+.airport-runway-line { height: 70%; border-left: 3px dashed #fff; }
+.airport-exit { position: absolute; right: 3px; color: white; background: #136f78; border-radius: .25rem; font-size: 1.5rem; line-height: 1; padding: 2px; }
+.airport-taxi-dot { width: 22%; height: 22%; background: #fff5b9; border-radius: 50%; }
+.airport-grass-dot { font-size: 1.4rem; opacity: .5; }
+.airport-flight-overlay { pointer-events: none; position: absolute; inset: 4px; width: calc(100% - 8px); height: calc(100% - 8px); overflow: visible; }
+@media (prefers-reduced-motion: reduce) { .airport-plane { display: none; } }
+.airport-using-gate-a .airport-gate-zone.airport-cell-grass, .airport-using-gate-b .airport-gate-zone.airport-cell-grass { background: #d0edf3; border: 2px dashed #368da1; }
+.airport-using-runway .airport-runway-zone.airport-cell-grass { background: #d0dce3; border: 2px dashed #64748b; }
+@media (max-width: 639px) { .airport-page { padding-top: 1rem; } }

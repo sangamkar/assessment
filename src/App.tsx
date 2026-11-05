@@ -22,14 +22,12 @@ import type { AnswerEvent } from './ui/Player';
 import { Player } from './ui/Player';
 import { Results } from './ui/Results';
 import { Setup } from './ui/Setup';
-import { Missions, ActivityPlayer } from './ui/growth/Missions';
-import { Portfolio } from './ui/growth/Portfolio';
-import { chooseMission, startActivity } from './engine/growth';
+import { AirportDesigner, AirportJournal } from './ui/airport/AirportDesigner';
+import { emptyAirport } from './games/airport';
 
 type View =
   | { name: 'home' }
-  | { name: 'missions' }
-  | { name: 'activity'; id: string }
+  | { name: 'airport' }
   | { name: 'portfolio' }
   | { name: 'island'; subject: SubjectId }
   | { name: 'play'; mode: Mode; title: string; color: string; total: number; first: QuestStep | null; again?: () => void; startAt?: number }
@@ -87,11 +85,6 @@ export default function App() {
   if (!state.profile) {
     return <Setup onSave={(name, avatar) => update((s) => ({ ...s, profile: { name, avatar, createdAt: Date.now() } }))} />;
   }
-
-  const openActivity = (id: string) => {
-    update((s) => startActivity(s, id));
-    setView({ name: 'activity', id });
-  };
 
   const startQuest = () => {
     const queue = buildQuest(stateRef.current);
@@ -219,13 +212,11 @@ export default function App() {
   const content = (() => {
     switch (view.name) {
       case 'home':
-        return <Home state={state} onMissions={(id) => { if (id) update((s) => chooseMission(s, id)); setView({ name: 'missions' }); }} onActivity={openActivity} onPassport={() => setView({ name: 'portfolio' })} onQuest={startQuest} onGames={() => setView({ name: 'games' })} onIsland={(subject) => setView({ name: 'island', subject })} onGrownUps={() => setView({ name: 'gate' })} />;
-      case 'missions':
-        return <Missions state={state} update={update} onBack={() => setView({ name: 'home' })} onActivity={openActivity} />;
-      case 'activity':
-        return <ActivityPlayer key={view.id} state={state} activityId={view.id} update={update} onBack={() => setView({ name: 'missions' })} onPassport={() => setView({ name: 'portfolio' })} onAgain={() => update((s) => startActivity(s, view.id))} onPractice={startSkill} />;
+        return <Home state={state} onAirport={() => setView({ name: 'airport' })} onPassport={() => setView({ name: 'portfolio' })} onQuest={startQuest} onGames={() => setView({ name: 'games' })} onIsland={(subject) => setView({ name: 'island', subject })} onGrownUps={() => setView({ name: 'gate' })} />;
+      case 'airport':
+        return <AirportDesigner state={state} update={update} onBack={() => setView({ name: 'home' })} onJournal={() => setView({ name: 'portfolio' })} />;
       case 'portfolio':
-        return <Portfolio state={state} onBack={() => setView({ name: 'home' })} onMissions={() => setView({ name: 'missions' })} />;
+        return <AirportJournal state={state} onBack={() => setView({ name: 'home' })} onPlay={(id) => { update((s) => ({ ...s, airport: { ...(s.airport ?? emptyAirport()), selected: id } })); setView({ name: 'airport' }); }} />;
       case 'games':
         return <Games state={state} onBack={() => setView({ name: 'home' })} onPlay={(id) => setView({ name: 'game', id, level: gameState(stateRef.current, id).level, run: Date.now() })} />;
       case 'game': {

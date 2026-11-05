@@ -3,7 +3,7 @@ import { getSkill } from '../src/content';
 import { emptyState } from '../src/engine/progress';
 import type { AppState } from '../src/engine/progress';
 import { buildQuest } from '../src/engine/planner';
-import { LADDER_MAX, MOCK_DOMAINS, MOCK_PER_DOMAIN, expectedLevel, levelLabel, mockTotal, newMockRun, nextMockStep, scoreMock } from '../src/engine/mock';
+import { LADDER_MAX, MOCK_DOMAINS, MOCK_PER_DOMAIN, mockTotal, newMockRun, nextMockStep, scoreMock } from '../src/engine/mock';
 import type { MockSubject } from '../src/engine/mock';
 
 const T0 = Date.UTC(2026, 9, 20, 15);
@@ -70,11 +70,11 @@ describe('mock i-Ready', () => {
     expect(saved.answers.map((a: { itemId: string }) => a.itemId)).not.toContain(next.item.id);
   });
 
-  it('expected Kindergarten level in December is “Mid K”-ish and labels are ordered', () => {
-    const dec = expectedLevel('K', new Date(2026, 11, 2));
-    expect(levelLabel(dec)).toMatch(/K$/);
-    expect(levelLabel(0)).toBe('Early K');
-    expect(levelLabel(LADDER_MAX)).toBe('Late Grade 2 or above');
+  it('reports observations rather than uncalibrated grade placements', () => {
+    const { result } = simulate('math', 4);
+    expect(result.overallLabel).not.toMatch(/Grade|Mid K|Early K/);
+    expect(result.domains.every(d => !/Grade|Mid K|Early K/.test(d.label))).toBe(true);
+    expect(result.untracked).toBeGreaterThan(0);
   });
 });
 

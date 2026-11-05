@@ -2,11 +2,11 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CURRICULA, getSkill, getSubject } from './content';
 import type { SubjectId } from './content/types';
 import type { CheckupAnswer, CheckupPlan, QuestStep } from './engine/planner';
-import { PLACEMENT_CAP, buildQuest, buildSkillSession, buildSkipChallenge, creditFromCheckup, nextCheckupItem, placementAnswer, placementNext, planCheckup, scoreCheckup, startPlacement } from './engine/planner';
+import { PLACEMENT_CAP, applyPlacement, buildQuest, buildSkillSession, buildSkipChallenge, creditFromCheckup, nextCheckupItem, placementAnswer, placementNext, planCheckup, scoreCheckup, startPlacement } from './engine/planner';
 import type { PlacementRun } from './engine/planner';
 import type { MockRun, MockSubject } from './engine/mock';
 import { MOCK_BREAK_EVERY, mockTitle, mockTotal, newMockRun, nextMockStep, scoreMock } from './engine/mock';
-import type { AppState, Attempt, GameId, Mode } from './engine/progress';
+import type { AppState, Attempt, GameId, GameEvidence, Mode } from './engine/progress';
 import { gameState, loadState, markIntroSeen, markKnown, recordAttempt, recordGame, saveState, skillState } from './engine/progress';
 import { Games } from './ui/games/Games';
 import { MysteryWord } from './ui/games/MysteryWord';
@@ -16,6 +16,9 @@ import { PasscodeLock } from './components/PasscodeLock';
 import { soundEngine } from './utils/audio';
 import { Gate } from './ui/Gate';
 import { Home } from './ui/Home';
+import { StartingPoint } from './ui/StartingPoint';
+import { questionFingerprint, seenQuestion } from './engine/evidence';
+import { BuildExplore } from './ui/BuildExplore';
 import { Island } from './ui/Island';
 import { Parent } from './ui/Parent';
 import type { AnswerEvent } from './ui/Player';
@@ -27,6 +30,8 @@ import { emptyAirport } from './games/airport';
 
 type View =
   | { name: 'home' }
+  | { name: 'starting-point' }
+  | { name: 'explore' }
   | { name: 'airport' }
   | { name: 'portfolio' }
   | { name: 'island'; subject: SubjectId }
@@ -42,6 +47,7 @@ interface Session {
   index: number;
   plan?: CheckupPlan;
   placement?: PlacementRun;
+  startupSubject?: 'math' | 'reading';
   mock?: MockRun;
   answers: (CheckupAnswer & Attempt)[];
 }
@@ -89,7 +95,7 @@ export default function App() {
   const startQuest = () => {
     const queue = buildQuest(stateRef.current);
     session.current = { queue, index: 0, answers: [] };
-    setView({ name: 'play', mode: 'quest', title: 'Today’s Quest', color: '#f97316', total: queue.length, first: queue[0] ?? null, again: startQuest });
+    setView({ name: 'play', mode: 'quest', title: 'Today’s learning', color: '#f97316', total: queue.length, first: queue[0] ?? null, again: startQuest });
   };
 
   const startSkill = (skillId: string) => {
@@ -110,16 +116,18 @@ export default function App() {
     setView({ name: 'play', mode: 'checkup', title: `Check-up · ${subject.kidTitle}`, color: subject.color, total, first });
   };
 
-  const startPlacementRun = (subjectId: SubjectId) => {
+  const startPlacementRun = (subjectId: SubjectId, startup = false) => {
     const run = startPlacement(stateRef.current, subjectId);
-    session.current = { queue: [], index: 0, placement: run, answers: [] };
+    if (startup) { run.cap = 12; run.perStrandCap = Math.max(2, Math.floor(12 / Math.max(1, run.strands.length))); }
+    session.current = { queue: [], index: 0, placement: run, answers: [], startupSubject: startup ? subjectId as 'math' | 'reading' : undefined };
     const first = placementNext(stateRef.current, run);
     const subject = getSubject(subjectId);
     if (!first) {
+      if (startup) { update(s => ({ ...s, startupCheck: { ...s.startupCheck, [subjectId]: Date.now() } })); setView({ name: 'starting-point' }); return; }
       window.alert(`Nothing left to place in ${subject.title}: every skill is already mastered or marked known.`);
       return;
     }
-    setView({ name: 'play', mode: 'placement', title: `Find your level · ${subject.kidTitle}`, color: subject.color, total: PLACEMENT_CAP, first });
+    setView({ name: 'play', mode: 'placement', title: `Find a starting point · ${subject.kidTitle}`, color: subject.color, total: run.cap ?? PLACEMENT_CAP, first });
   };
 
   const startSkip = (skillId: string) => {
@@ -159,12 +167,12 @@ export default function App() {
   };
 
   const onAnswer = (e: AnswerEvent, mode: Mode) => {
-    const attempt: Attempt = { itemId: e.step.item.id, skill: e.step.skill.id, d: e.step.item.difficulty, correct: e.correct, why: e.why, ts: Date.now(), mode };
+    const attempt: Attempt = { fingerprint: questionFingerprint(e.step.item), repeated: e.step.repeated ?? seenQuestion(stateRef.current, e.step.item), selectedChoiceId: e.selectedChoiceId, question: e.correct ? undefined : e.question, itemId: e.step.item.id, skill: e.step.skill.id, d: e.step.item.difficulty, correct: e.correct, why: e.why, ts: Date.now(), mode };
     if (mode === 'placement' && session.current.placement) placementAnswer(session.current.placement, e.correct);
     if (mode === 'mock' && session.current.mock) {
       const run = session.current.mock;
       const step = e.step as QuestStep & { strand: string; level: number; target: number };
-      run.answers.push({ strand: step.strand, skill: step.skill.id, itemId: step.item.id, level: step.level, target: step.target, correct: e.correct, why: e.why, ts: attempt.ts });
+      run.answers.push({ fingerprint: attempt.fingerprint, repeated: attempt.repeated, strand: step.strand, skill: step.skill.id, itemId: step.item.id, level: step.level, target: step.target, correct: e.correct, why: e.why, ts: attempt.ts });
       const snapshot = { ...run, answers: [...run.answers] };
       update((s) => ({ ...s, mockRun: snapshot })); // saved after every answer, so a paused test resumes
     }
@@ -186,7 +194,8 @@ export default function App() {
       return;
     } else if (mode === 'placement' && session.current.placement) {
       const known = session.current.placement.known;
-      update((s) => markKnown(s, known, 'tested'));
+      update((s) => ({ ...applyPlacement(s, session.current.placement!), startupCheck: session.current.startupSubject ? { ...s.startupCheck, [session.current.startupSubject]: Date.now() } : s.startupCheck }));
+      if (session.current.startupSubject) { setView({ name: 'starting-point' }); return; }
       const note = known.length
         ? `Amazing! You can skip ${known.length} thing${known.length > 1 ? 's' : ''} you already know.`
         : 'Thank you! Now we know where to start.';
@@ -194,13 +203,14 @@ export default function App() {
       return;
     } else if (mode === 'skip') {
       const skill = session.current.queue[0]?.skill;
-      const passed = summary.correct === summary.total;
+      const allCorrect = summary.correct === summary.total;
+      const passed = allCorrect && summary.total >= 3 && session.current.queue.every(step => !step.repeated);
       if (passed && skill) update((s) => markKnown(s, [skill.id], 'tested'));
       setView({
         name: 'results',
         mode,
         ...summary,
-        note: passed ? 'You already know this one! Skipped ahead. ⚡' : `${summary.correct} of ${summary.total} right. Let’s practise this one together!`,
+        note: passed ? 'You can try the next challenge! This skill will come back for review.' : allCorrect ? 'You finished the check. We’ll try fresh examples before skipping this skill.' : 'Thank you for trying. Let’s practise this one together!',
       });
       return;
     } else {
@@ -210,18 +220,21 @@ export default function App() {
   };
 
   const content = (() => {
+    if (view.name === 'starting-point' || (view.name === 'home' && !state.startupCheck?.finished)) return <StartingPoint state={state} onStart={subject => startPlacementRun(subject, true)} onContinue={() => { update(s => ({ ...s, startupCheck: { ...s.startupCheck, finished: true } })); setView({ name: 'home' }); }} />;
     switch (view.name) {
       case 'home':
-        return <Home state={state} onAirport={() => setView({ name: 'airport' })} onPassport={() => setView({ name: 'portfolio' })} onQuest={startQuest} onGames={() => setView({ name: 'games' })} onIsland={(subject) => setView({ name: 'island', subject })} onGrownUps={() => setView({ name: 'gate' })} />;
+        return <Home state={state} onExplore={() => setView({ name: 'explore' })} onQuest={startQuest} onGames={() => setView({ name: 'games' })} onIsland={(subject) => setView({ name: 'island', subject })} onGrownUps={() => setView({ name: 'gate' })} />;
+      case 'explore':
+        return <BuildExplore state={state} onBack={() => setView({ name: 'home' })} onAirport={() => setView({ name: 'airport' })} onPassport={() => setView({ name: 'portfolio' })} />;
       case 'airport':
-        return <AirportDesigner state={state} update={update} onBack={() => setView({ name: 'home' })} onJournal={() => setView({ name: 'portfolio' })} />;
+        return <AirportDesigner state={state} update={update} onBack={() => setView({ name: 'explore' })} onJournal={() => setView({ name: 'portfolio' })} />;
       case 'portfolio':
-        return <AirportJournal state={state} onBack={() => setView({ name: 'home' })} onPlay={(id) => { update((s) => ({ ...s, airport: { ...(s.airport ?? emptyAirport()), selected: id } })); setView({ name: 'airport' }); }} />;
+        return <AirportJournal state={state} onBack={() => setView({ name: 'explore' })} onPlay={(id) => { update((s) => ({ ...s, airport: { ...(s.airport ?? emptyAirport()), selected: id } })); setView({ name: 'airport' }); }} />;
       case 'games':
         return <Games state={state} onBack={() => setView({ name: 'home' })} onPlay={(id) => setView({ name: 'game', id, level: gameState(stateRef.current, id).level, run: Date.now() })} />;
       case 'game': {
         // Level is fixed for a session; the next session starts at the updated level.
-        const props = { level: view.level, onRound: (r: 'win' | 'assisted' | 'loss') => update((s) => recordGame(s, view.id, r)), onExit: () => setView({ name: 'games' }) };
+        const props = { level: view.level, onRound: (r: 'win' | 'assisted' | 'loss', evidence?: GameEvidence) => update((s) => recordGame(s, view.id, r, Date.now(), evidence)), onExit: () => setView({ name: 'games' }) };
         if (view.id === 'mystery-word') return <MysteryWord key={view.run} {...props} />;
         if (view.id === 'sentence-builder') return <SentenceBuilder key={view.run} {...props} />;
         return <NumberPath key={view.run} {...props} />;
@@ -245,7 +258,7 @@ export default function App() {
             onFinish={(summary) => onFinish(view.mode, summary, view.again)}
             startAt={view.startAt}
             breakEvery={view.mode === 'mock' ? MOCK_BREAK_EVERY : undefined}
-            onExit={() => setView(view.mode === 'checkup' || view.mode === 'placement' || view.mode === 'mock' ? { name: 'parent' } : { name: 'home' })}
+            onExit={() => setView(session.current.startupSubject ? { name: 'starting-point' } : view.mode === 'checkup' || view.mode === 'placement' || view.mode === 'mock' ? { name: 'parent' } : { name: 'home' })}
           />
         );
       case 'results':
@@ -253,7 +266,7 @@ export default function App() {
       case 'gate':
         return <Gate onPass={() => setView({ name: 'parent' })} onCancel={() => setView({ name: 'home' })} />;
       case 'parent':
-        return <Parent state={state} setState={(s) => update(() => s)} onClose={() => setView({ name: 'home' })} onStartCheckup={startCheckup} onStartPlacement={startPlacementRun} onStartMock={startMock} />;
+        return <Parent state={state} setState={(s) => update(() => s)} onClose={() => setView({ name: 'home' })} onStartCheckup={startCheckup} onStartPlacement={startPlacementRun} onPractice={startSkill} onStartingPoint={() => setView({ name: 'starting-point' })} onStartMock={startMock} />;
     }
   })();
   return <>{!storageOk && <div role="alert" className="sticky top-0 z-50 bg-amber-100 px-4 py-3 text-sm font-semibold text-amber-950">Recent changes could not be saved on this device. Keep this page open and use Grown-ups → Settings → Backup to keep a copy.</div>}{content}</>;

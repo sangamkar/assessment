@@ -59,7 +59,55 @@ button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus
 .airport-taxi-dot { width: 22%; height: 22%; background: #fff5b9; border-radius: 50%; }
 .airport-grass-dot { font-size: 1.4rem; opacity: .5; }
 .airport-flight-overlay { pointer-events: none; position: absolute; inset: 4px; width: calc(100% - 8px); height: calc(100% - 8px); overflow: visible; }
-@media (prefers-reduced-motion: reduce) { .airport-plane { display: none; } }
 .airport-using-gate-a .airport-gate-zone.airport-cell-grass, .airport-using-gate-b .airport-gate-zone.airport-cell-grass { background: #d0edf3; border: 2px dashed #368da1; }
 .airport-using-runway .airport-runway-zone.airport-cell-grass { background: #d0dce3; border: 2px dashed #64748b; }
 @media (max-width: 639px) { .airport-page { padding-top: 1rem; } }
+
+/* Build & Explore is secondary to the academic learning path. */
+.explore-entry { display: flex; align-items: center; gap: 1.5rem; padding: 1.25rem; border: 1px solid #c9ded4; border-radius: 1.75rem; background: #fffcf3; }
+.explore-entry:hover { border-color: #136f78; }
+.explore-entry-art { width: 12rem; flex-shrink: 0; }
+.tutorial-layout { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.tutorial-steps { display: flex; flex-wrap: wrap; gap: .75rem; font-size: .75rem; font-weight: 700; color: #64748b; }
+.tutorial-steps li { display: flex; align-items: center; gap: .35rem; }
+.tutorial-steps li>span { display: grid; place-items: center; width: 1.7rem; height: 1.7rem; border-radius: 50%; background: #e2e8e1; }
+.tutorial-steps .is-current { color: #136f78; }
+.tutorial-steps .is-current>span { background: #136f78; color: white; }
+.airport-picture-legend { display: flex; justify-content: space-between; font-size: .8rem; font-weight: 700; color: #195d63; margin-bottom: .75rem; }
+.airport-cell svg { width: 85%; height: 85%; }
+.airport-cell-terminal svg { width: 100%; height: 100%; }
+.airport-waiting-plane { filter: drop-shadow(0 3px 2px #0003); }
+.airport-exit { font-size: 1rem; bottom: 2px; }
+.airport-cell-taxi { background: #799e92; }
+.airport-path-mark { width: 85%; height: 85%; border: 3px dashed #ffedaa; border-radius: 20%; }
+.airport-gate-sign { display: inline-grid; place-items: center; width: 65%; aspect-ratio: 1; border-radius: 25%; background: #ffdd78; color: #694611; border: 2px solid #ac7b25; font-weight: 800; box-shadow: 0 3px 0 #ac7b25; }
+.airport-gate-b { background: #cceaff; color: #075985; border-color: #368da1; }
+.airport-visual-key { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: .75rem; font-size: .8rem; font-weight: 700; color: #345951; }
+.airport-visual-key>span { display: inline-flex; align-items: center; gap: .4rem; }
+.airport-visual-key .airport-gate-sign { width: 1.3rem; font-size: .7rem; }
+.key-swatch { width: 1.3rem; height: 1.3rem; display: inline-block; border-radius: .25rem; }
+.key-runway { background: #475569; border-left: 4px dashed white; }
+.key-path { background: #799e92; border: 2px dashed #ffedaa; }
+.airport-pond-picture { font-size: clamp(1rem, 4vw, 2.2rem); line-height: .7; color: #227891; }
+.airport-pond-picture>span { display: block; font-size: .7em; }
+.airport-target { background: #fff0b9; border: 3px dashed #b17618; animation: airport-glow 1.4s ease-in-out infinite; }
+.airport-tap-symbol { font-size: clamp(1.4rem, 5vw, 2.4rem); font-weight: 800; color: #885b12; }
+.airport-cell-taxi, .airport-cell-gate { animation: airport-place .25s ease-out; }
+.tutorial-board .airport-cell:disabled { cursor: default; opacity: 1; }
+@keyframes airport-glow { 50% { box-shadow: inset 0 0 0 5px #ffd363; background: #ffe79a; } }
+@keyframes airport-place { from { transform: scale(.85); } to { transform: scale(1); } }
+@media (max-width: 767px) { .tutorial-layout { grid-template-columns: minmax(0, 1fr); } .airport-tutorial .growth-feature { padding: 1.1rem; } .explore-entry { gap: .8rem; } .explore-entry-art { width: 6rem; } }
+@media (prefers-reduced-motion: reduce) { .airport-target, .airport-cell-taxi, .airport-cell-gate { animation: none; } .airport-plane { display: initial; } }
+@media (max-width: 767px) {
+  .airport-tutorial { padding-top: 1rem; }
+  .airport-tutorial header h1 { font-size: 1.6rem; }
+  .tutorial-layout { gap: 1rem; }
+  .tutorial-layout>.growth-feature { display: contents; }
+  .tutorial-instructions { order: 0; padding: 1rem; border-radius: 1.25rem; background: #fffcf3; }
+  .tutorial-instructions h2 { font-size: 1.5rem; }
+  .tutorial-instructions p { font-size: 1rem; }
+  .tutorial-instructions .growth-eyebrow { margin-top: 1rem; font-size: .7rem; }
+  .tutorial-layout>section[aria-label="Tutorial airport"] { order: 1; }
+  .tutorial-controls { order: 2; padding: 0 1rem 1rem; }
+  .tutorial-controls [role="status"] { margin-top: 0; }
+}

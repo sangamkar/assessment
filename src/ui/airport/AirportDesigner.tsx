@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import {
   Plane,
   Route,
-  Building2,
   Flag,
   Eraser,
   Undo2,
@@ -31,13 +30,14 @@ import type {
 } from "../../games/airport";
 import { SpeakButton } from "../SpeakButton";
 import { soundEngine } from "../../utils/audio";
-import { MissionArt } from "../growth/MissionArt";
+import { AirportPicture, PlanePicture, TerminalPicture } from "./AirportArt";
+import { AirportTutorial } from "./AirportTutorial";
 
 type Update = (fn: (s: AppState) => AppState) => void;
 const TOOLS = [
   {
     id: "taxi" as Tool,
-    label: "Taxi path",
+    label: "Plane path",
     Icon: Route,
     help: "Tap grass to build a path. Planes follow touching tiles, one at a time.",
   },
@@ -49,13 +49,13 @@ const TOOLS = [
   },
   {
     id: "gate-a" as Tool,
-    label: "Gate A",
+    label: "Place Gate A",
     Icon: Flag,
     help: "Tap the column just beside the terminal to place or move Gate A.",
   },
   {
     id: "gate-b" as Tool,
-    label: "Gate B",
+    label: "Place Gate B",
     Icon: Flag,
     help: "Tap the column just beside the terminal to place or move Gate B.",
   },
@@ -109,8 +109,7 @@ export function AirportHome({
           Airport Designer
         </h2>
         <p className="mt-3 max-w-md text-slate-600">
-          You’re in charge. Build a runway, connect your gates, and watch your
-          planes try the route.
+          Help a plane reach its airport gate. Start with a short, hands-on tutorial, then build your own paths.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <button className="growth-primary" onClick={onPlay}>
@@ -126,8 +125,8 @@ export function AirportHome({
           {selected.title} · No timer. Try your own ideas.
         </p>
       </div>
-      <div className="h-44 text-teal-700 md:h-56">
-        <MissionArt theme="airport" />
+      <div className="text-teal-700">
+        <AirportPicture />
       </div>
     </section>
   );
@@ -202,16 +201,24 @@ export function AirportDesigner({
   const airport = state.airport ?? emptyAirport();
   const c = challengeById(airport.selected) ?? CHALLENGES[0];
   const d = airport.drafts[c.id] ?? newDraft();
-  const [tool, setTool] = useState<Tool>("taxi");
+  const [tool, setTool] = useState<Tool>(c.id === "first-flight" && d.layout.gates[0] === null ? "gate-a" : "taxi");
+  const [tutorial, setTutorial] = useState(!airport.tutorialSeen);
+  const [reducedMotion, setReducedMotion] = useState(false);
   const [notice, setNotice] = useState("");
   const result =
     d.lastTest?.revision === d.revision ? testLayout(d.layout, c) : undefined;
   useEffect(() => {
-    setTool("taxi");
+    setTool(c.id === "first-flight" && d.layout.gates[0] === null ? "gate-a" : "taxi");
     setNotice("");
     soundEngine.stopSpeech();
   }, [c.id]);
   useEffect(() => () => soundEngine.stopSpeech(), []);
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const change = () => setReducedMotion(media.matches);
+    change(); media.addEventListener('change', change);
+    return () => media.removeEventListener('change', change);
+  }, []);
   const modify = (fn: (draft: AirportDraft) => AirportDraft) =>
     update((s) => {
       const a = s.airport ?? emptyAirport();
@@ -245,17 +252,22 @@ export function AirportDesigner({
       );
       return;
     }
-    setNotice("Design updated. Test your idea when you are ready.");
+    setNotice(tool === 'gate-a' ? "Gate placed. Now choose Plane path and connect it to the plane." : "Design updated. Test your idea when you are ready.");
+    if (tool === 'gate-a' && c.id === 'first-flight') setTool('taxi');
     modify((draft) => changeDesign(draft, c, tool, n));
   };
   const latest = CHALLENGES.indexOf(c);
   const currentTool = TOOLS.find((t) => t.id === tool)!;
+  if (tutorial) return <AirportTutorial onDone={() => {
+    update(s => ({ ...s, airport: { ...(s.airport ?? emptyAirport()), tutorialSeen: true } }));
+    setTutorial(false);
+  }} />;
   return (
     <main className="growth-page airport-page">
       <header className="mb-5 flex items-start gap-3">
         <button
           className="growth-back"
-          aria-label="Back to home"
+          aria-label="Back to Build and Explore"
           onClick={onBack}
         >
           <ArrowLeft />
@@ -269,6 +281,7 @@ export function AirportDesigner({
             Build it. Send a plane. Make it better.
           </p>
         </div>
+        <button className="growth-secondary" onClick={() => setTutorial(true)}>Show me how</button>
         <button className="growth-text-button" onClick={onJournal}>
           My designs
         </button>
@@ -320,7 +333,7 @@ export function AirportDesigner({
             aria-label="Building tools"
             className="mb-3 flex flex-wrap gap-2"
           >
-            {TOOLS.filter((t) => c.gates === 2 || t.id !== "gate-b").map(
+            {TOOLS.filter((t) => (c.gates === 2 || t.id !== "gate-b") && (c.id !== "first-flight" || t.id !== "runway")).map(
               ({ id, label, Icon }) => (
                 <button
                   key={id}
@@ -345,9 +358,9 @@ export function AirportDesigner({
             </span>
           </p>
           <div className="mb-2 flex justify-between px-1 text-xs font-bold uppercase tracking-wider text-teal-800">
-            <span>Runway ↓</span>
-            <span>Build here</span>
-            <span>Terminal ↓</span>
+            <span>✈ Start here ↓</span>
+            <span>Connect a path</span>
+            <span>Airport ↓</span>
           </div>
           <div className={`airport-board-shell airport-using-${tool}`}>
             <div
@@ -393,19 +406,20 @@ export function AirportDesigner({
                     }}
                   >
                     {name === "terminal" ? (
-                      <Building2 aria-hidden size={25} />
+                      <TerminalPicture />
                     ) : name === "pond" ? (
-                      <span aria-hidden>≈</span>
+                      <span aria-hidden className="airport-pond-picture">〰<span>🌿</span></span>
                     ) : isGate ? (
                       <span
                         aria-hidden
-                        className={gateLabel === "B" ? "airport-gate-b" : ""}
+                        className={`airport-gate-sign ${gateLabel === "B" ? "airport-gate-b" : ""}`}
                       >
                         {gateLabel}
                       </span>
                     ) : d.layout.runway.includes(n) ? (
                       <>
-                        <span className="airport-runway-line" />
+                        {n !== EXIT && <span className="airport-runway-line" />}
+                        {n === EXIT && !result?.ok && <PlanePicture className="airport-waiting-plane" />}
                         {n === EXIT && (
                           <span aria-hidden className="airport-exit">
                             →
@@ -413,10 +427,10 @@ export function AirportDesigner({
                         )}
                       </>
                     ) : d.layout.taxi.includes(n) ? (
-                      <span aria-hidden className="airport-taxi-dot" />
+                      <span aria-hidden className="airport-path-mark" />
                     ) : (
                       <span aria-hidden className="airport-grass-dot">
-                        ·
+                        +
                       </span>
                     )}
                   </button>
@@ -450,22 +464,23 @@ export function AirportDesigner({
                       />
                       <g
                         className="airport-plane"
-                        opacity="0"
+                        opacity={reducedMotion ? "1" : "0"}
+                        transform={reducedMotion ? `translate(${(route[route.length - 1] % 6) * 100 + 50},${Math.floor(route[route.length - 1] / 6) * 100 + 50})` : undefined}
                         fill={i ? "#cf6c13" : "#0d6472"}
                       >
-                        <set
+                        {!reducedMotion && <set
                           attributeName="opacity"
                           to="1"
                           begin={`${result.routes.slice(0, i).reduce((n, r) => n + Math.max(2, r.length * 0.45), 0)}s`}
                           fill="freeze"
-                        />
-                        <animateMotion
+                        />}
+                        {!reducedMotion && <animateMotion
                           path={path}
                           dur={`${Math.max(2, route.length * 0.45)}s`}
                           begin={`${result.routes.slice(0, i).reduce((n, r) => n + Math.max(2, r.length * 0.45), 0)}s`}
                           fill="freeze"
                           rotate="auto"
-                        />
+                        />}
                         <path
                           d="M-23,-6 L-5,-6 L2,-22 L10,-22 L6,-6 L23,-2 L23,3 L6,6 L10,22 L2,22 L-5,6 L-23,6 L-17,0Z"
                           stroke="white"
@@ -478,6 +493,7 @@ export function AirportDesigner({
               </svg>
             )}
           </div>
+          <div className="airport-visual-key"><span><span className="key-swatch key-runway" />Runway</span><span><span className="key-swatch key-path" />Plane path</span><span><span className="airport-gate-sign">A</span>Gate</span></div>
           <div className="mt-4 flex flex-wrap gap-3">
             <button
               className="growth-primary flex-1"
@@ -575,8 +591,9 @@ export function AirportDesigner({
               </div>
             )}
           </section>
-          <section className="growth-card">
-            <label className="growth-label">
+          <details className="growth-card">
+            <summary className="cursor-pointer font-semibold text-teal-900">Tell me about your design (optional)</summary>
+            <label className="growth-label mt-4">
               My design idea
               <textarea
                 className="growth-input mt-2 min-h-24"
@@ -594,7 +611,7 @@ export function AirportDesigner({
             <p className="mt-2 text-xs text-slate-500">
               Optional. Your layout and words save automatically on this device.
             </p>
-          </section>
+          </details>
         </aside>
       </div>
     </main>

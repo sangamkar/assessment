@@ -3,17 +3,11 @@ import type { Difficulty, Grade, Skill } from '../content/types';
 import { NOISE_TAGS } from '../content/misconceptions';
 import type { AppState } from './progress';
 import type { QuestStep } from './planner';
-import { pickItem } from './planner';
+import { pickAssessmentItem } from './planner';
+import { evidenceLabel } from './evidence';
 
-/*
- * Mock i-Ready Diagnostic.
- *
- * Like the real test it is adaptive *within each domain*: every answer moves a
- * staircase up or down a 9-step ladder (K / Grade 1 / Grade 2 × difficulty 1–3).
- * Big steps first, then small steps, so it homes in quickly. The result is an
- * estimated working level per domain, phrased like i-Ready placements
- * ("Mid Grade 1"). It is an estimate from our own items, not an i-Ready scale score.
- */
+/** Independent adaptive practice check. Numeric ladder values only select questions;
+ * they are not calibrated grade placements, standardized scores, or school norms. */
 
 export type MockSubject = 'math' | 'reading';
 const GRADES: Grade[] = ['K', '1', '2'];
@@ -36,7 +30,7 @@ export const MOCK_DOMAINS: Record<MockSubject, { strand: string; title: string }
   ],
 };
 
-/** Questions per domain. ~32 math / ~36 reading, close to a real K–1 diagnostic sitting split in parts. */
+/** App-specific question budgets, split into short sittings. */
 export const MOCK_PER_DOMAIN: Record<MockSubject, number> = { math: 8, reading: 6 };
 export const MOCK_BREAK_EVERY = 12;
 
@@ -44,6 +38,8 @@ export interface MockAnswer {
   strand: string;
   skill: string;
   itemId: string;
+  fingerprint?: string;
+  repeated?: boolean;
   level: number;
   /** Level the staircase asked for; above `level` when the domain had no harder questions. */
   target?: number;
@@ -68,8 +64,10 @@ export interface MockDomainResult {
   label: string;
   correct: number;
   total: number;
-  /** He reached the hardest questions the app has for this domain, so his true level may be higher. */
+  /** The app cannot provide harder content here; no higher ability is inferred. */
   ceiling: boolean;
+  repeated?: number;
+  untracked?: number;
 }
 
 export interface MockResult {
@@ -81,22 +79,12 @@ export interface MockResult {
   domains: MockDomainResult[];
   misconceptions: { tag: string; count: number }[];
   practice: string[];
+  repeated?: number;
+  untracked?: number;
 }
 
 export const ladderOf = (grade: Grade, d: Difficulty) => GRADES.indexOf(grade) * 3 + (d - 1);
 const fromLadder = (level: number): { grade: Grade; d: Difficulty } => ({ grade: GRADES[Math.floor(level / 3)], d: ((level % 3) + 1) as Difficulty });
-
-export function levelLabel(x: number): string {
-  const labels = ['Early K', 'Mid K', 'Late K', 'Early Grade 1', 'Mid Grade 1', 'Late Grade 1', 'Early Grade 2', 'Mid Grade 2', 'Late Grade 2 or above'];
-  return labels[Math.max(0, Math.min(LADDER_MAX, Math.round(x)))];
-}
-
-/** Where a kindergartner is expected to be at a given month (school year Aug–May). */
-export function expectedLevel(grade: Grade, date: Date): number {
-  const month = date.getMonth(); // 0 = Jan
-  const fraction = month >= 7 ? (month - 7) / 10 : (month + 5) / 10; // Aug → 0, May → 0.9
-  return GRADES.indexOf(grade) * 3 + fraction * 3;
-}
 
 /** Skills that represent a domain on a US i-Ready test (no India-only or language-track skills). */
 function domainSkills(subject: MockSubject, strand: string): Skill[] {
@@ -136,17 +124,16 @@ export function nextMockStep(state: AppState, run: MockRun): (QuestStep & { stra
   const dist = (k: Skill) => Math.abs(GRADES.indexOf(k.grade) - GRADES.indexOf(grade));
   const ordered = [...pool].sort((a, b) => dist(a) - dist(b) || (usedSkills.get(a.id) ?? 0) - (usedSkills.get(b.id) ?? 0));
   const seen = new Set(run.answers.map((a) => a.itemId));
-  let skill = ordered[0];
-  let item = pickItem(state, skill, d, seen);
-  for (const candidate of ordered) {
-    const fresh = pickItem(state, candidate, d, seen);
-    if (!seen.has(fresh.id)) {
-      skill = candidate;
-      item = fresh;
-      break;
-    }
+  // Keep the nearest available grade; freshness never pushes a child into unrelated harder content.
+  const nearest = dist(ordered[0]);
+  const appropriate = ordered.filter(s => dist(s) === nearest);
+  let skill = appropriate[0];
+  let selected = pickAssessmentItem(state, skill, d, run.answers);
+  for (const candidate of appropriate) {
+    const next = pickAssessmentItem(state, candidate, d, run.answers);
+    if (!next.repeated) { skill = candidate; selected = next; break; }
   }
-  return { skill, item, role: 'focus', strand: domain.strand, level: ladderOf(skill.grade, item.difficulty), target };
+  return { skill, ...selected, role: 'focus', strand: domain.strand, level: ladderOf(skill.grade, selected.item.difficulty), target };
 }
 
 /** Estimate = average level of the last 4 questions, nudged by how many of them were right. */
@@ -167,7 +154,9 @@ export function scoreMock(run: MockRun): MockResult {
     const lastThree = mine.slice(-3);
     const starved = lastThree.length === 3 && lastThree.every((a) => a.correct) && lastThree.some((a) => a.target !== undefined && a.level < a.target);
     const ceiling = mine.length > 0 && (est >= top - 0.5 || starved);
-    return { strand: d.strand, title: d.title, estimate: est, label: levelLabel(est), correct: mine.filter((a) => a.correct).length, total: mine.length, ceiling };
+    const correct = mine.filter(a => a.correct).length;
+    const repeated = mine.filter(a => a.repeated).length;
+    return { strand: d.strand, title: d.title, estimate: est, label: mine.some(a => a.repeated === undefined) ? 'Limited evidence' : evidenceLabel(correct, mine.length, repeated), untracked: mine.filter(a => a.repeated === undefined).length, correct, total: mine.length, ceiling, repeated };
   });
   const overall = domains.reduce((n, d) => n + d.estimate, 0) / domains.length;
   const tags = new Map<string, number>();
@@ -179,7 +168,9 @@ export function scoreMock(run: MockRun): MockResult {
     subject: run.subject,
     ts: run.answers[run.answers.length - 1]?.ts ?? run.startedAt,
     overall,
-    overallLabel: levelLabel(overall),
+    overallLabel: "Performance on this app’s questions",
+    repeated: run.answers.filter(a => a.repeated).length,
+    untracked: run.answers.filter(a => a.repeated === undefined).length,
     domains,
     misconceptions: [...tags.entries()].map(([tag, count]) => ({ tag, count })).sort((a, b) => b.count - a.count),
     practice,
@@ -190,4 +181,4 @@ export function newMockRun(subject: MockSubject, startLevel = 2, now = Date.now(
   return { id: `mock-${subject}-${now}`, subject, startedAt: now, startLevel, answers: [] };
 }
 
-export const mockTitle = (subject: MockSubject) => `Mock i-Ready · ${getSubject(subject).title}`;
+export const mockTitle = (subject: MockSubject) => `Practice check · ${getSubject(subject).title}`;

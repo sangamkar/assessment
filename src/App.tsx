@@ -24,6 +24,9 @@ import { Results } from './ui/Results';
 import { Setup } from './ui/Setup';
 import { AirportDesigner, AirportJournal } from './ui/airport/AirportDesigner';
 import { emptyAirport } from './games/airport';
+import { BrainLab } from './ui/brain/BrainLab';
+import { isNewGame, newBrainRun } from './games/brain';
+import { itemFingerprint } from './engine/itemPools';
 
 type View =
   | { name: 'home' }
@@ -135,6 +138,10 @@ export default function App() {
     session.current = { queue: [], index: 0, mock: run, answers: [] };
     if (!saved || saved.subject !== subject) update((s) => ({ ...s, mockRun: run }));
     const first = nextMockStep(stateRef.current, run);
+    if (!first && run.answers.length < mockTotal(subject)) {
+      window.alert('There are not enough unseen mock questions in this area. Your test progress is saved. Add fresh questions before continuing; no partial result has been scored.');
+      return;
+    }
     if (!first) {
       // Every question was already answered before a pause: just score it.
       const result = scoreMock(run);
@@ -159,12 +166,12 @@ export default function App() {
   };
 
   const onAnswer = (e: AnswerEvent, mode: Mode) => {
-    const attempt: Attempt = { itemId: e.step.item.id, skill: e.step.skill.id, d: e.step.item.difficulty, correct: e.correct, why: e.why, ts: Date.now(), mode };
+    const attempt: Attempt = { itemId: e.step.item.id, fingerprint: itemFingerprint(e.step.item), skill: e.step.skill.id, d: e.step.item.difficulty, correct: e.correct, why: e.why, ts: Date.now(), mode };
     if (mode === 'placement' && session.current.placement) placementAnswer(session.current.placement, e.correct);
     if (mode === 'mock' && session.current.mock) {
       const run = session.current.mock;
       const step = e.step as QuestStep & { strand: string; level: number; target: number };
-      run.answers.push({ strand: step.strand, skill: step.skill.id, itemId: step.item.id, level: step.level, target: step.target, correct: e.correct, why: e.why, ts: attempt.ts });
+      run.answers.push({ strand: step.strand, skill: step.skill.id, itemId: step.item.id, fingerprint: itemFingerprint(step.item), level: step.level, target: step.target, correct: e.correct, why: e.why, ts: attempt.ts });
       const snapshot = { ...run, answers: [...run.answers] };
       update((s) => ({ ...s, mockRun: snapshot })); // saved after every answer, so a paused test resumes
     }
@@ -180,6 +187,11 @@ export default function App() {
       const result = scoreCheckup(session.current.plan, session.current.answers);
       update((s) => creditFromCheckup({ ...s, checkups: [...s.checkups, result] }, session.current.answers));
     } else if (mode === 'mock' && session.current.mock) {
+      if (session.current.mock.answers.length < mockTotal(session.current.mock.subject)) {
+        setView({ name: 'parent' });
+        window.alert('This mock is paused because there are not enough unseen questions in an area. Your answers are saved; no partial result has been scored.');
+        return;
+      }
       const result = scoreMock(session.current.mock);
       update((s) => ({ ...s, mocks: [...(s.mocks ?? []), result], mockRun: undefined }));
       setView({ name: 'results', mode, ...summary, note: 'All done! You worked so hard. A grown-up can see your results.' });
@@ -218,8 +230,9 @@ export default function App() {
       case 'portfolio':
         return <AirportJournal state={state} onBack={() => setView({ name: 'home' })} onPlay={(id) => { update((s) => ({ ...s, airport: { ...(s.airport ?? emptyAirport()), selected: id } })); setView({ name: 'airport' }); }} />;
       case 'games':
-        return <Games state={state} onBack={() => setView({ name: 'home' })} onPlay={(id) => setView({ name: 'game', id, level: gameState(stateRef.current, id).level, run: Date.now() })} />;
+        return <Games state={state} onBack={() => setView({ name: 'home' })} onPlay={(id) => { const level = gameState(stateRef.current, id).level; if (isNewGame(id)) update((s) => s.brainRuns?.[id] ? s : { ...s, brainRuns: { ...s.brainRuns, [id]: newBrainRun(id, level) } }); setView({ name: 'game', id, level, run: Date.now() }); }} />;
       case 'game': {
+        if (isNewGame(view.id)) return <BrainLab id={view.id} state={state} update={update} onExit={() => setView({ name: 'games' })} />;
         // Level is fixed for a session; the next session starts at the updated level.
         const props = { level: view.level, onRound: (r: 'win' | 'assisted' | 'loss') => update((s) => recordGame(s, view.id, r)), onExit: () => setView({ name: 'games' }) };
         if (view.id === 'mystery-word') return <MysteryWord key={view.run} {...props} />;

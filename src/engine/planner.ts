@@ -4,6 +4,7 @@ import { NOISE_TAGS } from '../content/misconceptions';
 import { createRng } from './rng';
 import type { AppState, Attempt, Band, CheckupResult, StrandResult } from './progress';
 import { accuracy, attemptsFor, skillState } from './progress';
+import { isMockItem, poolItems } from './itemPools';
 
 export type SkillStatus = 'locked' | 'ready' | 'learning' | 'mastered' | 'review';
 
@@ -50,25 +51,27 @@ export function present(item: Item): Item {
   return { ...item, choices };
 }
 
+/** Practice never draws from the mock holdout, including generated lookalikes. */
 export function pickItem(state: AppState, skill: Skill, level: Difficulty, avoid: Set<string> = new Set()): Item {
   const recent = new Set(state.attempts.slice(-30).map((a) => a.itemId));
-  const allowed = (skill.items ?? []).filter((i) => inRegion(state, i));
+  const allowed = poolItems(skill, 'practice').filter((i) => inRegion(state, i));
   const written = allowed.filter((i) => !avoid.has(i.id));
-  const useGenerator = skill.generate && (written.length === 0 || rng.next() < 0.6);
-  if (useGenerator && skill.generate) {
-    for (let tries = 0; tries < 8; tries++) {
-      const item = skill.generate(rng, level);
-      if (!avoid.has(item.id) && !recent.has(item.id)) return present(item);
+  if (skill.generate && (written.length === 0 || rng.next() < 0.6)) {
+    let repeated: Item | undefined;
+    for (const d of [level, ...([1,2,3] as Difficulty[]).filter((x) => x !== level)]) {
+      for (let tries = 0; tries < 160; tries++) {
+        const item = skill.generate(rng, d);
+        if (isMockItem(item)) continue;
+        repeated = item;
+        if (!avoid.has(item.id) && !recent.has(item.id)) return present(item);
+      }
+      if (repeated) return present(repeated);
     }
-    return present(skill.generate(rng, level));
   }
   const pool = written.length ? written : allowed;
-  const byDistance = [...pool].sort((a, b) => {
-    const da = Math.abs(a.difficulty - level) + (recent.has(a.id) ? 2 : 0);
-    const db = Math.abs(b.difficulty - level) + (recent.has(b.id) ? 2 : 0);
-    return da - db || rng.next() - 0.5;
-  });
-  return present(byDistance[0]);
+  const sorted = [...pool].sort((a,b) => Math.abs(a.difficulty-level)+(recent.has(a.id)?2:0)-Math.abs(b.difficulty-level)-(recent.has(b.id)?2:0) || rng.next()-.5);
+  if (!sorted[0]) throw new Error(`No practice questions available for ${skill.title}.`);
+  return present(sorted[0]);
 }
 
 /* ------------------------------------------------------------------------ */

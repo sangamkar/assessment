@@ -63,3 +63,12 @@ button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus
 .airport-using-gate-a .airport-gate-zone.airport-cell-grass, .airport-using-gate-b .airport-gate-zone.airport-cell-grass { background: #d0edf3; border: 2px dashed #368da1; }
 .airport-using-runway .airport-runway-zone.airport-cell-grass { background: #d0dce3; border: 2px dashed #64748b; }
 @media (max-width: 639px) { .airport-page { padding-top: 1rem; } }
+.lab-choice, .lab-number { min-height: 64px; min-width: 0; border: 2px solid #d1e2da; border-radius: 1rem; padding: .8rem; background: white; color: #164c50; font-weight: 700; overflow-wrap: anywhere; }
+.lab-choice { font-size: clamp(1rem, 2vw, 1.3rem); }
+.lab-number { font-size: 1.5rem; min-width: 64px; }
+.lab-selected { border-color: #136f78; background: #d4eee8; box-shadow: 0 0 0 2px #136f78; }
+.lab-choice:disabled, .lab-number:disabled { cursor: default; }
+.lab-robot-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: #fffdf3; color: #2c6d70; border-radius: .5rem; min-width: 0; }
+.lab-parcel { display: flex; align-items: center; gap: 1px; }
+.lab-parcel-blue { color: #2563ad; }
+.lab-parcel-red { color: #b83e34; }

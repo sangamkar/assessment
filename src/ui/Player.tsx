@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { Choice } from '../content/types';
+import type { Choice, Item } from '../content/types';
 import type { QuestStep } from '../engine/planner';
 import type { Mode } from '../engine/progress';
 import { soundEngine } from '../utils/audio';
@@ -15,6 +15,8 @@ export interface AnswerEvent {
   step: QuestStep;
   correct: boolean;
   why?: string;
+  selectedChoiceId: string;
+  question: Item;
 }
 
 interface Props {
@@ -99,7 +101,7 @@ export function Player({ locale, mode, title, color, total, first, getNext, intr
     if (firstTry) {
       score.current.total++;
       if (correct) score.current.correct++;
-      onAnswer({ step, correct, why: choice.why });
+      onAnswer({ step, correct, why: choice.why, selectedChoiceId: choice.id, question: item });
     }
 
     if (!practice) {
@@ -117,7 +119,7 @@ export function Player({ locale, mode, title, color, total, first, getNext, intr
       setMessage(msg);
       setPhase('right');
       soundEngine.speak(msg);
-      setTimeout(advance, 1500);
+
     } else if (firstTry) {
       soundEngine.playGentleBuzzer();
       const msg = L(item.hint ?? 'Not quite. Look again and try one more time!');
@@ -275,9 +277,9 @@ export function Player({ locale, mode, title, color, total, first, getNext, intr
                 {message}
               </div>
             )}
-            {phase === 'explain' ? (
+            {phase === 'explain' || phase === 'right' ? (
               <div className="flex gap-3">
-                <SpeakButton text={L(item.explain)} />
+                <SpeakButton text={L(item.explain)} label="Hear why this answer works" />
                 <button onClick={advance} className="rounded-full px-10 py-4 font-kid text-2xl font-bold text-white shadow-lg active:scale-95" style={{ background: color }}>
                   Next ▶
                 </button>

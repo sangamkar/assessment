@@ -95,7 +95,14 @@ export function BrainLab({
       const next = finishBrainRound(r, won, message);
       const result = won ? (next.clean > r.clean ? "win" : "assisted") : "loss";
       return {
-        ...recordGame(s, id, result),
+        ...recordGame(s, id, result, Date.now(), {
+          prompt,
+          answer: message,
+          mistakes: r.board.misses
+            ? [r.board.misses + " incorrect check(s) before this result"]
+            : [],
+          hints: r.board.hints,
+        }),
         brainRuns: { ...s.brainRuns, [id]: next },
       };
     });

@@ -1,4 +1,4 @@
-import type { CurriculumId, Difficulty, LanguageCode } from '../content/types';
+import type { CurriculumId, Difficulty, LanguageCode, Item } from '../content/types';
 import type { MockResult, MockRun } from './mock';
 import { emptyGrowth, normalizeGrowth } from './growth';
 import type { GrowthState } from './growth';
@@ -11,8 +11,12 @@ export type Mode = 'quest' | 'skill' | 'checkup' | 'placement' | 'skip' | 'mock'
 
 export interface Attempt {
   itemId: string;
-  /** Visible question identity, independent of ID and shuffled distractors. */
   fingerprint?: string;
+  poolFingerprint?: string;
+  repeated?: boolean;
+  selectedChoiceId?: string;
+  /** Exact displayed question, kept for the latest 200 missed answers. */
+  question?: Item;
   skill: string;
   d: Difficulty;
   /** Correct on the first try — the only thing that counts toward mastery. */
@@ -23,6 +27,8 @@ export interface Attempt {
 }
 
 export interface SkillState {
+  /** Inferred prerequisite readiness, scheduled for a fresh check; not mastery. */
+  provisional?: boolean;
   introSeen: boolean;
   level: Difficulty;
   streak: number;
@@ -54,6 +60,8 @@ export interface CheckupResult {
   total: number;
   misconceptions: { tag: string; count: number }[];
   recommend: string[];
+  repeated?: number;
+  untracked?: number;
 }
 
 export interface Settings {
@@ -73,6 +81,12 @@ export interface Settings {
 }
 
 export type GameId = 'mystery-word' | 'number-path' | 'sentence-builder' | NewGameId;
+export interface GameEvidence {
+  prompt: string;
+  answer: string;
+  mistakes: string[];
+  hints: number;
+}
 export interface GameState {
   level: 1 | 2 | 3;
   played: number;
@@ -81,7 +95,8 @@ export interface GameState {
 }
 
 export interface AppState {
-  version: 2;
+  version: 3;
+  startupCheck?: { finished?: boolean; math?: number; reading?: number };
   growth: GrowthState;
   airport?: AirportState;
   brainRuns?: BrainRuns;
@@ -93,6 +108,7 @@ export interface AppState {
   days: string[];
   checkups: CheckupResult[];
   games: Partial<Record<GameId, GameState>>;
+  gameReviews?: (GameEvidence & { game: GameId; result: 'win' | 'assisted' | 'loss'; ts: number })[];
   /** Finished mock i-Ready tests. */
   mocks?: MockResult[];
   /** A mock test paused part-way (resumable). */
@@ -107,10 +123,10 @@ const DAY = 24 * 60 * 60 * 1000;
 export const MASTERY = { window: 8, minAttempts: 6, accuracy: 0.85, minHardAttempts: 3, minDays: 3, dayWindow: 21 };
 
 export function emptyState(): AppState {
-  return { version: 2, growth: emptyGrowth(), settings: { muted: false, unlockAll: false, showStretch: true, curricula: ['us-ga'], primary: 'us-ga', languages: ['hi'] }, skills: {}, attempts: [], stars: 0, days: [], checkups: [], games: {} };
+  return { version: 3, growth: emptyGrowth(), settings: { muted: false, unlockAll: false, showStretch: true, curricula: ['us-ga'], primary: 'us-ga', languages: ['hi'] }, skills: {}, attempts: [], stars: 0, days: [], checkups: [], games: {} };
 }
 
-export const STATE_VERSION = 2;
+export const STATE_VERSION = 3;
 
 /**
  * Upgrades saved progress from version n to n + 1. When the saved shape changes,
@@ -118,6 +134,7 @@ export const STATE_VERSION = 2;
  */
 const MIGRATIONS: Record<number, (s: Record<string, unknown>) => Record<string, unknown>> = {
   1: (state) => ({ ...state, growth: emptyGrowth() }),
+  2: (state) => ({ ...state, startupCheck: state.startupCheck ?? {} }),
 };
 
 export type UpgradeResult = { ok: true; state: AppState } | { ok: false; reason: 'not-progress' | 'newer-version' | 'no-migration' };
@@ -191,12 +208,13 @@ export function accuracy(list: Attempt[]): number {
  * after weeks away is not evidence that it stuck.
  */
 export function meetsMastery(list: Attempt[]): boolean {
-  const recent = list.slice(-MASTERY.window);
+  const independent = list.filter(a => !a.correct || a.repeated !== true);
+  const recent = independent.slice(-MASTERY.window);
   if (recent.length < MASTERY.minAttempts) return false;
   if (accuracy(recent) < MASTERY.accuracy) return false;
   if (recent.filter((a) => a.d >= 2).length < MASTERY.minHardAttempts) return false;
   const since = recent[recent.length - 1].ts - MASTERY.dayWindow * DAY;
-  const days = new Set(list.filter((a) => a.correct && a.ts >= since).map((a) => dayKey(a.ts)));
+  const days = new Set(independent.filter((a) => a.correct && a.ts >= since).map((a) => dayKey(a.ts)));
   return days.size >= MASTERY.minDays;
 }
 
@@ -204,6 +222,7 @@ export function meetsMastery(list: Attempt[]): boolean {
 export function recordAttempt(state: AppState, attempt: Attempt): AppState {
   const prev = skillState(state, attempt.skill);
   const next: SkillState = { ...prev };
+  if (prev.provisional) { next.provisional = false; next.credited = false; next.nextReview = undefined; }
   if (attempt.mode === 'quest' || attempt.mode === 'skill') {
     if (attempt.correct) {
       next.streak = prev.streak + 1;
@@ -216,7 +235,13 @@ export function recordAttempt(state: AppState, attempt: Attempt): AppState {
       if (prev.level > 1) next.level = (prev.level - 1) as Difficulty;
     }
   }
-  const attempts = [...state.attempts, attempt].slice(-MAX_ATTEMPTS);
+  const rawAttempts = [...state.attempts, attempt].slice(-MAX_ATTEMPTS);
+  let snapshots = 0;
+  const attempts = rawAttempts.slice().reverse().map(a => {
+    if (!a.question || ++snapshots <= 200) return a;
+    const { question: _question, ...metadata } = a;
+    return metadata;
+  }).reverse();
   const practice = attempt.mode === 'quest' || attempt.mode === 'skill';
   const list = attempts.filter((a) => a.skill === attempt.skill);
 
@@ -271,7 +296,7 @@ export function gameState(state: AppState, id: GameId): GameState {
  * One round of a game. 2 clean wins in a row → harder; a loss → easier;
  * 'assisted' (solved with several hints) changes nothing. Clean wins earn a star.
  */
-export function recordGame(state: AppState, id: GameId, result: 'win' | 'assisted' | 'loss', now = Date.now()): AppState {
+export function recordGame(state: AppState, id: GameId, result: 'win' | 'assisted' | 'loss', now = Date.now(), evidence?: GameEvidence): AppState {
   const g = gameState(state, id);
   let { level, streak } = g;
   const won = result === 'win';
@@ -290,6 +315,7 @@ export function recordGame(state: AppState, id: GameId, result: 'win' | 'assiste
   const day = dayKey(now);
   return {
     ...state,
+    gameReviews: evidence ? [...(state.gameReviews ?? []), { ...evidence, game: id, result, ts: now }].slice(-100) : state.gameReviews,
     games: { ...state.games, [id]: { level, streak, played: g.played + 1, won: g.won + (won ? 1 : 0) } },
     stars: state.stars + (won ? 1 : 0),
     days: state.days.includes(day) ? state.days : [...state.days, day],
@@ -306,7 +332,7 @@ export function markKnown(state: AppState, ids: string[], source: 'parent' | 'te
   for (const id of ids) {
     const s = skillState(state, id);
     if (s.mastered && !s.known) continue; // already mastered through practice
-    skills[id] = { ...s, mastered: true, masteredAt: now, known: source, credited: true, level: 3, reviewStep: 2, nextReview: now + 14 * DAY };
+    skills[id] = { ...s, provisional: false, mastered: true, masteredAt: now, known: source, credited: true, level: 3, reviewStep: 2, nextReview: now + 14 * DAY };
   }
   return { ...state, skills };
 }

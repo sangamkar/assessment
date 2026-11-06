@@ -40,7 +40,7 @@ retested; a historical solved marker remains separate from current success.
 - Airport play does not change academic accuracy, stars, skill mastery or streaks.
 - Settings → Backup / Restore includes these records. Existing version 1/2
   academic progress and earlier portfolios are retained. Airport data is an
-  optional additive field in schema 2; old backups load with an empty design lab.
+  optional additive field in schema 3; old backups load with an empty design lab.
 - Earlier offline portfolio entries are read-only in the parent area when present.
   They remain in backups, including sketches and observations. No new offline
   entries or observations can be created through the routed UI.

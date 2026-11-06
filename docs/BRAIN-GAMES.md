@@ -34,7 +34,7 @@ mastery or claim to measure broader development.
 
 ## Saving
 
-The optional schema-2 `brainRuns` field stores seed, fixed level, current round,
+The optional schema-3 `brainRuns` field stores seed, fixed level, current round,
 operands/undo history, selected words, found groups, robot inventory/position,
 hints, mistakes and round status. Refresh or leave a game and return to continue.
 Finished sets show a summary with an explicit new-set action. Save normalization

@@ -11,16 +11,10 @@ import {
   poolItems,
   legacyItemFamily,
 } from "./itemPools";
+import { evidenceLabel, seenQuestion } from "./evidence";
 
-/*
- * Mock i-Ready Diagnostic.
- *
- * Like the real test it is adaptive *within each domain*: every answer moves a
- * staircase up or down a 9-step ladder (K / Grade 1 / Grade 2 × difficulty 1–3).
- * Big steps first, then small steps, so it homes in quickly. The result is an
- * estimated working level per domain, phrased like i-Ready placements
- * ("Mid Grade 1"). It is an estimate from our own items, not an i-Ready scale score.
- */
+/** Independent adaptive practice check. Numeric ladder values only select questions;
+ * they are not calibrated grade placements, standardized scores, or school norms. */
 
 export type MockSubject = "math" | "reading";
 const GRADES: Grade[] = ["K", "1", "2"];
@@ -46,7 +40,7 @@ export const MOCK_DOMAINS: Record<
   ],
 };
 
-/** Questions per domain. ~32 math / ~36 reading, close to a real K–1 diagnostic sitting split in parts. */
+/** App-specific question budgets, split into short sittings. */
 export const MOCK_PER_DOMAIN: Record<MockSubject, number> = {
   math: 8,
   reading: 6,
@@ -58,6 +52,8 @@ export interface MockAnswer {
   skill: string;
   itemId: string;
   fingerprint?: string;
+  poolFingerprint?: string;
+  repeated?: boolean;
   level: number;
   /** Level the staircase asked for; above `level` when the domain had no harder questions. */
   target?: number;
@@ -82,8 +78,10 @@ export interface MockDomainResult {
   label: string;
   correct: number;
   total: number;
-  /** He reached the hardest questions the app has for this domain, so his true level may be higher. */
+  /** The app cannot provide harder content here; no higher ability is inferred. */
   ceiling: boolean;
+  repeated?: number;
+  untracked?: number;
 }
 
 export interface MockResult {
@@ -95,6 +93,8 @@ export interface MockResult {
   domains: MockDomainResult[];
   misconceptions: { tag: string; count: number }[];
   practice: string[];
+  repeated?: number;
+  untracked?: number;
 }
 
 export const ladderOf = (grade: Grade, d: Difficulty) =>
@@ -103,28 +103,6 @@ const fromLadder = (level: number): { grade: Grade; d: Difficulty } => ({
   grade: GRADES[Math.floor(level / 3)],
   d: ((level % 3) + 1) as Difficulty,
 });
-
-export function levelLabel(x: number): string {
-  const labels = [
-    "Early K",
-    "Mid K",
-    "Late K",
-    "Early Grade 1",
-    "Mid Grade 1",
-    "Late Grade 1",
-    "Early Grade 2",
-    "Mid Grade 2",
-    "Late Grade 2 or above",
-  ];
-  return labels[Math.max(0, Math.min(LADDER_MAX, Math.round(x)))];
-}
-
-/** Where a kindergartner is expected to be at a given month (school year Aug–May). */
-export function expectedLevel(grade: Grade, date: Date): number {
-  const month = date.getMonth(); // 0 = Jan
-  const fraction = month >= 7 ? (month - 7) / 10 : (month + 5) / 10; // Aug → 0, May → 0.9
-  return GRADES.indexOf(grade) * 3 + fraction * 3;
-}
 
 /** Skills that represent a domain on a US i-Ready test (no India-only or language-track skills). */
 function domainSkills(subject: MockSubject, strand: string): Skill[] {
@@ -179,11 +157,13 @@ export function nextMockStep(
   );
   const dist = (k: Skill) =>
     Math.abs(GRADES.indexOf(k.grade) - GRADES.indexOf(grade));
-  const ordered = [...pool].sort(
+  const ranked = [...pool].sort(
     (a, b) =>
       dist(a) - dist(b) ||
       (usedSkills.get(a.id) ?? 0) - (usedSkills.get(b.id) ?? 0),
   );
+  const nearest = dist(ranked[0]);
+  const ordered = ranked.filter((s) => dist(s) === nearest);
   // Prefer new tasks; repeats are allowed only inside the reserved mock pool.
   const seen = new Set([
     ...state.attempts.map((a) => a.itemId),
@@ -191,8 +171,8 @@ export function nextMockStep(
   ]);
   const signatures = new Set(
     [
-      ...state.attempts.map((a) => a.fingerprint),
-      ...run.answers.map((a) => a.fingerprint),
+      ...state.attempts.map((a) => a.poolFingerprint ?? a.fingerprint),
+      ...run.answers.map((a) => a.poolFingerprint ?? a.fingerprint),
     ].filter((x): x is string => !!x),
   );
   // Pre-update authored attempts did not store fingerprints. Recover those from IDs.
@@ -201,13 +181,14 @@ export function nextMockStep(
       if (seen.has(i.id)) signatures.add(itemFingerprint(i));
   const legacyFamilies = new Set(
     [...state.attempts, ...run.answers]
-      .filter((a) => !a.fingerprint)
+      .filter((a) => !a.poolFingerprint)
       .map((a) => legacyItemFamily(a.itemId)),
   );
   const unseen = (item: Item) =>
     !seen.has(item.id) &&
     !legacyFamilies.has(legacyItemFamily(item.id)) &&
-    !signatures.has(itemFingerprint(item));
+    !signatures.has(itemFingerprint(item)) &&
+    !seenQuestion(state, item, run.answers);
   const rng = createRng(
     run.startedAt +
       run.answers.length * 1009 +
@@ -215,17 +196,20 @@ export function nextMockStep(
   );
   const currentIds = new Set(run.answers.map((a) => a.itemId));
   const currentSignatures = new Set(
-    run.answers.map((a) => a.fingerprint).filter((x): x is string => !!x),
+    run.answers
+      .map((a) => a.poolFingerprint ?? a.fingerprint)
+      .filter((x): x is string => !!x),
   );
   const currentLegacyFamilies = new Set(
     run.answers
-      .filter((a) => !a.fingerprint)
+      .filter((a) => !a.poolFingerprint)
       .map((a) => legacyItemFamily(a.itemId)),
   );
   const notInThisRun = (item: Item) =>
     !currentIds.has(item.id) &&
     !currentLegacyFamilies.has(legacyItemFamily(item.id)) &&
     !currentSignatures.has(itemFingerprint(item));
+  const wasSeen = (item: Item) => !unseen(item);
   const select = (
     accept: (item: Item) => boolean,
   ): (QuestStep & { strand: string; level: number; target: number }) | null => {
@@ -240,6 +224,7 @@ export function nextMockStep(
         return {
           skill,
           item: present(written[0]),
+          repeated: wasSeen(written[0]),
           role: "focus",
           strand: domain.strand,
           level: ladderOf(skill.grade, written[0].difficulty),
@@ -252,6 +237,7 @@ export function nextMockStep(
             return {
               skill,
               item: present(item),
+              repeated: wasSeen(item),
               role: "focus",
               strand: domain.strand,
               level: ladderOf(skill.grade, item.difficulty),
@@ -262,6 +248,7 @@ export function nextMockStep(
         return {
           skill,
           item: present(written[0]),
+          repeated: wasSeen(written[0]),
           role: "focus",
           strand: domain.strand,
           level: ladderOf(skill.grade, written[0].difficulty),
@@ -298,14 +285,20 @@ export function scoreMock(run: MockRun): MockResult {
       lastThree.every((a) => a.correct) &&
       lastThree.some((a) => a.target !== undefined && a.level < a.target);
     const ceiling = mine.length > 0 && (est >= top - 0.5 || starved);
+    const correct = mine.filter((a) => a.correct).length;
+    const repeated = mine.filter((a) => a.repeated).length;
     return {
       strand: d.strand,
       title: d.title,
       estimate: est,
-      label: levelLabel(est),
-      correct: mine.filter((a) => a.correct).length,
+      label: mine.some((a) => a.repeated === undefined)
+        ? "Limited evidence"
+        : evidenceLabel(correct, mine.length, repeated),
+      untracked: mine.filter((a) => a.repeated === undefined).length,
+      correct,
       total: mine.length,
       ceiling,
+      repeated,
     };
   });
   const overall = domains.reduce((n, d) => n + d.estimate, 0) / domains.length;
@@ -331,7 +324,9 @@ export function scoreMock(run: MockRun): MockResult {
     subject: run.subject,
     ts: run.answers[run.answers.length - 1]?.ts ?? run.startedAt,
     overall,
-    overallLabel: levelLabel(overall),
+    overallLabel: "Performance on this app’s questions",
+    repeated: run.answers.filter((a) => a.repeated).length,
+    untracked: run.answers.filter((a) => a.repeated === undefined).length,
     domains,
     misconceptions: [...tags.entries()]
       .map(([tag, count]) => ({ tag, count }))
@@ -355,4 +350,4 @@ export function newMockRun(
 }
 
 export const mockTitle = (subject: MockSubject) =>
-  `Mock i-Ready · ${getSubject(subject).title}`;
+  `Practice check · ${getSubject(subject).title}`;

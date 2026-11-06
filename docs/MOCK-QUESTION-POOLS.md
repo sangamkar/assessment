@@ -22,7 +22,8 @@ estimates, not validated or official i-Ready scores.
   and letter/sound attempts that predate fingerprint storage.
 - New answers save fingerprints. Existing question IDs and saved academic
   progress are retained. Mock adaptation uses the difficulty of the item actually
-  served, including any fallback to a nearby difficulty/grade.
+  served. Selection retains the nearest available grade; freshness does not push
+  a child into a harder grade. Repeated items remain flagged in parent evidence.
 
 If a domain has no unseen reserved item left, the mock repeats questions from
 its own reserved pool. It first prefers a question not yet used in the current

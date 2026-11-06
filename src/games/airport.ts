@@ -266,6 +266,7 @@ export interface AirportDraft {
   reflection: string;
 }
 export interface AirportState {
+  tutorialSeen?: boolean;
   selected: string;
   drafts: Record<string, AirportDraft>;
 }
@@ -286,6 +287,7 @@ export function normalizeAirport(value: unknown): AirportState {
   const out = emptyAirport();
   if (!value || typeof value !== "object") return out;
   const data = value as Partial<AirportState>;
+  if (data.tutorialSeen === true) out.tutorialSeen = true;
   if (typeof data.selected === "string" && challengeById(data.selected))
     out.selected = data.selected;
   const count = (v: unknown, max = 100000) =>

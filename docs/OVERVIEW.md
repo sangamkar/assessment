@@ -8,6 +8,12 @@ progress. It replaces the offline mission entry points. Earlier records remain
 read-only in the parent area. See [the current guide](GROWTH.md).
 
 
+**Also added:** five vocabulary/number games with saved rounds, plus separate
+Mock i-Ready question pools. See [Brain Games](BRAIN-GAMES.md) and
+[mock pool rules](MOCK-QUESTION-POOLS.md). The inventory below describes the
+original academic features; these guides describe the additions.
+
+
 Learning Quest is a private learning app for Aarav, a kindergartner in Forsyth County, Georgia. It teaches, practises and assesses the skills behind i-Ready, gifted screening, olympiads and STEM challenges. It is built to grow with him from Kindergarten through Grade 2 and beyond. If the family moves, an India (CBSE/NCERT) track with Hindi and Kannada is ready.
 
 - **Live app:** https://sangamkar.github.io/assessment/ (protected by the classroom passcode)

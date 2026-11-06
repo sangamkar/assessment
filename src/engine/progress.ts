@@ -4,12 +4,15 @@ import { emptyGrowth, normalizeGrowth } from './growth';
 import type { GrowthState } from './growth';
 import { normalizeAirport } from '../games/airport';
 import type { AirportState } from '../games/airport';
+import { normalizeBrainRuns } from '../games/brain';
+import type { NewGameId, BrainRuns } from '../games/brain';
 
 export type Mode = 'quest' | 'skill' | 'checkup' | 'placement' | 'skip' | 'mock';
 
 export interface Attempt {
   itemId: string;
   fingerprint?: string;
+  poolFingerprint?: string;
   repeated?: boolean;
   selectedChoiceId?: string;
   /** Exact displayed question, kept for the latest 200 missed answers. */
@@ -77,7 +80,7 @@ export interface Settings {
   iReadyDate?: string;
 }
 
-export type GameId = 'mystery-word' | 'number-path' | 'sentence-builder';
+export type GameId = 'mystery-word' | 'number-path' | 'sentence-builder' | NewGameId;
 export interface GameEvidence {
   prompt: string;
   answer: string;
@@ -96,6 +99,7 @@ export interface AppState {
   startupCheck?: { finished?: boolean; math?: number; reading?: number };
   growth: GrowthState;
   airport?: AirportState;
+  brainRuns?: BrainRuns;
   profile?: { name: string; avatar: string; createdAt: number };
   settings: Settings;
   skills: Record<string, SkillState>;
@@ -149,7 +153,7 @@ export function upgradeState(data: unknown): UpgradeResult {
   }
   const parsed = s as unknown as AppState;
   const base = emptyState();
-  return { ok: true, state: { ...base, ...parsed, growth: normalizeGrowth(parsed.growth), airport: normalizeAirport(parsed.airport), settings: { ...base.settings, ...parsed.settings } } };
+  return { ok: true, state: { ...base, ...parsed, growth: normalizeGrowth(parsed.growth), airport: normalizeAirport(parsed.airport), brainRuns: normalizeBrainRuns(parsed.brainRuns), settings: { ...base.settings, ...parsed.settings } } };
 }
 
 /** Saved progress that could not be read is copied aside instead of being overwritten. */

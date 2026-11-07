@@ -83,8 +83,6 @@ export interface Settings {
   iReadyDate?: string;
   /** Today's learning sessions that make up the daily goal (1–3, default 1). */
   dailyQuests?: number;
-  /** Brain Games and Build & Explore unlock once the daily goal is met. */
-  gamesAfterQuest?: boolean;
   /** Soft screen-time reminder in minutes; 0 or unset means off. */
   screenMinutes?: number;
 }
@@ -115,6 +113,7 @@ export interface GameState {
 
 export interface AppState {
   version: 3;
+  questCompletedDay?: string;
   startupCheck?: { finished?: boolean; math?: number; reading?: number };
   growth: GrowthState;
   airport?: AirportState;

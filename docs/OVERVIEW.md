@@ -75,7 +75,7 @@ Tap **🔒 Grown-ups** on the home screen and answer the multiplication question
 | **Check-ups** | Short adaptive tests per subject (12 questions, no hints). Also the **Find his level** placement test, which skips everything he proves he knows |
 | **Skill map** | Every topic, with its standard, grade and status. Tick **Knows it** to skip a topic yourself. **Mark all Kindergarten known** does a whole subject at once. 📌 **Focus** pins a topic to the daily Quest |
 | **Question bank** | Browse every question with its answer, the misconception behind each wrong choice, and the explanation |
-| **Settings** | **Daily routine:** daily goal (1–3 sessions), keep Brain Games and Build & Explore locked until it is met, and a soft screen-time reminder (nothing is blocked). Also child's name and buddy, sound, curriculum (USA / India), Hindi and Kannada on/off, show stretch (higher-grade) topics, unlock all, **backup / restore**, reset |
+| **Settings** | **Daily routine:** daily goal (1–3 sessions) and a soft screen-time reminder (nothing is blocked). Also child's name and buddy, sound, curriculum (USA / India), Hindi and Kannada on/off, show stretch (higher-grade) topics, unlock all, **backup / restore**, reset |
 
 ### Three ways to skip what he already knows
 1. **Find his level** (Check-ups tab, or the ⚡ button in Skill map): up to 24 hard questions per subject. It jumps ahead on success and checks back on a miss. Best first step for him.

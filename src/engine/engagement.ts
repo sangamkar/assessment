@@ -1,3 +1,4 @@
+import { gamesUnlocked } from './dailyQuest';
 import type { AppState } from './progress';
 import { dayKey } from './progress';
 
@@ -55,8 +56,8 @@ export function weekStrip(state: AppState, now = Date.now()): { key: string; lab
 export const questsToday = (state: AppState, now = Date.now()) => state.engagement?.questDays?.[dayKey(now)] ?? 0;
 export const dailyGoal = (state: AppState) => Math.min(3, Math.max(1, state.settings.dailyQuests ?? 1));
 export const goalMet = (state: AppState, now = Date.now()) => questsToday(state, now) >= dailyGoal(state);
-/** Brain Games and Build & Explore wait for today's learning when the parent switches this on. */
-export const playLocked = (state: AppState, now = Date.now()) => !!state.settings.gamesAfterQuest && !goalMet(state, now);
+/** Brain Games and Build & Explore wait until one full Today's learning session is finished. */
+export const playLocked = (state: AppState, now = Date.now()) => !gamesUnlocked(state, now);
 
 export function recordQuestDone(state: AppState, now = Date.now()): AppState {
   const key = dayKey(now);

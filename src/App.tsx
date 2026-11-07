@@ -1,3 +1,5 @@
+import { completeDailyQuest, gamesUnlocked } from './engine/dailyQuest';
+import { dayKey } from './engine/progress';
 import { GardenKitchen } from './ui/games/GardenKitchen';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CURRICULA, getSkill, getSubject } from './content';
@@ -53,6 +55,7 @@ type View =
   | { name: 'parent' };
 
 interface Session {
+  questDay?: string;
   queue: QuestStep[];
   index: number;
   plan?: CheckupPlan;
@@ -75,6 +78,16 @@ export default function App() {
   const session = useRef<Session>({ queue: [], index: 0, answers: [] });
   const stateRef = useRef(state);
   const [storageOk, setStorageOk] = useState(true);
+  const [today, setToday] = useState(() => dayKey(Date.now()));
+  useEffect(() => {
+    const refresh = () => setToday(dayKey(Date.now()));
+    const timer = window.setInterval(refresh, 1000);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => { clearInterval(timer); window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh); };
+  }, []);
+  const unlocked = state.questCompletedDay === today;
+
   stateRef.current = state;
 
   const update = useCallback((fn: (s: AppState) => AppState) => setStateRaw((s) => fn(s)), []);
@@ -90,6 +103,7 @@ export default function App() {
   useEffect(() => soundEngine.setLocale(locale), [locale]);
 
   const startGame = (id: GameId) => {
+    if (!gamesUnlocked(stateRef.current)) { setView({name:'games'}); return; }
     const level = gameState(stateRef.current, id).level;
     if (id === 'garden-kitchen') update(s => ({ ...s, lastGame: id }));
     if (isNewGame(id)) update(s => ({
@@ -120,7 +134,7 @@ export default function App() {
 
   const startQuest = () => {
     const queue = buildQuest(stateRef.current);
-    session.current = { queue, index: 0, answers: [] };
+    session.current = { queue, index: 0, answers: [], questDay: dayKey(Date.now()) };
     setView({ name: 'play', mode: 'quest', title: 'Today’s learning', color: '#f97316', total: queue.length, first: queue[0] ?? null, again: startQuest });
   };
 
@@ -242,9 +256,13 @@ export default function App() {
       });
       return;
     } else if (mode === 'quest') {
+      const finish = (s: AppState): AppState => {
+        const completed = completeDailyQuest(s, summary.total, session.current.queue.length, session.current.questDay);
+        return { ...(completed === s ? s : recordQuestDone(completed)), stars: s.stars + 3 };
+      };
       const before = goalMet(stateRef.current);
-      const after = recordQuestDone({ ...stateRef.current, stars: stateRef.current.stars + 3 });
-      update((s) => recordQuestDone({ ...s, stars: s.stars + 3 }));
+      const after = finish(stateRef.current);
+      update(finish);
       setView({ name: 'results', mode, ...summary, again, doneToday: !before && goalMet(after) });
       return;
     } else {
@@ -255,6 +273,13 @@ export default function App() {
 
   const content = (() => {
     if (view.name === 'starting-point' || (view.name === 'home' && !state.startupCheck?.finished)) return <StartingPoint state={state} onStart={subject => startPlacementRun(subject, true)} onContinue={() => { update(s => ({ ...s, startupCheck: { ...s.startupCheck, finished: true } })); setView({ name: 'home' }); }} />;
+    if (!unlocked && ['games', 'game', 'explore', 'airport'].includes(view.name)) return (
+      <main className="growth-page max-w-xl"><button className="growth-secondary" onClick={() => setView({name:'home'})}>← Home</button><section className="growth-feature mt-6 text-center">
+        <span className="text-6xl" aria-hidden>🔒</span><h1 className="font-kid text-3xl mt-4">Learning first, then games</h1>
+        <p className="my-5">Finish Today’s Learning to open all games and Build &amp; Explore for today. You don’t need every answer right—just finish the session.</p>
+        <button className="growth-primary" onClick={startQuest}>Start Today’s Learning →</button>
+      </section></main>
+    );
     switch (view.name) {
       case 'home':
         return <Home state={state} onResumeGame={startGame} onExplore={() => setView({ name: 'explore' })} onQuest={startQuest} onGames={() => setView({ name: 'games' })} onIsland={(subject) => setView({ name: 'island', subject })} onGrownUps={() => setView({ name: 'gate' })} onStickers={() => setView({ name: 'stickers' })} />;

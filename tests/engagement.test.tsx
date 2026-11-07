@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { dayKey, emptyState, upgradeState } from '../src/engine/progress';
 import type { AppState } from '../src/engine/progress';
 import { backupDue, buySticker, claimStreakStickers, gentleStreak, goalMet, playLocked, recordQuestDone, starsToSpend, weekStrip } from '../src/engine/engagement';
+import { completeDailyQuest } from '../src/engine/dailyQuest';
 import { Home } from '../src/ui/Home';
 import { Results } from '../src/ui/Results';
 
@@ -38,17 +39,18 @@ describe('gentle streak', () => {
 
 describe('daily goal and play lock', () => {
   it('meets the goal after the chosen number of sessions', () => {
-    let state: AppState = { ...emptyState(), settings: { ...emptyState().settings, dailyQuests: 2, gamesAfterQuest: true } };
-    expect(playLocked(state, NOW)).toBe(true);
+    let state: AppState = { ...emptyState(), settings: { ...emptyState().settings, dailyQuests: 2 } };
     state = recordQuestDone(state, NOW);
     expect(goalMet(state, NOW)).toBe(false);
     state = recordQuestDone(state, NOW);
     expect(goalMet(state, NOW)).toBe(true);
-    expect(playLocked(state, NOW)).toBe(false);
     expect(goalMet(state, NOW + DAY)).toBe(false);
   });
-  it('never locks play unless a grown-up turns it on', () => {
-    expect(playLocked(emptyState(), NOW)).toBe(false);
+  it('locks play until one full session is finished today', () => {
+    expect(playLocked(emptyState(), NOW)).toBe(true);
+    const done = completeDailyQuest(emptyState(), 8, 8, dayKey(NOW), NOW);
+    expect(playLocked(done, NOW)).toBe(false);
+    expect(playLocked(done, NOW + DAY)).toBe(true);
   });
 });
 
@@ -87,21 +89,21 @@ describe('backup reminder', () => {
 describe('kid screens', () => {
   const props = { onQuest: noop, onExplore: noop, onGames: noop, onIsland: noop, onGrownUps: noop, onStickers: noop };
   it('shows the week strip, path and spendable stars', () => {
-    const html = renderToStaticMarkup(<Home state={withDays([dayKey(Date.now())], { stars: 7 })} {...props} />);
+    const html = renderToStaticMarkup(<Home state={withDays([dayKey(Date.now())], { stars: 7, questCompletedDay: dayKey(Date.now()) })} {...props} />);
     expect(html).toContain('This week');
     expect(html).toContain('Today’s path');
     expect(html).toContain('7 stars to spend');
     expect(html).not.toContain('Opens after today’s learning');
   });
-  it('locks games until today’s learning when the grown-up setting is on', () => {
-    const state = { ...emptyState(), settings: { ...emptyState().settings, gamesAfterQuest: true } };
+  it('locks games until today’s learning is finished', () => {
+    const state = emptyState();
     const html = renderToStaticMarkup(<Home state={state} {...props} />);
     expect(html).toContain('Brain Games: open after today’s learning');
     expect(html).toContain('Build and Explore: open after today’s learning');
   });
   it('shows a soft screen-time reminder without blocking anything', () => {
     vi.stubGlobal('localStorage', { getItem: () => JSON.stringify({ day: dayKey(Date.now()), ms: 31 * 60_000 }) });
-    const state = { ...emptyState(), settings: { ...emptyState().settings, screenMinutes: 30 } };
+    const state = { ...emptyState(), questCompletedDay: dayKey(Date.now()), settings: { ...emptyState().settings, screenMinutes: 30 } };
     const html = renderToStaticMarkup(<Home state={state} {...props} />);
     expect(html).toContain('Time to rest your eyes');
     expect(html).not.toContain('open after today’s learning');

@@ -20,7 +20,7 @@ See [Brain Games](docs/BRAIN-GAMES.md).
 rest day a week is forgiven), a *Today's path* (learning → a game → free play) and
 a sticker book that spends earned stars on cosmetic stickers; days-in-a-row
 stickers are free. Grown-ups → Settings → *Daily routine* sets the daily goal
-(1–3 sessions), can keep games locked until it is met, and adds an optional soft
+(1–3 sessions) and an optional soft
 screen-time reminder. The parent area reminds you to back up every 14 days.
 
 **Mock questions are separate from practice:** held-out selection and new reading

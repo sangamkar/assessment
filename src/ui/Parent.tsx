@@ -504,13 +504,6 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
             {[1, 2, 3].map((n) => <option key={n} value={n}>{n} × Today’s learning (about {n * 10} minutes)</option>)}
           </select>
         </label>
-        <label className="flex items-start justify-between gap-4 py-2">
-          <span>
-            <span className="block font-semibold text-slate-800">Games after today’s learning</span>
-            <span className="block text-xs text-slate-500">Brain Games and Build &amp; Explore unlock once the daily goal is met. Subject islands stay open.</span>
-          </span>
-          <input type="checkbox" className="mt-1 h-5 w-5" checked={!!state.settings.gamesAfterQuest} onChange={(e) => set({ gamesAfterQuest: e.target.checked })} />
-        </label>
         <label className="block py-2 text-sm font-semibold text-slate-600">
           Screen-time reminder
           <select value={state.settings.screenMinutes ?? 0} onChange={(e) => set({ screenMinutes: Number(e.target.value) })} className="mt-1 block w-full rounded-lg border border-slate-300 px-2 py-1.5">

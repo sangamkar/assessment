@@ -13,8 +13,8 @@ export function StickerBook({ state, update, onBack }: { state: AppState; update
       dialog.current?.showModal();
       soundEngine.speak(`Buy the ${selected.name} sticker for ${selected.cost} stars? Choose yes to buy or no to go back.`);
     } else dialog.current?.close();
-    return () => soundEngine.stopSpeech();
   }, [selected]);
+  useEffect(() => () => soundEngine.stopSpeech(), []);
   const owned = new Set(ownedStickers(state));
   const stars = starsToSpend(state);
   const best = bestStreakSoFar(state);
@@ -37,10 +37,10 @@ export function StickerBook({ state, update, onBack }: { state: AppState; update
       </header>
       <p className="mb-5 font-kid text-lg text-slate-600">Earn stars by learning and playing. Spend them on stickers! Days-in-a-row stickers are free.</p>
       <p role="status" className="font-kid text-lg text-emerald-800">{message}</p>
-      <dialog ref={dialog} aria-labelledby="sticker-confirm-title" onCancel={() => setPending(null)} onClose={() => setPending(null)} className="m-auto w-[min(90vw,420px)] rounded-3xl p-6 text-center shadow-xl backdrop:bg-black/40">
+      <dialog ref={dialog} aria-labelledby="sticker-confirm-title" onCancel={() => { soundEngine.stopSpeech(); setPending(null); }} onClose={() => setPending(null)} className="m-auto w-[min(90vw,420px)] rounded-3xl p-6 text-center shadow-xl backdrop:bg-black/40">
         <h2 id="sticker-confirm-title" className="font-kid text-2xl font-bold">Buy {selected?.emoji} for {selected?.cost} ⭐?</h2>
         <p className="my-4">{selected?.name}</p>
-        <div className="flex justify-center gap-4"><button autoFocus className="growth-secondary" onClick={() => setPending(null)}>No, go back</button><button className="growth-primary" disabled={!selected || !canBuy(state, selected)} onClick={() => selected && buy(selected.id, selected.name)}>Yes, buy sticker</button></div>
+        <div className="flex justify-center gap-4"><button autoFocus className="growth-secondary" onClick={() => { soundEngine.stopSpeech(); setPending(null); }}>No, go back</button><button className="growth-primary" disabled={!selected || !canBuy(state, selected)} onClick={() => selected && buy(selected.id, selected.name)}>Yes, buy sticker</button></div>
       </dialog>
       {STICKER_PAGES.map((page) => (
         <section key={page} className="mb-6 rounded-[2rem] bg-white/90 p-5 shadow">

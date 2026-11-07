@@ -30,6 +30,117 @@ type Props = {
   update: (fn: (s: AppState) => AppState) => void;
   onExit: () => void;
 };
+const wordPictures: Record<string, string> = {
+  cat: "🐈",
+  sat: "🪑",
+  map: "🗺️",
+  tap: "🚰",
+  pig: "🐖",
+  dig: "⛏️",
+  hen: "🐔",
+  pen: "🖊️",
+  fan: "🪭",
+  man: "👨",
+  log: "🪵",
+  dog: "🐕",
+  cap: "🧢",
+  mat: "▧",
+  pin: "📍",
+  hem: "🧵",
+  bag: "👜",
+  bat: "🦇",
+  bed: "🛏️",
+  beg: "🙏",
+  cot: "🛏️",
+  pan: "🍳",
+  big: "🐘",
+  pet: "🐈",
+  pot: "🍲",
+  bug: "🐞",
+};
+function WordScene({
+  from,
+  to,
+  revealed,
+  spoken,
+}: {
+  from: string;
+  to: string;
+  revealed: boolean;
+  spoken: string;
+}) {
+  useEffect(() => {
+    soundEngine.speak(spoken);
+    return () => soundEngine.stopSpeech();
+  }, [spoken]);
+  return (
+    <div
+      className="word-scene"
+      role="img"
+      aria-label={
+        revealed
+          ? from + " became " + to
+          : "Start with " + from + ". Make " + to
+      }
+    >
+      <span className={revealed ? "word-reveal" : "word-cargo"}>
+        {wordPictures[revealed ? to : from]}
+      </span>
+      <span className="scene-arrow">{revealed ? "✓" : "→"}</span>
+      <span className="word-goal">{wordPictures[to]}</span>
+    </div>
+  );
+}
+
+function Garden({ flowers }: { flowers: number }) {
+  return (
+    <svg
+      className="pipe-garden"
+      viewBox="0 0 400 94"
+      role="img"
+      aria-label={`${flowers} flowers watered this set`}
+    >
+      <path fill="#d9f2fc" d="M0 0H400V94H0z" />
+      <circle cx="350" cy="22" r="14" fill="#ffd984" />
+      <path fill="#afdcbe" d="M0 65Q65 32 140 61T288 55T400 50V94H0z" />
+      <path fill="#71b497" d="M0 77Q80 60 160 74T320 68T400 70V94H0z" />
+      {[0, 1, 2, 3].map((i) => {
+        const grown = i < flowers;
+        return (
+          <g key={i} transform={`translate(${56 + i * 94} 78)`}>
+            <path
+              d={grown ? "M0 0 Q-4 -18 0 -35" : "M0 0 Q-3 -6 0 -12"}
+              fill="none"
+              stroke="#257551"
+              strokeWidth="4"
+            />
+            <path
+              d="M0 -7 Q-16 -6 -17 -18 Q-3 -18 0 -7 M0 -12 Q9 -25 17 -21 Q15 -12 0 -12"
+              fill="#378d60"
+            />
+            {grown && (
+              <g transform="translate(0 -38)">
+                <g className="garden-bloom">
+                  {[0, 60, 120, 180, 240, 300].map((angle) => (
+                    <ellipse
+                      key={angle}
+                      rx="6"
+                      ry="10"
+                      cy="-8"
+                      transform={`rotate(${angle})`}
+                      fill={["#ffba45", "#f082a4", "#e7a3fc", "#ff8d66"][i]}
+                    />
+                  ))}
+                  <circle r="6" fill="#8c4f28" />
+                </g>
+              </g>
+            )}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
 function Shape({ code, ghost = false }: { code: number; ghost?: boolean }) {
   return (
     <svg aria-hidden viewBox="0 0 100 100" className="h-full w-full">
@@ -132,13 +243,14 @@ export function Workshop({ id, state, update, onExit }: Props) {
     });
   const edit = (values: number[]) =>
     patch({ work: values, feedback: "", answer: null });
-  let prompt = "",
+  let narration = "",
+    prompt = "",
     instructions = "",
     clue = "",
     solution = "",
     answer = "",
     content: React.ReactNode = null;
-  const finish = (won: boolean, message: string) => {
+  const finish = (won: boolean, message: string, response?: string) => {
     update((s) => {
       const r = s.brainRuns?.[id];
       if (!r || r.board.status !== "playing") return s;
@@ -150,8 +262,8 @@ export function Workshop({ id, state, update, onExit }: Props) {
           won ? (next.clean > r.clean ? "win" : "assisted") : "loss",
           Date.now(),
           {
-            prompt,
-            answer: answer || message,
+            prompt: narration || prompt,
+            answer: response || answer || message,
             mistakes: r.board.misses
               ? [`${r.board.misses} unsuccessful check(s)`]
               : [],
@@ -427,77 +539,84 @@ export function Workshop({ id, state, update, onExit }: Props) {
     );
   } else if (id === "sound-switch") {
     const p = soundPuzzle(level, seed);
-    prompt = `Change the ${p.position} sound in ${p.from} to the ${p.position} sound in ${p.reference}.`;
-    instructions =
-      "Listen to both words. Choose the letter for the new sound. Only the highlighted part changes. Read your new word, then check it.";
-    clue = `Listen again: ${p.reference}. The ${p.position} sound is written with ${p.answer}.`;
+    prompt = "Switch one letter to make the new picture.";
+    instructions = "Tap a letter to put it in the glowing space.";
+    const spoken = `Start with ${p.from}. Make ${p.to}. Change the ${p.position} sound.`;
+    narration = spoken;
+    clue = `Listen: ${p.from}, ${p.to}. Change the ${p.position} sound to the sound written with ${p.answer}.`;
     solution = `${p.from} becomes ${p.to}. Only the ${p.position} sound changes.`;
-    const picked = work[0] === undefined ? null : p.choices[work[0]];
     const built = p.from.split("");
-    if (picked) built[p.at] = picked;
+    if (work.length) built[p.at] = p.choices[work[0]];
     answer = `Built ${built.join("")}`;
     content = (
       <>
-        <div className="my-4 flex flex-wrap justify-center gap-3">
-          <SpeakButton text={p.from} label={`Hear ${p.from}`} />
-          <SpeakButton text={p.reference} label={`Hear ${p.reference}`} />
-        </div>
-        <div aria-label="Word tiles" className="flex justify-center gap-3">
-          {built.map((c, i) => (
+        <WordScene
+          from={p.from}
+          to={p.to}
+          revealed={!playing}
+          spoken={spoken}
+        />
+        <details className="mt-2 text-center text-sm">
+          <summary>Read the mission</summary>
+          {spoken}
+        </details>
+        <div aria-label="Word tiles" className="my-4 flex justify-center gap-3">
+          {built.map((letter, i) => (
             <span
               key={i}
-              className={`lab-number ${i === p.at ? "lab-selected" : ""}`}
+              className={`lab-number ${i === p.at ? "sound-slot" : ""}`}
             >
-              {c}
+              {letter}
             </span>
           ))}
         </div>
-        <p className="mt-3 text-center">Change the highlighted letter.</p>
-        <div className="mt-5 flex flex-wrap justify-center gap-3">
-          {p.choices.map((c, i) => choice(c, () => edit([i]), work[0] === i))}
+        <div className="flex flex-wrap justify-center gap-3">
+          {p.choices.map((letter, i) =>
+            choice(
+              letter,
+              () => {
+                const changed = p.from.split("");
+                changed[p.at] = letter;
+                edit([i]);
+                if (letter === p.answer)
+                  finish(true, solution, `Changed ${p.from} to ${p.to}`);
+                else {
+                  const message = `That makes ${changed.join("")}. Try another letter to make ${p.to}.`;
+                  check(false, message);
+                  soundEngine.speak(message);
+                }
+              },
+              work[0] === i,
+            ),
+          )}
         </div>
-        {picked && (
-          <div className="mt-4 text-center">
-            <SpeakButton text={built.join("")} label="Hear my word" />
-          </div>
-        )}
-        <button
-          disabled={!playing || picked === null}
-          className="growth-primary mt-5 w-full disabled:opacity-40"
-          onClick={() =>
-            check(
-              picked === p.answer,
-              picked === p.answer
-                ? solution
-                : `That makes ${built.join("")}. Listen to ${p.reference} again and match its ${p.position} sound.`,
-            )
-          }
-        >
-          Check my word
-        </button>
       </>
     );
   } else {
     const p = pipePuzzle(level, seed),
-      masks = p.initial.map((m, i) => work[i] ?? m),
-      flow = traceWater(p.size, masks),
-      tested = b.answer !== null;
-    prompt = "Connect the water tap to the thirsty flower.";
+      intro = level === 1 && run.round === 0,
+      starter = intro
+        ? p.solved.map((mask, i) =>
+            i === p.path[1] ? rotateMask(mask, 3) : mask,
+          )
+        : p.initial,
+      masks = starter.map((m, i) => work[i] ?? m),
+      flow = traceWater(p.size, masks);
+    prompt = "Grow a garden. Turn a pipe.";
     instructions =
-      "Tap a pipe to turn it clockwise. Pipe ends must meet. The tap and flower stay fixed. Press Test water to see how far it flows.";
+      intro && !work.length
+        ? "Tap the glowing pipe. Watch where the water goes."
+        : "Follow the blue water. Tap a pipe to turn it.";
     clue =
       "Start at the tap in the top-left. Follow one connected pipe at a time. Turn the next pipe so its opening meets yours.";
     solution =
       "Follow the highlighted example route from the tap to the flower. Every touching pipe opening must match.";
     answer = `Pipe masks: ${masks.join(", ")}. Water reached ${flow.reached.length} squares.`;
     const shown = b.status === "skipped" ? p.solved : masks,
-      wet = b.status === "skipped" ? p.path : tested ? flow.reached : [];
+      wet = b.status === "skipped" ? p.path : flow.reached;
     content = (
       <>
-        <div className="mb-3 flex justify-between text-sm font-bold">
-          <span>💧 Tap: top-left</span>
-          <span>🌼 Flower: bottom-right</span>
-        </div>
+        <Garden flowers={run.clean + run.assisted} />
         <div
           role="group"
           aria-label="Water pipe grid"
@@ -511,12 +630,21 @@ export function Workshop({ id, state, update, onExit }: Props) {
               <button
                 key={i}
                 disabled={!playing || fixed}
-                className={`pipe-cell ${active ? "pipe-wet" : ""} ${tested && flow.blocked === i ? "pipe-blocked" : ""}`}
+                className={`pipe-cell ${active ? "pipe-wet" : ""} ${intro && !work.length && playing && p.path[1] === i ? "pipe-guide" : ""}`}
                 aria-label={`Pipe row ${Math.floor(i / p.size) + 1}, column ${(i % p.size) + 1}, openings ${DIRECTIONS.filter((_, d) => mask & (1 << d)).join(" and ")}${fixed ? ", fixed" : ""}`}
                 onClick={() => {
                   const next = [...masks];
                   next[i] = rotateMask(mask, 1);
+                  if (intro && !work.length)
+                    patch({ hints: Math.max(1, b.hints) });
                   edit(next);
+                  const result = traceWater(p.size, next);
+                  if (result.ok)
+                    finish(
+                      true,
+                      "The flower has water! Your garden grew.",
+                      `Connected ${result.reached.length} pipe squares from tap to flower.`,
+                    );
                 }}
               >
                 <svg aria-hidden viewBox="0 0 100 100">
@@ -543,7 +671,7 @@ export function Workshop({ id, state, update, onExit }: Props) {
                   />
                   {fixed && (
                     <text x="50" y="57" textAnchor="middle" fontSize="23">
-                      {i === 0 ? "💧" : "🌼"}
+                      {i === 0 ? "💧" : b.status === "solved" ? "🌻" : "🌱"}
                     </text>
                   )}
                 </svg>
@@ -551,21 +679,14 @@ export function Workshop({ id, state, update, onExit }: Props) {
             );
           })}
         </div>
-        <button
-          disabled={!playing}
-          className="growth-primary mt-5 w-full"
-          onClick={() => {
-            patch({ answer: flow.reached.length });
-            check(
-              flow.ok,
-              flow.ok
-                ? "Water reached the flower! Every pipe on your route connects."
-                : `Water stops at row ${Math.floor((flow.blocked ?? 0) / p.size) + 1}, column ${((flow.blocked ?? 0) % p.size) + 1}. Match the opening to the next pipe, then test again.`,
-            );
-          }}
-        >
-          Test water
-        </button>
+        {playing && flow.ok && (
+          <button
+            className="growth-primary mt-4"
+            onClick={() => finish(true, "Water reached the flower!", answer)}
+          >
+            Water the flower
+          </button>
+        )}
       </>
     );
   }
@@ -585,17 +706,19 @@ export function Workshop({ id, state, update, onExit }: Props) {
         </p>
         <div className="mt-2 flex items-start gap-2">
           <h1 className="font-kid flex-1 text-2xl text-teal-950">{prompt}</h1>
-          <SpeakButton text={prompt} label="Hear the puzzle" />
+          <SpeakButton text={narration || prompt} label="Hear the puzzle" />
         </div>
         <p className="my-4 text-slate-600">{instructions}</p>
         {content}
-        <div
-          role="status"
-          aria-live="polite"
-          className="mt-4 rounded-xl bg-teal-50 p-3"
-        >
-          {b.feedback || "Explore, then check when you are ready."}
-        </div>
+        {(b.feedback || (id !== "sound-switch" && id !== "water-pipes")) && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="mt-4 rounded-xl bg-teal-50 p-3"
+          >
+            {b.feedback || "Explore, then check when you are ready."}
+          </div>
+        )}
         {playing ? (
           <div className="mt-4 flex flex-wrap gap-3">
             <button

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ALL_SKILLS, CURRICULA, LANGUAGES, SUBJECTS, getSkill, getSubject, localize } from '../content';
 import type { CurriculumId } from '../content/types';
 import { soundEngine } from '../utils/audio';
@@ -368,6 +368,7 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
   const [msg, setMsg] = useState('');
   // The name field may be empty while typing, but an empty name is never saved.
   const [nameDraft, setNameDraft] = useState(state.profile?.name ?? '');
+  useEffect(() => setNameDraft(state.profile?.name ?? ''), [state.profile?.name]);
   const set = (patch: Partial<AppState['settings']>) => setState({ ...state, settings: { ...state.settings, ...patch } });
   const toggle = (label: string, hint: string, key: 'muted' | 'unlockAll' | 'showStretch') => (
     <label className="flex items-start justify-between gap-4 py-2">

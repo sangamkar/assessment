@@ -255,7 +255,7 @@ class SoundEngine {
 
   public isSpeaking(): boolean {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      return window.speechSynthesis.speaking;
+      return window.speechSynthesis.speaking || window.speechSynthesis.pending;
     }
     return false;
   }

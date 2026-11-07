@@ -223,7 +223,24 @@ export function Workshop({ id, state, update, onExit }: Props) {
   const run = state.brainRuns?.[id];
   useEffect(() => () => soundEngine.stopSpeech(), []);
   useEffect(() => {
-    if (id !== "pattern-machine" || !run || run.round >= 4) return;
+    if ((id !== "pattern-machine" && id !== "shape-builder") || !run || run.round >= 4) return;
+    if (id === "shape-builder") {
+      const puzzle = shapePuzzle(run.level,puzzleSeed(run));
+      if (run.board.status !== "playing" || !puzzle.cells.every((cell,i)=>cell===(run.board.work?.[i]??0))) return;
+      update(state => {
+        const current = state.brainRuns?.[id];
+        if (!current || current.seed !== run.seed || current.round !== run.round || current.board.status !== "playing" ||
+            !puzzle.cells.every((cell,i)=>cell===(current.board.work?.[i]??0))) return state;
+        const message = `You built the ${puzzle.name}! All the shapes fit.`;
+        const next = finishBrainRound(current,true,message);
+        return {...recordGame(state,id,next.clean>current.clean?'win':'assisted',Date.now(),{
+          prompt:`Build the ${puzzle.name}`,answer:current.board.work!.slice(0,16).join(', '),
+          hints:current.board.hints,mistakes:current.board.misses?[current.board.misses+' incorrect checks']:[],
+        }),brainRuns:{...state.brainRuns,[id]:next}};
+      });
+      soundEngine.playCorrectChime();
+      return;
+    }
     const puzzle = patternPuzzle(run.level, puzzleSeed(run));
     const complete = run.board.work?.length === 2 &&
       run.board.work.every((value, index) => value === puzzle.answer[index]);
@@ -431,20 +448,7 @@ export function Workshop({ id, state, update, onExit }: Props) {
             </button>
           ))}
         </div>
-        <button
-          disabled={!playing}
-          className="growth-primary mt-5 w-full"
-          onClick={() =>
-            check(
-              board.every((c, i) => c === p.cells[i]),
-              board.every((c, i) => c === p.cells[i])
-                ? `You built the ${p.name}! You matched the shapes and their directions.`
-                : "Compare with the model. Check for empty squares, extra pieces, and triangles that need a turn.",
-            )
-          }
-        >
-          Check my picture
-        </button>
+
       </>
     );
   } else if (id === "clock-quest") {

@@ -2,11 +2,14 @@ import React from 'react';
 import { SUBJECTS } from '../content';
 import type { SubjectId } from '../content/types';
 import { subjectSummary } from '../engine/planner';
-import type { AppState } from '../engine/progress';
+import { GAMES } from './games/Games';
+import { isNewGame } from '../games/brain';
+import type { AppState, GameId } from '../engine/progress';
 import { AirportPicture } from './airport/AirportArt';
 
 interface Props {
   state: AppState;
+  onResumeGame?: (id: GameId) => void;
   onQuest: () => void;
   onExplore: () => void;
   onGames: () => void;
@@ -14,7 +17,10 @@ interface Props {
   onGrownUps: () => void;
 }
 
-export function Home({ state, onQuest, onGames, onIsland, onGrownUps, onExplore }: Props) {
+export function Home({ state, onQuest, onGames, onIsland, onGrownUps, onExplore, onResumeGame }: Props) {
+  const saved = state.lastGame && isNewGame(state.lastGame) ? state.brainRuns?.[state.lastGame] : undefined;
+  const resume = saved && saved.round < 4 && !(saved.round === 3 && saved.board.status !== 'playing')
+    ? GAMES.find(game => game.id === state.lastGame) : undefined;
   const name = state.profile?.name?.trim() || 'Explorer';
   return (
     <div className="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-4 py-6">
@@ -49,6 +55,8 @@ export function Home({ state, onQuest, onGames, onIsland, onGrownUps, onExplore 
           <div className="mt-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-white text-3xl shadow-lg">🎮</div>
         </button>
       </div>
+
+      {resume && onResumeGame && <button className="growth-secondary self-start" onClick={() => onResumeGame(resume.id)}>Continue playing · {resume.title} →</button>}
 
       <div className={`grid grid-cols-2 gap-4 sm:grid-cols-3 ${SUBJECTS.filter((x) => subjectSummary(state, x.id).total).length > 5 ? 'lg:grid-cols-6' : 'lg:grid-cols-5'}`}>
         {SUBJECTS.map((s) => {

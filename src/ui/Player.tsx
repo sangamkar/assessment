@@ -1,3 +1,4 @@
+import { useAutoAdvance } from "../utils/useAutoAdvance";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Choice, Item } from '../content/types';
 import type { QuestStep } from '../engine/planner';
@@ -82,6 +83,8 @@ export function Player({ locale, mode, title, color, total, first, getNext, intr
     }
     setPhase(practice && !introSeen(next.skill.id) ? 'intro' : 'ask');
   }, [getNext, introSeen, onFinish, practice, breakEvery, n]);
+
+  const auto = useAutoAdvance(practice && phase === "right" && !confirmExit, String(n), advance);
 
   if (!step || !item) return null;
 
@@ -278,8 +281,9 @@ export function Player({ locale, mode, title, color, total, first, getNext, intr
               </div>
             )}
             {phase === 'explain' || phase === 'right' ? (
-              <div className="flex gap-3">
-                <SpeakButton text={L(item.explain)} label="Hear why this answer works" />
+              <div className="flex flex-wrap justify-center gap-3">
+                <span onClick={() => auto.setPaused(true)}><SpeakButton text={L(item.explain)} label="Hear why this answer works" /></span>
+                {phase === "right" && <button className="growth-secondary" onClick={() => auto.setPaused(!auto.paused)}>{auto.paused ? "Resume auto-next" : "Pause auto-next"}</button>}
                 <button onClick={advance} className="rounded-full px-10 py-4 font-kid text-2xl font-bold text-white shadow-lg active:scale-95" style={{ background: color }}>
                   Next ▶
                 </button>

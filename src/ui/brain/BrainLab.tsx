@@ -15,6 +15,7 @@ import type { AppState } from "../../engine/progress";
 import { recordGame } from "../../engine/progress";
 import {
   LAB_ROUNDS,
+  brainCompletion,
   newBrainRun,
   nextBrainRound,
   finishBrainRound,
@@ -65,6 +66,25 @@ export function BrainLab({
     guard.current = false;
   }, [run?.round, run?.seed]);
   useEffect(() => () => soundEngine.stopSpeech(), []);
+  useEffect(() => {
+    if (!run) return;
+    const message = brainCompletion(id, run);
+    if (!message) return;
+    update(state => {
+      const current = state.brainRuns?.[id];
+      if (!current || current.seed !== run.seed || current.round !== run.round) return state;
+      const result = brainCompletion(id,current);
+      if (!result) return state;
+      const next = finishBrainRound(current,true,result);
+      return {...recordGame(state,id,next.clean>current.clean?'win':'assisted',Date.now(),{
+        prompt: promptRef.current?.textContent ?? LAB_TITLES[id],
+        answer: result,
+        hints: current.board.hints,
+        mistakes: current.board.misses ? [current.board.misses+' unsuccessful attempts'] : [],
+      }),brainRuns:{...state.brainRuns,[id]:next}};
+    });
+    soundEngine.speak(message);
+  }, [id,run?.seed,run?.round,run?.board]);
   if (!run)
     return (
       <main className="growth-page">
@@ -273,7 +293,12 @@ export function BrainLab({
           <button
             disabled={!playing || b.selection.length !== 2}
             className="growth-primary disabled:opacity-40"
-            onClick={() => alter(combineTiles)}
+            onClick={() => alter(r => {
+              const next = combineTiles(r);
+              const final = next.board.cards.length === 1;
+              if (!final || brainCompletion(id,next)) return next;
+              return {...next,board:{...next.board,misses:Math.min(1000,next.board.misses+1),feedback:`Your result is ${next.board.cards[0].value}. Undo a combination to try for ${p.target}.`}};
+            })}
           >
             Combine tiles
           </button>
@@ -293,31 +318,14 @@ export function BrainLab({
             Undo combination
           </button>
         </div>
-        <button
-          disabled={!playing}
-          className="growth-primary mt-5 w-full"
-          onClick={() =>
-            b.cards.length === 1 && b.cards[0].value === p.target
-              ? finish(
-                  true,
-                  `You found a working combination! ${b.cards[0].expression} equals ${p.target}.`,
-                )
-              : fail(
-                  b.cards.length > 1
-                    ? "Use every tile. Combine until only one tile is left."
-                    : `Your result is ${b.cards[0]?.value}. The target is ${p.target}. Undo a combination and try another operation.`,
-                )
-          }
-        >
-          Check my number
-        </button>
+
       </>
     );
   } else if (id === "connections-junior") {
     const p = connectionPuzzle(level, run.seed, run.round);
     const done = new Set(b.groups.flat());
     prompt =
-      "Find four words that belong together. Select four tiles and check your group. There are two groups.";
+      "Find four words that belong together. Tap four tiles to make a group. There are two groups.";
     const remaining = p.tiles.findIndex((_, i) => !done.has(i));
     clue =
       remaining < 0
@@ -341,14 +349,14 @@ export function BrainLab({
               disabled={!playing || done.has(i)}
               aria-pressed={b.selection.includes(i)}
               onClick={() => {
-                patch({
-                  selection: b.selection.includes(i)
-                    ? b.selection.filter((n) => n !== i)
-                    : b.selection.length < 4
-                      ? [...b.selection, i]
-                      : b.selection,
-                  feedback: "",
-                });
+                const selected = b.selection.includes(i)
+                  ? b.selection.filter(n => n !== i) : [...b.selection, i];
+                if (selected.length < 4) patch({selection:selected,feedback:""});
+                else {
+                  const group = matchingGroup(selected,level,run.seed,run.round);
+                  if (group === null) patch({selection:[],misses:Math.min(1000,b.misses+1),feedback:"Those words do not share our category. Try another group."});
+                  else patch({selection:[],groups:[...b.groups,selected],feedback:`You found ${p.set.groups[group].label.toLowerCase()}!`});
+                }
                 soundEngine.speak(t.word);
               }}
             >
@@ -356,30 +364,7 @@ export function BrainLab({
             </button>
           ))}
         </div>
-        <button
-          disabled={!playing || b.selection.length !== 4}
-          className="growth-primary mt-5 w-full disabled:opacity-40"
-          onClick={() => {
-            const g = matchingGroup(b.selection, level, run.seed, run.round);
-            if (g === null) {
-              fail(
-                "Those four do not all share our intended category. Try a different group.",
-              );
-              return;
-            }
-            if (b.groups.length === 1) {
-              patch({ groups: [...b.groups, b.selection], selection: [] });
-              finish(true, solution);
-            } else
-              patch({
-                groups: [...b.groups, b.selection],
-                selection: [],
-                feedback: `You found ${p.set.groups[g].label.toLowerCase()}. Now find the other four.`,
-              });
-          }}
-        >
-          Check group
-        </button>
+
       </>
     );
   } else if (id === "balance-lab") {
@@ -440,25 +425,13 @@ export function BrainLab({
               key={n}
               className={`lab-number ${b.answer === n ? "lab-selected" : ""}`}
               aria-pressed={b.answer === n}
-              onClick={() => patch({ answer: n, feedback: "" })}
+              onClick={() => patch({answer:n,feedback:n===p.answer?"":`${p.a+n} and ${p.total} are not equal. Try another number.`,misses:Math.min(1000,b.misses+(n===p.answer?0:1))})}
             >
               {n}
             </button>
           ))}
         </div>
-        <button
-          disabled={!playing || b.answer === null}
-          className="growth-primary mt-5 w-full disabled:opacity-40"
-          onClick={() =>
-            b.answer === p.answer
-              ? finish(true, solution)
-              : fail(
-                  `${lhs} and ${rhs} are not equal. Try another number and watch the scale.`,
-                )
-          }
-        >
-          Check the balance
-        </button>
+
       </>
     );
   } else {
@@ -564,17 +537,7 @@ export function BrainLab({
           >
             Return last parcel
           </button>
-          <button
-            disabled={!playing || !p.stations.includes(b.position)}
-            className="growth-primary disabled:opacity-40"
-            onClick={() =>
-              delivery.ok
-                ? finish(true, delivery.message)
-                : fail(delivery.message)
-            }
-          >
-            Deliver parcels
-          </button>
+          {playing && p.stations.includes(b.position) && !delivery.ok && <p role="status">{delivery.message}</p>}
         </div>
       </>
     );

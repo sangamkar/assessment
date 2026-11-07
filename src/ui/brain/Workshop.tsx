@@ -222,6 +222,53 @@ function Clock({ total }: { total: number }) {
 export function Workshop({ id, state, update, onExit }: Props) {
   const run = state.brainRuns?.[id];
   useEffect(() => () => soundEngine.stopSpeech(), []);
+  useEffect(() => {
+    if ((id !== "pattern-machine" && id !== "shape-builder") || !run || run.round >= 4) return;
+    if (id === "shape-builder") {
+      const puzzle = shapePuzzle(run.level,puzzleSeed(run));
+      if (run.board.status !== "playing" || !puzzle.cells.every((cell,i)=>cell===(run.board.work?.[i]??0))) return;
+      update(state => {
+        const current = state.brainRuns?.[id];
+        if (!current || current.seed !== run.seed || current.round !== run.round || current.board.status !== "playing" ||
+            !puzzle.cells.every((cell,i)=>cell===(current.board.work?.[i]??0))) return state;
+        const message = `You built the ${puzzle.name}! All the shapes fit.`;
+        const next = finishBrainRound(current,true,message);
+        return {...recordGame(state,id,next.clean>current.clean?'win':'assisted',Date.now(),{
+          prompt:`Build the ${puzzle.name}`,answer:current.board.work!.slice(0,16).join(', '),
+          hints:current.board.hints,mistakes:current.board.misses?[current.board.misses+' incorrect checks']:[],
+        }),brainRuns:{...state.brainRuns,[id]:next}};
+      });
+      soundEngine.playCorrectChime();
+      return;
+    }
+    const puzzle = patternPuzzle(run.level, puzzleSeed(run));
+    const complete = run.board.work?.length === 2 &&
+      run.board.work.every((value, index) => value === puzzle.answer[index]);
+    if (run.board.status === "playing" && complete) {
+      update(state => {
+        const current = state.brainRuns?.[id];
+        if (!current || current.seed !== run.seed || current.round !== run.round ||
+            current.board.status !== "playing") return state;
+        const message = "You fixed it! " + puzzle.explanation;
+        const next = finishBrainRound(current, true, message);
+        return {...recordGame(state, id, next.clean > current.clean ? "win" : "assisted", Date.now(), {
+          prompt: puzzle.shown.map(n => PATTERN_TILES[n]).join(" ") + " — fill the next two shapes",
+          answer: puzzle.answer.map(n => PATTERN_TILES[n]).join(" "),
+          hints: current.board.hints,
+          mistakes: current.board.misses ? [current.board.misses + " incorrect shape selections"] : [],
+        }), brainRuns: {...state.brainRuns, [id]: next}};
+      });
+      soundEngine.playCorrectChime();
+    }
+    if (run.board.status !== "solved" || run.round === 3) return;
+    const timer = setTimeout(() => update(state => {
+      const current = state.brainRuns?.[id];
+      if (!current || current.seed !== run.seed || current.round !== run.round ||
+          current.board.status !== "solved") return state;
+      return {...state, brainRuns: {...state.brainRuns, [id]: nextBrainRound(id,current)}};
+    }), 1400);
+    return () => clearTimeout(timer);
+  }, [id, run?.seed, run?.round, run?.board.status, run?.board.work]);
   if (!run) return <button onClick={onExit}>Back to games</button>;
   const b = run.board,
     level = run.level,
@@ -401,20 +448,7 @@ export function Workshop({ id, state, update, onExit }: Props) {
             </button>
           ))}
         </div>
-        <button
-          disabled={!playing}
-          className="growth-primary mt-5 w-full"
-          onClick={() =>
-            check(
-              board.every((c, i) => c === p.cells[i]),
-              board.every((c, i) => c === p.cells[i])
-                ? `You built the ${p.name}! You matched the shapes and their directions.`
-                : "Compare with the model. Check for empty squares, extra pieces, and triangles that need a turn.",
-            )
-          }
-        >
-          Check my picture
-        </button>
+
       </>
     );
   } else if (id === "clock-quest") {
@@ -476,9 +510,11 @@ export function Workshop({ id, state, update, onExit }: Props) {
     );
   } else if (id === "pattern-machine") {
     const p = patternPuzzle(level, seed);
-    prompt = "Repair the pattern machine. What are the next TWO shapes?";
+    const filled: number[] = [];
+    for (let i = 0; i < 2 && work[i] === p.answer[i]; i++) filled.push(work[i]);
+    prompt = "What comes next?";
     instructions =
-      "Look for the smallest group that repeats. Choose a shape for each empty space, then test your pattern.";
+      "Tap the next shape. Then add one more.";
     clue = p.explanation;
     solution = `${p.explanation} The next two shapes are ${p.answer.map((n) => PATTERN_TILES[n]).join(" ")}.`;
     answer = work.map((n) => PATTERN_TILES[n]).join(" ");
@@ -501,40 +537,20 @@ export function Workshop({ id, state, update, onExit }: Props) {
           {[0, 1].map((i) => (
             <span
               key={`a${i}`}
-              className="pattern-tile border-2 border-dashed border-teal-600"
+              className={`pattern-tile border-2 border-dashed border-teal-600 ${i === filled.length && playing ? "pattern-active-slot" : ""}`}
             >
-              {work[i] === undefined ? "?" : PATTERN_TILES[work[i]]}
+              {filled[i] === undefined ? "?" : PATTERN_TILES[filled[i]]}
             </span>
           ))}
         </div>
         <div className="mt-5 flex flex-wrap justify-center gap-3">
-          {PATTERN_TILES.map((n, i) =>
-            choice(["Circle", "Triangle", "Square", "Star"][i] + " " + n, () =>
-              edit(work.length < 2 ? [...work, i] : [i]),
-            ),
+          {PATTERN_TILES.map((symbol, value) =>
+            choice(["Circle", "Triangle", "Square", "Star"][value] + " " + symbol, () => {
+              if (value === p.answer[filled.length]) edit([...filled, value]);
+              else check(false, "Try another shape in the glowing space.");
+            }),
           )}
         </div>
-        <button
-          className="growth-secondary mt-4"
-          disabled={!playing || !work.length}
-          onClick={() => edit(work.slice(0, -1))}
-        >
-          Undo shape
-        </button>
-        <button
-          disabled={!playing || work.length !== 2}
-          className="growth-primary mt-4 w-full disabled:opacity-40"
-          onClick={() =>
-            check(
-              work.length === 2 && work.every((n, i) => n === p.answer[i]),
-              work.every((n, i) => n === p.answer[i])
-                ? `The machine works! ${solution}`
-                : "Read the pattern from the beginning. Find the repeating group, then try the next two shapes.",
-            )
-          }
-        >
-          Test my pattern
-        </button>
       </>
     );
   } else if (id === "sound-switch") {
@@ -749,6 +765,8 @@ export function Workshop({ id, state, update, onExit }: Props) {
               Show solution and skip
             </button>
           </div>
+        ) : id === "pattern-machine" && b.status === "solved" && run.round < 3 ? (
+          <p className="mt-4 text-center text-teal-700">Next pattern…</p>
         ) : (
           <button
             className="growth-primary mt-5"

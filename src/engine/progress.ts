@@ -100,6 +100,7 @@ export interface AppState {
   growth: GrowthState;
   airport?: AirportState;
   brainRuns?: BrainRuns;
+  lastGame?: NewGameId;
   profile?: { name: string; avatar: string; createdAt: number };
   settings: Settings;
   skills: Record<string, SkillState>;

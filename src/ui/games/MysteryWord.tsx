@@ -1,3 +1,4 @@
+import { useAutoAdvance } from "../../utils/useAutoAdvance";
 import React, { useEffect, useMemo, useState } from 'react';
 import { createRng } from '../../engine/rng';
 import type { GameEvidence } from '../../engine/progress';
@@ -45,6 +46,7 @@ export function MysteryWord({
     setMessage('');
     setSolved(false);
   };
+  const auto = useAutoAdvance(solved, seed + ":" + round, () => reset(round + 1));
   if (!current || round >= ROUNDS)
     return (
       <Wrap>
@@ -146,9 +148,9 @@ export function MysteryWord({
             </button>
           </>
         ) : (
-          <button className="growth-primary" onClick={() => reset(round + 1)}>
+          <div className="flex flex-wrap gap-3"><button className="growth-secondary" onClick={() => auto.setPaused(!auto.paused)}>{auto.paused ? "Resume auto-next" : "Pause auto-next"}</button><button className="growth-primary" onClick={() => reset(round + 1)}>
             Next word →
-          </button>
+          </button></div>
         )}
       </div>
     </Wrap>

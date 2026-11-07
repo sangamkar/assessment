@@ -138,3 +138,4 @@ button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus
 @media(prefers-reduced-motion:no-preference){.garden-bloom,.word-reveal{animation:bloom-in .55s ease-out}@keyframes bloom-in{from{transform:scale(.5) rotate(-10deg)}to{transform:scale(1)}}}
 
 .pipe-garden {display:block;width:100%;max-width:28rem;margin:0 auto 1rem;border-radius:1rem}.garden-bloom {transform-box:fill-box;transform-origin:center}.word-cargo,.word-reveal {display:inline-block}
+.pattern-active-slot { background:#ccfbf1; box-shadow:0 0 0 3px #5eead4; }

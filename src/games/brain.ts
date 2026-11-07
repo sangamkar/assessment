@@ -369,3 +369,28 @@ export function normalizeBrainRuns(value: unknown): BrainRuns {
   }
   return out;
 }
+
+/** Completion conditions shared by live interaction and restored saved boards. */
+export function brainCompletion(id: NewGameId, run: BrainRun): string | null {
+  if (run.round >= LAB_ROUNDS || run.board.status !== 'playing') return null;
+  const board = run.board;
+  if (id === 'target-number' && board.cards.length === 1) {
+    const target = targetPuzzle(run.level, puzzleSeed(run)).target;
+    return board.cards[0].value === target
+      ? `You made ${target}! ${board.cards[0].expression} equals ${target}.` : null;
+  }
+  if (id === 'balance-lab') {
+    const puzzle = balancePuzzle(run.level, puzzleSeed(run));
+    return board.answer === puzzle.answer ? `${puzzle.a} + ${puzzle.answer} = ${puzzle.total}. Both sides balance.` : null;
+  }
+  if (id === 'connections-junior' && board.groups.length === 2) {
+    const groups = board.groups.map(indices => matchingGroup(indices,run.level,run.seed,run.round));
+    if (groups[0] === null || groups[1] === null || groups[0] === groups[1]) return null;
+    return connectionPuzzle(run.level,run.seed,run.round).set.explanation;
+  }
+  if (id === 'robot-delivery') {
+    const delivery = robotDelivery(run);
+    return delivery.ok ? delivery.message : null;
+  }
+  return null;
+}

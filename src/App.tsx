@@ -78,6 +78,15 @@ export default function App() {
   const locale = CURRICULA[state.settings.primary].locale;
   useEffect(() => soundEngine.setLocale(locale), [locale]);
 
+  const startGame = (id: GameId) => {
+    const level = gameState(stateRef.current, id).level;
+    if (isNewGame(id)) update(s => ({
+      ...s, lastGame: id,
+      brainRuns: {...s.brainRuns, [id]: s.brainRuns?.[id] ?? newBrainRun(id, level)},
+    }));
+    setView({name:'game', id, level, run:Date.now()});
+  };
+
   if (!authed) {
     return (
       <PasscodeLock
@@ -230,7 +239,7 @@ export default function App() {
     if (view.name === 'starting-point' || (view.name === 'home' && !state.startupCheck?.finished)) return <StartingPoint state={state} onStart={subject => startPlacementRun(subject, true)} onContinue={() => { update(s => ({ ...s, startupCheck: { ...s.startupCheck, finished: true } })); setView({ name: 'home' }); }} />;
     switch (view.name) {
       case 'home':
-        return <Home state={state} onExplore={() => setView({ name: 'explore' })} onQuest={startQuest} onGames={() => setView({ name: 'games' })} onIsland={(subject) => setView({ name: 'island', subject })} onGrownUps={() => setView({ name: 'gate' })} />;
+        return <Home state={state} onResumeGame={startGame} onExplore={() => setView({ name: 'explore' })} onQuest={startQuest} onGames={() => setView({ name: 'games' })} onIsland={(subject) => setView({ name: 'island', subject })} onGrownUps={() => setView({ name: 'gate' })} />;
       case 'explore':
         return <BuildExplore state={state} onBack={() => setView({ name: 'home' })} onAirport={() => setView({ name: 'airport' })} onPassport={() => setView({ name: 'portfolio' })} />;
       case 'airport':
@@ -238,7 +247,7 @@ export default function App() {
       case 'portfolio':
         return <AirportJournal state={state} onBack={() => setView({ name: 'explore' })} onPlay={(id) => { update((s) => ({ ...s, airport: { ...(s.airport ?? emptyAirport()), selected: id } })); setView({ name: 'airport' }); }} />;
       case 'games':
-        return <Games state={state} onBack={() => setView({ name: 'home' })} onPlay={(id) => { const level = gameState(stateRef.current, id).level; if (isNewGame(id)) update((s) => s.brainRuns?.[id] ? s : { ...s, brainRuns: { ...s.brainRuns, [id]: newBrainRun(id, level) } }); setView({ name: 'game', id, level, run: Date.now() }); }} />;
+        return <Games state={state} onBack={() => setView({ name: 'home' })} onPlay={startGame} />;
       case 'game': {
         if (isWorkshop(view.id)) return <Workshop id={view.id} state={state} update={update} onExit={() => setView({ name: 'games' })} />;
         if (isNewGame(view.id)) return <BrainLab id={view.id} state={state} update={update} onExit={() => setView({ name: 'games' })} />;

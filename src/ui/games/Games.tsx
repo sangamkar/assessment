@@ -40,10 +40,19 @@ export const GAMES: { id: GameId; title: string; emoji: string; kid: string; bui
   {id:'shape-builder',title:'Shape Builder',emoji:'🔺',kid:'Choose, turn and place shapes to build a picture.',builds:'Shape composition and rotation.',color:'#7c3aed',soft:'#ede9fe'},
   {id:'clock-quest',title:'Clock Quest',emoji:'🕒',kid:'Move the clock hands to get ready for launch.',builds:'Whole hours, half-hours and quarter-hours.',color:'#b45309',soft:'#fef3c7'},
   {id:'pattern-machine',title:'Pattern Machine',emoji:'⚙️',kid:'Find the repeating rule and repair the machine.',builds:'Repeating patterns and prediction.',color:'#0f766e',soft:'#dcf5ee'},
-  {id:'sound-switch',title:'Sound Switch',emoji:'🔊',kid:'Change one sound and discover a different word.',builds:'Sound substitution and letter–sound connections.',color:'#be185d',soft:'#fce7f3'},
-  {id:'water-pipes',title:'Water Pipes',emoji:'💧',kid:'Turn the pipes and send water all the way to the flower.',builds:'Spatial connections, planning and testing a solution.',color:'#0369a1',soft:'#e0f2fe'},
+  {id:'sound-switch',title:'Sound Switch',emoji:'🔊',kid:'Swap a letter to change one picture into another.',builds:'Sound substitution and letter–sound connections.',color:'#be185d',soft:'#fce7f3'},
+  {id:'water-pipes',title:'Water Pipes',emoji:'💧',kid:'Turn a pipe. Follow the water. Grow your garden.',builds:'Spatial connections, planning and testing a solution.',color:'#0369a1',soft:'#e0f2fe'},
 
 ];
+
+// Put the most-played game on this device beside the two redesigned games.
+function shelfOrder(state: AppState) {
+  const favorite = GAMES.reduce((best, g) =>
+    (state.games[g.id]?.played ?? 0) > (state.games[best]?.played ?? 0) ? g.id : best,
+    'number-path' as GameId);
+  const order = new Set<GameId>([favorite,'water-pipes','sound-switch',...GAMES.map(game=>game.id)]);
+  return [...order].map(id=>GAMES.find(game=>game.id===id)!);
+}
 
 export function Games({ state, onPlay, onBack }: { state: AppState; onPlay: (id: GameId) => void; onBack: () => void }) {
   const [filter, setFilter] = useState<'all' | 'words' | 'numbers' | 'thinking'>('all');
@@ -60,7 +69,7 @@ export function Games({ state, onPlay, onBack }: { state: AppState; onPlay: (id:
       </header>
       <nav aria-label="Game categories" className="mb-5 flex flex-wrap gap-2">{([['all','All games'],['words','Words & vocabulary'],['numbers','Numbers & maths'],['thinking','Shapes & logic']] as const).map(([id,label]) => <button key={id} aria-pressed={filter === id} className={filter === id ? 'growth-primary' : 'growth-secondary'} onClick={() => setFilter(id)}>{label}</button>)}</nav>
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {GAMES.filter((g) => filter === 'all' || (filter === 'words' ? wordGames : filter === 'numbers' ? numberGames : ['shape-builder','pattern-machine','water-pipes','number-path','robot-delivery']).includes(g.id)).map((g) => {
+        {shelfOrder(state).filter((g) => filter === 'all' || (filter === 'words' ? wordGames : filter === 'numbers' ? numberGames : ['shape-builder','pattern-machine','water-pipes','number-path','robot-delivery']).includes(g.id)).map((g) => {
           const st = gameState(state, g.id);
           const saved = isNewGame(g.id) ? state.brainRuns?.[g.id] : undefined;
           const shownLevel = saved && saved.round < 4 ? saved.level : st.level;

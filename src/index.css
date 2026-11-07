@@ -131,3 +131,10 @@ button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus
 .workshop-page .growth-feature { padding:clamp(1rem, 3vw, 2rem); }
 .workshop-page { padding-left:.75rem; padding-right:.75rem; }
 .workshop-page .growth-secondary { padding-left:.6rem; padding-right:.6rem; }
+.word-scene {display:flex;align-items:center;justify-content:center;gap:.6rem;border-radius:1.2rem;padding:1rem;margin-bottom:1rem;background:linear-gradient(#daf4ff 65%,#b9dfa4 65%);font-size:clamp(2rem,7vw,3rem)}
+.word-scene {gap:1rem;background:linear-gradient(120deg,#eef3ff,#fbebfd);font-size:clamp(3rem,12vw,5rem)}
+.scene-arrow {font-size:1.5rem;color:#54547a}.sound-slot {outline:3px dashed #95428b;background:#fbebfd}.word-goal {border:2px dashed #9977a6;border-radius:1rem;padding:.25rem}
+.pipe-guide {outline:3px dashed #c2740e;outline-offset:-4px}
+@media(prefers-reduced-motion:no-preference){.garden-bloom,.word-reveal{animation:bloom-in .55s ease-out}@keyframes bloom-in{from{transform:scale(.5) rotate(-10deg)}to{transform:scale(1)}}}
+
+.pipe-garden {display:block;width:100%;max-width:28rem;margin:0 auto 1rem;border-radius:1rem}.garden-bloom {transform-box:fill-box;transform-origin:center}.word-cargo,.word-reveal {display:inline-block}

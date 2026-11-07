@@ -94,9 +94,14 @@ export default function App() {
   useEffect(() => setStorageOk(saveState(state)), [state]);
   useEffect(() => soundEngine.setMuted(state.settings.muted), [state.settings.muted]);
   useEffect(() => update(claimStreakStickers), [state.days, update]);
+  const [, setScreenTick] = useState(0);
   useEffect(() => {
     const tick = 30_000;
-    const id = window.setInterval(() => document.visibilityState === 'visible' && addScreenTime(tick), tick);
+    const id = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
+      addScreenTime(tick);
+      setScreenTick((n) => n + 1);
+    }, tick);
     return () => window.clearInterval(id);
   }, []);
   const locale = CURRICULA[state.settings.primary].locale;

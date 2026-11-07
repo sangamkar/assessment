@@ -16,6 +16,21 @@ const noop = () => {};
 afterEach(() => vi.unstubAllGlobals());
 
 describe('gentle streak', () => {
+  it('walks calendar days across daylight-saving changes', () => {
+    const tz = process.env.TZ;
+    process.env.TZ = 'America/New_York';
+    try {
+      const spring = new Date(2026, 2, 9, 0, 30).getTime();
+      const springState = withDays(['2026-03-07', '2026-03-08', '2026-03-09']);
+      expect(gentleStreak(springState, spring)).toBe(3);
+      expect(weekStrip(springState, spring).map((d) => d.key).slice(-3)).toEqual(['2026-03-07', '2026-03-08', '2026-03-09']);
+      const fall = new Date(2026, 10, 2, 23, 30).getTime();
+      expect(gentleStreak(withDays(['2026-10-31', '2026-11-01', '2026-11-02']), fall)).toBe(3);
+      expect(new Set(weekStrip(withDays([]), fall).map((d) => d.key)).size).toBe(7);
+    } finally {
+      if (tz === undefined) delete process.env.TZ; else process.env.TZ = tz;
+    }
+  });
   it('counts consecutive days and keeps going while today is still open', () => {
     expect(gentleStreak(withDays(ago(0, 1, 2)), NOW)).toBe(3);
     expect(gentleStreak(withDays(ago(1, 2)), NOW)).toBe(2);

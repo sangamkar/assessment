@@ -7,6 +7,14 @@ const DAY = 24 * 60 * 60 * 1000;
 /** At most one missed day per rolling week is forgiven as a rest day. */
 export const REST_GAP = 7;
 
+/** Noon of the local calendar day `n` days before `now`; stepping by dates keeps DST shifts from skipping a day. */
+function daysBefore(now: number, n: number): number {
+  const d = new Date(now);
+  d.setHours(12, 0, 0, 0);
+  d.setDate(d.getDate() - n);
+  return d.getTime();
+}
+
 export type DayMark = 'done' | 'rest' | 'missed' | 'today';
 
 function streakWalk(state: AppState, now: number) {
@@ -15,10 +23,9 @@ function streakWalk(state: AppState, now: number) {
   let count = 0;
   let lastRest = -Infinity;
   let pendingRest: string | undefined;
-  let t = now;
-  if (!done.has(dayKey(t))) t -= DAY; // today is still open
-  for (let i = 0; i < 400; i++, t -= DAY) {
-    const key = dayKey(t);
+  const start = done.has(dayKey(now)) ? 0 : 1; // today is still open
+  for (let i = 0; i < 400; i++) {
+    const key = dayKey(daysBefore(now, start + i));
     if (done.has(key)) {
       count++;
       if (pendingRest) rests.add(pendingRest);
@@ -46,7 +53,7 @@ export function weekStrip(state: AppState, now = Date.now()): { key: string; lab
   const done = new Set(state.days);
   const { rests } = streakWalk(state, now);
   return Array.from({ length: 7 }, (_, i) => {
-    const t = now - (6 - i) * DAY;
+    const t = daysBefore(now, 6 - i);
     const key = dayKey(t);
     const mark: DayMark = done.has(key) ? 'done' : i === 6 ? 'today' : rests.has(key) ? 'rest' : 'missed';
     return { key, label: new Date(t).toLocaleDateString('en-US', { weekday: 'narrow' }), mark };

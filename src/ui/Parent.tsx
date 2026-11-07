@@ -546,7 +546,7 @@ export function Parent({ state, setState, onClose, onStartCheckup, onStartPlacem
   const tabs: { id: Tab; label: string }[] = [
     { id: 'summary', label: 'Summary & next steps' },
     { id: 'answers', label: 'Missed questions' },
-    { id: 'airport', label: 'Screen-time progress' },
+    { id: 'airport', label: 'Airport designs' },
     ...(state.growth.sessions.length ? [{ id: 'growth' as const, label: 'Earlier records' }] : []),
     { id: 'overview', label: 'Academic overview' },
     { id: 'iready', label: 'i-Ready prep' },
@@ -556,6 +556,13 @@ export function Parent({ state, setState, onClose, onStartCheckup, onStartPlacem
     { id: 'bank', label: 'Question bank' },
     { id: 'settings', label: 'Settings' },
   ];
+  const groups = [
+    { label: 'Today', ids: ['summary', 'focus'] },
+    { label: 'Progress', ids: ['answers', 'airport', 'growth', 'overview'] },
+    { label: 'Readiness', ids: ['iready', 'checkups', 'skills', 'bank'] },
+    { label: 'Settings', ids: ['settings'] },
+  ];
+  const activeGroup = groups.find(group => group.ids.includes(tab))!;
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 backdrop-blur">
@@ -566,12 +573,14 @@ export function Parent({ state, setState, onClose, onStartCheckup, onStartPlacem
             Back to kid mode
           </button>
         </div>
-        <nav className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4 pb-2">
-          {tabs.map((t) => (
-            <button key={t.id} onClick={() => setTab(t.id)} className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-semibold ${tab === t.id ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
-              {t.label}
-            </button>
-          ))}
+        <nav aria-label="Parent sections" className="mx-auto max-w-6xl px-4 pb-3">
+          <label className="block sm:hidden text-sm font-semibold">Section
+            <select className="mt-1 w-full rounded-lg border p-3" value={activeGroup.label} onChange={e => setTab(groups.find(g => g.label === e.target.value)!.ids[0] as Tab)}>
+              {groups.map(g => <option key={g.label}>{g.label}</option>)}
+            </select>
+          </label>
+          <div className="hidden sm:flex gap-2">{groups.map(g => <button key={g.label} aria-pressed={g === activeGroup} onClick={() => setTab(g.ids[0] as Tab)} className={g === activeGroup ? 'growth-primary' : 'growth-secondary'}>{g.label}</button>)}</div>
+          <div className="mt-3 flex flex-wrap gap-2">{tabs.filter(t => activeGroup.ids.includes(t.id)).map(t => <button key={t.id} aria-pressed={tab === t.id} onClick={() => setTab(t.id)} className={`rounded-lg px-3 py-2 text-sm font-semibold ${tab === t.id ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-700'}`}>{t.label}</button>)}</div>
         </nav>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-5">

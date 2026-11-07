@@ -1,3 +1,4 @@
+import { gamesUnlocked } from '../engine/dailyQuest';
 import React from 'react';
 import { SUBJECTS } from '../content';
 import type { SubjectId } from '../content/types';
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export function Home({ state, onQuest, onGames, onIsland, onGrownUps, onExplore, onResumeGame }: Props) {
+  const unlocked = gamesUnlocked(state);
   const saved = state.lastGame && isNewGame(state.lastGame) ? state.brainRuns?.[state.lastGame] : undefined;
   const resume = state.lastGame === 'garden-kitchen' && state.garden ? GAMES.find(game => game.id === 'garden-kitchen') : saved && saved.round < 4 && !(saved.round === 3 && saved.board.status !== 'playing')
     ? GAMES.find(game => game.id === state.lastGame) : undefined;
@@ -51,12 +53,12 @@ export function Home({ state, onQuest, onGames, onIsland, onGrownUps, onExplore,
         >
           <div className="absolute -bottom-4 -right-4 text-[7rem] opacity-30">🧩</div>
           <div className="font-kid text-sm font-bold uppercase tracking-widest text-white/80">Brain Games</div>
-          <div className="mt-1 font-kid text-3xl font-bold leading-tight text-white">Word, number &amp; thinking puzzles</div>
+          <div className="mt-1 font-kid text-3xl font-bold leading-tight text-white">{unlocked ? 'Word, number & thinking puzzles' : 'Games unlock after Today’s Learning'}</div>
           <div className="mt-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-white text-3xl shadow-lg">🎮</div>
         </button>
       </div>
 
-      {resume && onResumeGame && <button className="growth-secondary self-start" onClick={() => onResumeGame(resume.id)}>Continue playing · {resume.title} →</button>}
+      {unlocked && resume && onResumeGame && <button className="growth-secondary self-start" onClick={() => onResumeGame(resume.id)}>Continue playing · {resume.title} →</button>}
 
       <div className={`grid grid-cols-2 gap-4 sm:grid-cols-3 ${SUBJECTS.filter((x) => subjectSummary(state, x.id).total).length > 5 ? 'lg:grid-cols-6' : 'lg:grid-cols-5'}`}>
         {SUBJECTS.map((s) => {
@@ -82,7 +84,7 @@ export function Home({ state, onQuest, onGames, onIsland, onGrownUps, onExplore,
 
       <button onClick={onExplore} className="explore-entry text-left" aria-label="Open Build and Explore">
         <div className="explore-entry-art"><AirportPicture /></div>
-        <div><p className="growth-eyebrow">Create &amp; discover</p><h2 className="font-kid text-2xl font-semibold text-teal-950">Build &amp; Explore</h2>
+        <div><p className="growth-eyebrow">Create &amp; discover</p><h2 className="font-kid text-2xl font-semibold text-teal-950">Build &amp; Explore{!unlocked && ' · Locked until learning is done'}</h2>
           <p className="mt-1 text-sm text-slate-600">Design an airport. Test your ideas.</p><span className="mt-3 inline-block font-bold text-teal-800">Let’s build →</span></div>
       </button>
       <div className="mt-auto flex justify-end">

@@ -98,6 +98,7 @@ export interface GameState {
 
 export interface AppState {
   version: 3;
+  questCompletedDay?: string;
   startupCheck?: { finished?: boolean; math?: number; reading?: number };
   growth: GrowthState;
   airport?: AirportState;

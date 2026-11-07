@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import type { GardenState } from '../src/games/garden';
 import { CROPS, emptyGarden, gardenAction, gardenOrder, normalizeGarden } from '../src/games/garden';
-import { emptyState, upgradeState } from '../src/engine/progress';
+import { emptyState, upgradeState, dayKey } from '../src/engine/progress';
 import { GardenKitchen } from '../src/ui/games/GardenKitchen';
 import { Games } from '../src/ui/games/Games';
 import { Home } from '../src/ui/Home';
@@ -73,7 +73,7 @@ describe('garden missions', () => {
     expect(result.ok && result.state.lastGame).toBe('garden-kitchen');
   });
   it('offers accessible plots, seed selection, basket correction and home resume', () => {
-    const state = { ...emptyState(), garden: emptyGarden(), lastGame: 'garden-kitchen' as const };
+    const state = { ...emptyState(), garden: emptyGarden(), lastGame: 'garden-kitchen' as const, questCompletedDay: dayKey(Date.now()) };
     const html = renderToStaticMarkup(<GardenKitchen state={state} update={() => {}} onExit={() => {}} />);
     expect(html.match(/data-plot=/g)).toHaveLength(6);
     expect(html).toContain('Plot 1: plant carrot');

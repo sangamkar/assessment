@@ -35,7 +35,7 @@ import { isWorkshop } from './games/workshop';
 import { BrainLab } from './ui/brain/BrainLab';
 import { isNewGame, newBrainRun } from './games/brain';
 import { itemFingerprint } from './engine/itemPools';
-import { addScreenTime, claimStreakStickers, gentleStreak, goalMet, playLocked, recordQuestDone, starsToSpend } from './engine/engagement';
+import { claimStreakStickers, screenTracker, gentleStreak, goalMet, playLocked, recordQuestDone, starsToSpend } from './engine/engagement';
 import { StickerBook } from './ui/StickerBook';
 import type { DoneToday } from './ui/Results';
 
@@ -96,13 +96,20 @@ export default function App() {
   useEffect(() => update(claimStreakStickers), [state.days, update]);
   const [, setScreenTick] = useState(0);
   useEffect(() => {
-    const tick = 30_000;
+    const tracker = screenTracker(() => document.visibilityState === 'visible');
+    const flush = () => tracker.flush();
     const id = window.setInterval(() => {
-      if (document.visibilityState !== 'visible') return;
-      addScreenTime(tick);
+      flush();
       setScreenTick((n) => n + 1);
-    }, tick);
-    return () => window.clearInterval(id);
+    }, 30_000);
+    document.addEventListener('visibilitychange', flush);
+    window.addEventListener('pagehide', flush);
+    return () => {
+      flush();
+      window.clearInterval(id);
+      document.removeEventListener('visibilitychange', flush);
+      window.removeEventListener('pagehide', flush);
+    };
   }, []);
   const locale = CURRICULA[state.settings.primary].locale;
   useEffect(() => soundEngine.setLocale(locale), [locale]);

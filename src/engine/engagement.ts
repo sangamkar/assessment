@@ -166,6 +166,19 @@ export function addScreenTime(ms: number, now = Date.now()) {
     // Storage blocked: the soft limit simply never shows.
   }
 }
+/** Longest gap one flush may add, so a sleeping device isn't counted as screen time. */
+export const SCREEN_FLUSH_CAP = 2 * 60_000;
+/** Measures elapsed visible time: call `flush()` on a timer and on visibility changes or page exit. */
+export function screenTracker(isVisible: () => boolean, clock: () => number = Date.now) {
+  let since = isVisible() ? clock() : undefined;
+  return {
+    flush() {
+      const t = clock();
+      if (since !== undefined && t > since) addScreenTime(Math.min(t - since, SCREEN_FLUSH_CAP), t);
+      since = isVisible() ? t : undefined;
+    },
+  };
+}
 export const overScreenLimit = (state: AppState, now = Date.now()) => !!state.settings.screenMinutes && screenMinutesToday(now) >= state.settings.screenMinutes;
 
 export function normalizeEngagement(value: unknown): AppState['engagement'] {

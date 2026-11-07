@@ -3,10 +3,10 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { dayKey, emptyState, upgradeState } from '../src/engine/progress';
 import type { AppState } from '../src/engine/progress';
-import { backupDue, buySticker, claimStreakStickers, gentleStreak, goalMet, playLocked, recordQuestDone, starsToSpend, weekStrip } from '../src/engine/engagement';
+import { SCREEN_FLUSH_CAP, screenMinutesToday, screenTracker, backupDue, buySticker, claimStreakStickers, gentleStreak, goalMet, playLocked, recordQuestDone, starsToSpend, weekStrip } from '../src/engine/engagement';
 import { completeDailyQuest } from '../src/engine/dailyQuest';
 import { Home } from '../src/ui/Home';
-import { Results } from '../src/ui/Results';
+import { Results, celebrationKey } from '../src/ui/Results';
 
 const DAY = 86_400_000;
 const NOW = new Date(2026, 10, 7, 12).getTime();
@@ -133,5 +133,51 @@ describe('kid screens', () => {
     expect(html).toContain('Done for today!');
     expect(html).toContain('4 days of learning in a row');
     expect(html).not.toContain('Again');
+  });
+});
+
+describe('screen-time tracker', () => {
+  const memoryStorage = () => {
+    const data = new Map<string, string>();
+    vi.stubGlobal('localStorage', { getItem: (k: string) => data.get(k) ?? null, setItem: (k: string, v: string) => data.set(k, v) });
+  };
+  it('counts only elapsed visible time across background and foreground switches', () => {
+    memoryStorage();
+    let t = NOW;
+    let visible = true;
+    const tracker = screenTracker(() => visible, () => t);
+    t += 50_000; visible = false; tracker.flush(); // hidden after 50 s
+    t += 10 * 60_000; tracker.flush(); // 10 min in another tab
+    t += 20_000; visible = true; tracker.flush(); // back just before a tick
+    t += 10_000; tracker.flush();
+    expect(screenMinutesToday(t)).toBe(1);
+    t += 40_000; tracker.flush();
+    expect(screenMinutesToday(t)).toBe(1); // 50 + 10 + 40 = 100 s
+  });
+  it('persists across a reload and starts the new page from a fresh timestamp', () => {
+    memoryStorage();
+    let t = NOW;
+    const first = screenTracker(() => true, () => t);
+    t += 90_000; first.flush(); // page exit
+    t += 5 * 60_000; // closed for 5 minutes
+    const second = screenTracker(() => true, () => t);
+    t += 30_000; second.flush();
+    expect(screenMinutesToday(t)).toBe(2);
+  });
+  it('caps one flush so a sleeping device is not counted', () => {
+    memoryStorage();
+    let t = NOW;
+    const tracker = screenTracker(() => true, () => t);
+    t += 60 * 60_000; tracker.flush();
+    expect(screenMinutesToday(t)).toBe(SCREEN_FLUSH_CAP / 60_000);
+  });
+});
+
+describe('results celebration', () => {
+  it('keeps the same identity when the parent rerenders with fresh props', () => {
+    const a = celebrationKey('quest', 10, undefined, true);
+    const b = celebrationKey('quest', 10, undefined, true);
+    expect(a).toBe(b);
+    expect(celebrationKey('quest', 10, undefined, false)).not.toBe(a);
   });
 });

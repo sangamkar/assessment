@@ -28,7 +28,7 @@ describe('independent use',()=>{
   const render=()=>root.render(<StickerBook state={state} update={fn=>{state=fn(state);render();}} onBack={()=>{}}/>);
   act(render);click(host,'Rocket: 45 stars');expect(state.engagement?.spent).toBeUndefined();expect(host.querySelector('dialog')?.hasAttribute('open')).toBe(true);
   click(host,'No, go back');expect(state.stars).toBe(50);expect(state.engagement?.spent).toBeUndefined();
-  click(host,'Rocket: 45 stars');click(host,'Yes, buy sticker');expect(state.engagement?.spent).toBe(45);expect(state.engagement?.stickers).toContain('rocket');expect(host.querySelector('dialog')?.hasAttribute('open')).toBe(false);
+  click(host,'Rocket: 45 stars');vi.mocked(soundEngine.stopSpeech).mockClear();click(host,'Yes, buy sticker');expect(soundEngine.stopSpeech).not.toHaveBeenCalled();expect(state.engagement?.spent).toBe(45);expect(state.engagement?.stickers).toContain('rocket');expect(host.querySelector('dialog')?.hasAttribute('open')).toBe(false);
   expect(host.textContent).toContain('You got the Rocket sticker!');
  });
  it('speaks personalized guidance and explains locked cards without opening games',()=>{

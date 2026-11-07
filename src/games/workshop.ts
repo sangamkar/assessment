@@ -15,7 +15,7 @@ export const WORKSHOP_TITLES: Record<WorkshopId, string> = {
   "clock-quest": "Clock Quest",
   "pattern-machine": "Pattern Machine",
   "sound-switch": "Sound Switch",
-  "water-pipes": "Water Pipes",
+  "water-pipes": "Water Rescue",
 };
 // Shape codes: empty, four quarter-turns of a right triangle, square.
 const MOSAICS = [
@@ -210,4 +210,12 @@ export function traceWater(size: number, masks: number[]) {
     cell = next;
   }
   return { ok: false, reached, blocked: cell };
+}
+
+/** Reveal one repair along a guaranteed route, never the whole solution. */
+export function pipeHint(puzzle: ReturnType<typeof pipePuzzle>, masks: number[]) {
+  const cell = puzzle.path.find(i => i !== 0 && i !== puzzle.size * puzzle.size - 1 && masks[i] !== puzzle.solved[i]);
+  if (cell === undefined) return null;
+  const turns = [1, 2, 3].find(n => rotateMask(masks[cell], n) === puzzle.solved[cell])!;
+  return { cell, turns, row: Math.floor(cell / puzzle.size) + 1, column: cell % puzzle.size + 1 };
 }

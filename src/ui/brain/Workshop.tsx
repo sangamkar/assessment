@@ -14,6 +14,7 @@ import {
   patternPuzzle,
   soundPuzzle,
   pipePuzzle,
+  pipeHint,
   traceWater,
   rotateMask,
   PATTERN_TILES,
@@ -92,6 +93,13 @@ function WordScene({
   );
 }
 
+function RescueScene({ round, solved }: { round: number; solved: boolean }) {
+  const friends = ['🌻', '🐰', '🐸', '🌳'];
+  const missions = ['Water the sunflower patch.', 'Fill a drinking bowl for Bunny.', 'Refill the pond for Frog.', 'Bring water to the young trees.'];
+  const text = solved ? ['The sunflowers can bloom!', 'Bunny has a full drinking bowl!', 'Frog has a pond again!', 'The trees have water!'][round % 4] : missions[round % 4];
+  useEffect(() => { soundEngine.speak(text); }, [text]);
+  return <div className="pipe-rescue-scene"><span aria-hidden>{friends[round % 4]}</span><p>{text}</p><span aria-hidden>{solved ? '💧' : '🪣'}</span></div>;
+}
 function Garden({ flowers }: { flowers: number }) {
   return (
     <svg
@@ -618,13 +626,19 @@ export function Workshop({ id, state, update, onExit }: Props) {
         : p.initial,
       masks = starter.map((m, i) => work[i] ?? m),
       flow = traceWater(p.size, masks);
-    prompt = "Grow a garden. Turn a pipe.";
+    const rescueNames = ['sunflowers', 'Bunny’s drinking bowl', 'Frog’s pond', 'young trees'];
+    const repair = pipeHint(p, masks);
+    prompt = `Bring water to ${rescueNames[run.round % 4]}.`;
     instructions =
       intro && !work.length
         ? "Tap the glowing pipe. Watch where the water goes."
         : "Follow the blue water. Tap a pipe to turn it.";
-    clue =
-      "Start at the tap in the top-left. Follow one connected pipe at a time. Turn the next pipe so its opening meets yours.";
+    clue = b.hints === 0
+      ? "Start at the tap. Follow the blue water. The openings of two touching pipes must meet."
+      : repair ? b.hints === 1
+        ? `Try the glowing pipe in row ${repair.row}, column ${repair.column}. Can you join its openings to the route?`
+        : `Turn the glowing pipe ${repair.turns} ${repair.turns === 1 ? 'time' : 'times'}. Then follow the water again.`
+      : "The route is connected. Watch the water reach your friend!";
     solution =
       "Follow the highlighted example route from the tap to the flower. Every touching pipe opening must match.";
     answer = `Pipe masks: ${masks.join(", ")}. Water reached ${flow.reached.length} squares.`;
@@ -632,6 +646,7 @@ export function Workshop({ id, state, update, onExit }: Props) {
       wet = b.status === "skipped" ? p.path : flow.reached;
     content = (
       <>
+        <RescueScene round={run.round} solved={b.status === "solved"} />
         <Garden flowers={run.clean + run.assisted} />
         <div
           role="group"
@@ -646,7 +661,7 @@ export function Workshop({ id, state, update, onExit }: Props) {
               <button
                 key={i}
                 disabled={!playing || fixed}
-                className={`pipe-cell ${active ? "pipe-wet" : ""} ${intro && !work.length && playing && p.path[1] === i ? "pipe-guide" : ""}`}
+                className={`pipe-cell ${active ? "pipe-wet" : ""} ${playing && ((intro && !work.length && p.path[1] === i) || (b.hints >= 2 && repair?.cell === i)) ? "pipe-guide" : ""}`}
                 aria-label={`Pipe row ${Math.floor(i / p.size) + 1}, column ${(i % p.size) + 1}, openings ${DIRECTIONS.filter((_, d) => mask & (1 << d)).join(" and ")}${fixed ? ", fixed" : ""}`}
                 onClick={() => {
                   const next = [...masks];
@@ -658,8 +673,8 @@ export function Workshop({ id, state, update, onExit }: Props) {
                   if (result.ok)
                     finish(
                       true,
-                      "The flower has water! Your garden grew.",
-                      `Connected ${result.reached.length} pipe squares from tap to flower.`,
+                      `Water reached ${rescueNames[run.round % 4]}! You repaired the route.`,
+                      `Connected ${result.reached.length} pipe squares to ${rescueNames[run.round % 4]}.`,
                     );
                 }}
               >
@@ -687,7 +702,7 @@ export function Workshop({ id, state, update, onExit }: Props) {
                   />
                   {fixed && (
                     <text x="50" y="57" textAnchor="middle" fontSize="23">
-                      {i === 0 ? "💧" : b.status === "solved" ? "🌻" : "🌱"}
+                      {i === 0 ? "💧" : ["🌻", "🐰", "🐸", "🌳"][run.round % 4]}
                     </text>
                   )}
                 </svg>

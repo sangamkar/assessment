@@ -1,3 +1,5 @@
+import { normalizeGarden } from '../games/garden';
+import type { GardenState } from '../games/garden';
 import type { CurriculumId, Difficulty, LanguageCode, Item } from '../content/types';
 import type { MockResult, MockRun } from './mock';
 import { emptyGrowth, normalizeGrowth } from './growth';
@@ -80,7 +82,7 @@ export interface Settings {
   iReadyDate?: string;
 }
 
-export type GameId = 'mystery-word' | 'number-path' | 'sentence-builder' | NewGameId;
+export type GameId = 'garden-kitchen' | 'mystery-word' | 'number-path' | 'sentence-builder' | NewGameId;
 export interface GameEvidence {
   prompt: string;
   answer: string;
@@ -100,7 +102,8 @@ export interface AppState {
   growth: GrowthState;
   airport?: AirportState;
   brainRuns?: BrainRuns;
-  lastGame?: NewGameId;
+  lastGame?: NewGameId | 'garden-kitchen';
+  garden?: GardenState;
   profile?: { name: string; avatar: string; createdAt: number };
   settings: Settings;
   skills: Record<string, SkillState>;
@@ -154,7 +157,7 @@ export function upgradeState(data: unknown): UpgradeResult {
   }
   const parsed = s as unknown as AppState;
   const base = emptyState();
-  return { ok: true, state: { ...base, ...parsed, growth: normalizeGrowth(parsed.growth), airport: normalizeAirport(parsed.airport), brainRuns: normalizeBrainRuns(parsed.brainRuns), settings: { ...base.settings, ...parsed.settings } } };
+  return { ok: true, state: { ...base, ...parsed, growth: normalizeGrowth(parsed.growth), garden: parsed.garden ? normalizeGarden(parsed.garden) : undefined, airport: normalizeAirport(parsed.airport), brainRuns: normalizeBrainRuns(parsed.brainRuns), settings: { ...base.settings, ...parsed.settings } } };
 }
 
 /** Saved progress that could not be read is copied aside instead of being overwritten. */

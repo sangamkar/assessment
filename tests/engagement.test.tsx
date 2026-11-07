@@ -16,6 +16,11 @@ const noop = () => {};
 afterEach(() => vi.unstubAllGlobals());
 
 describe('gentle streak', () => {
+  it('keeps an earned rest day on the strip after the streak later breaks', () => {
+    const marks = weekStrip(withDays(ago(6, 5, 3)), NOW).map((d) => d.mark);
+    expect(gentleStreak(withDays(ago(6, 5, 3)), NOW)).toBe(0);
+    expect(marks).toEqual(['done', 'done', 'rest', 'done', 'missed', 'missed', 'today']);
+  });
   it('walks calendar days across daylight-saving changes', () => {
     const tz = process.env.TZ;
     process.env.TZ = 'America/New_York';

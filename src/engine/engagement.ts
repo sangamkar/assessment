@@ -51,7 +51,12 @@ export function bestStreakSoFar(state: AppState, now = Date.now()): number {
 /** The last seven days, oldest first, for the kid-facing calendar strip. */
 export function weekStrip(state: AppState, now = Date.now()): { key: string; label: string; mark: DayMark }[] {
   const done = new Set(state.days);
-  const { rests } = streakWalk(state, now);
+  // A rest day stays earned once a later learning day bridged it, even if the streak broke afterwards.
+  const rests = new Set(streakWalk(state, now).rests);
+  for (let j = 1; j < 7; j++) {
+    const t = daysBefore(now, j);
+    if (done.has(dayKey(t))) streakWalk(state, t).rests.forEach((key) => rests.add(key));
+  }
   return Array.from({ length: 7 }, (_, i) => {
     const t = daysBefore(now, 6 - i);
     const key = dayKey(t);

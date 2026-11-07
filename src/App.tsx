@@ -27,6 +27,8 @@ import { Results } from './ui/Results';
 import { Setup } from './ui/Setup';
 import { AirportDesigner, AirportJournal } from './ui/airport/AirportDesigner';
 import { emptyAirport } from './games/airport';
+import { Workshop } from './ui/brain/Workshop';
+import { isWorkshop } from './games/workshop';
 import { BrainLab } from './ui/brain/BrainLab';
 import { isNewGame, newBrainRun } from './games/brain';
 import { itemFingerprint } from './engine/itemPools';
@@ -238,6 +240,7 @@ export default function App() {
       case 'games':
         return <Games state={state} onBack={() => setView({ name: 'home' })} onPlay={(id) => { const level = gameState(stateRef.current, id).level; if (isNewGame(id)) update((s) => s.brainRuns?.[id] ? s : { ...s, brainRuns: { ...s.brainRuns, [id]: newBrainRun(id, level) } }); setView({ name: 'game', id, level, run: Date.now() }); }} />;
       case 'game': {
+        if (isWorkshop(view.id)) return <Workshop id={view.id} state={state} update={update} onExit={() => setView({ name: 'games' })} />;
         if (isNewGame(view.id)) return <BrainLab id={view.id} state={state} update={update} onExit={() => setView({ name: 'games' })} />;
         // Level is fixed for a session; the next session starts at the updated level.
         const props = { level: view.level, onRound: (r: 'win' | 'assisted' | 'loss', evidence?: GameEvidence) => update((s) => recordGame(s, view.id, r, Date.now(), evidence)), onExit: () => setView({ name: 'games' }) };

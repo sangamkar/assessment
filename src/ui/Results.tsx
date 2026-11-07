@@ -3,14 +3,21 @@ import confetti from 'canvas-confetti';
 import { soundEngine } from '../utils/audio';
 import type { Mode } from '../engine/progress';
 
-export function Results({ correct, total, mode, note, onHome, onAgain }: { correct: number; total: number; mode: Mode; note?: string; onHome: () => void; onAgain?: () => void }) {
+export interface DoneToday {
+  streak: number;
+  stars: number;
+  onStickers?: () => void;
+  onGames?: () => void;
+}
+
+export function Results({ correct, total, mode, note, onHome, onAgain, doneToday }: { correct: number; total: number; mode: Mode; note?: string; onHome: () => void; onAgain?: () => void; doneToday?: DoneToday }) {
   const tested = mode === 'checkup' || mode === 'placement' || mode === 'skip' || mode === 'mock';
   const stars = tested ? 0 : correct + (mode === 'quest' ? 3 : 1);
   useEffect(() => {
     soundEngine.playCorrectChime();
-    soundEngine.speak(note ?? (tested ? 'All done! Thank you for trying your best!' : `Hooray! You earned ${stars} stars!`));
+    soundEngine.speak(note ?? (tested ? 'All done! Thank you for trying your best!' : doneToday ? `Hooray! You earned ${stars} stars. You finished today’s learning!` : `Hooray! You earned ${stars} stars!`));
     confetti({ particleCount: 140, spread: 80, origin: { y: 0.6 } });
-  }, [mode, stars, note, tested]);
+  }, [mode, stars, note, tested, doneToday]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 px-4 text-center">
@@ -24,10 +31,20 @@ export function Results({ correct, total, mode, note, onHome, onAgain }: { corre
           <p className="font-kid text-xl text-slate-600">
             {correct} of {total} right on the first try
           </p>
+          {doneToday && (
+            <section className="w-full max-w-md rounded-[2rem] bg-emerald-50 p-5 shadow" aria-label="Done for today">
+              <h2 className="font-kid text-3xl font-bold text-emerald-800">🌟 Done for today!</h2>
+              <p className="mt-1 font-kid text-lg text-emerald-900">{doneToday.streak > 1 ? `${doneToday.streak} days of learning in a row. ` : ''}You have {doneToday.stars} ⭐ to spend.</p>
+              <div className="mt-3 flex flex-wrap justify-center gap-3">
+                {doneToday.onStickers && <button onClick={doneToday.onStickers} className="rounded-full bg-white px-5 py-3 font-kid text-xl font-bold text-amber-600 shadow">📒 Sticker book</button>}
+                {doneToday.onGames && <button onClick={doneToday.onGames} className="rounded-full bg-violet-500 px-5 py-3 font-kid text-xl font-bold text-white shadow">🎮 Pick a game</button>}
+              </div>
+            </section>
+          )}
         </>
       )}
       <div className="flex gap-4">
-        {onAgain && (
+        {onAgain && !doneToday && (
           <button onClick={onAgain} className="rounded-full bg-white px-8 py-4 font-kid text-2xl font-bold text-slate-700 shadow-lg">
             ↻ Again
           </button>

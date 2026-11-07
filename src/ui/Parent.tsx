@@ -16,6 +16,7 @@ import type { MockSubject } from '../engine/mock';
 import { getActivity } from '../content/missions';
 import { LearningSummary, QuestionReview } from './LearningSummary';
 import { AirportJournal } from './airport/AirportDesigner';
+import { BACKUP_EVERY_DAYS, backupDue, downloadBackup, screenMinutesToday } from '../engine/engagement';
 
 type Tab = 'summary' | 'answers' | 'airport' | 'growth' | 'overview' | 'iready' | 'focus' | 'checkups' | 'skills' | 'bank' | 'settings';
 
@@ -377,14 +378,7 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
       <input type="checkbox" className="mt-1 h-5 w-5" checked={state.settings[key]} onChange={(e) => set({ [key]: e.target.checked })} />
     </label>
   );
-  const exportData = () => {
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `learning-quest-backup-${dayKey(Date.now())}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  };
+  const exportData = () => setState(downloadBackup(state));
   const importData = async (file: File) => {
     try {
       const result = upgradeState(JSON.parse(await file.text()));
@@ -503,6 +497,28 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
         {toggle('Unlock every skill', 'Skip prerequisites (useful when earlier skills are already known).', 'unlockAll')}
         {toggle('Mute sound', 'Turns off speech and sound effects. Not recommended for non-readers.', 'muted')}
       </Card>
+      <Card title="Daily routine">
+        <label className="block py-2 text-sm font-semibold text-slate-600">
+          Daily goal
+          <select value={state.settings.dailyQuests ?? 1} onChange={(e) => set({ dailyQuests: Number(e.target.value) })} className="mt-1 block w-full rounded-lg border border-slate-300 px-2 py-1.5">
+            {[1, 2, 3].map((n) => <option key={n} value={n}>{n} × Today’s learning (about {n * 10} minutes)</option>)}
+          </select>
+        </label>
+        <label className="flex items-start justify-between gap-4 py-2">
+          <span>
+            <span className="block font-semibold text-slate-800">Games after today’s learning</span>
+            <span className="block text-xs text-slate-500">Brain Games and Build &amp; Explore unlock once the daily goal is met. Subject islands stay open.</span>
+          </span>
+          <input type="checkbox" className="mt-1 h-5 w-5" checked={!!state.settings.gamesAfterQuest} onChange={(e) => set({ gamesAfterQuest: e.target.checked })} />
+        </label>
+        <label className="block py-2 text-sm font-semibold text-slate-600">
+          Screen-time reminder
+          <select value={state.settings.screenMinutes ?? 0} onChange={(e) => set({ screenMinutes: Number(e.target.value) })} className="mt-1 block w-full rounded-lg border border-slate-300 px-2 py-1.5">
+            {[0, 15, 20, 30, 45, 60].map((n) => <option key={n} value={n}>{n ? `After ${n} minutes` : 'Off'}</option>)}
+          </select>
+          <span className="mt-1 block text-xs font-normal text-slate-500">A gentle reminder on the home screen; nothing is blocked. {screenMinutesToday()} minutes on this device today.</span>
+        </label>
+      </Card>
       <Card title="Backup">
         <p className="mb-3 text-sm text-slate-600">Academic progress, discoveries, sketches and observations are saved in this browser only. Download a backup now and then, and restore it on a new device.</p>
         <div className="flex flex-wrap gap-2">
@@ -565,6 +581,12 @@ export function Parent({ state, setState, onClose, onStartCheckup, onStartPlacem
         </nav>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-5">
+        {backupDue(state) && (
+          <div role="status" className="mb-4 flex flex-wrap items-center gap-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            <span className="flex-1">{state.engagement?.lastBackupAt ? `No backup in the last ${BACKUP_EVERY_DAYS} days.` : 'Progress has never been backed up.'} It lives only in this browser, so clearing site data would erase it.</span>
+            <button onClick={() => setState(downloadBackup(state))} className="rounded-xl bg-indigo-600 px-4 py-2 font-bold text-white">Download backup</button>
+          </div>
+        )}
         {tab === 'summary' && <LearningSummary state={state} setState={setState} onPractice={onPractice} onStartingPoint={onStartingPoint} />}
         {tab === 'answers' && <QuestionReview state={state} />}
         {tab === 'airport' && <AirportJournal state={state} parent />}

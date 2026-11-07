@@ -8,6 +8,7 @@ import { normalizeAirport } from '../games/airport';
 import type { AirportState } from '../games/airport';
 import { normalizeBrainRuns } from '../games/brain';
 import type { NewGameId, BrainRuns } from '../games/brain';
+import { normalizeEngagement } from './engagement';
 
 export type Mode = 'quest' | 'skill' | 'checkup' | 'placement' | 'skip' | 'mock';
 
@@ -80,6 +81,22 @@ export interface Settings {
   focus?: string[];
   /** Date of the next school i-Ready diagnostic (YYYY-MM-DD). */
   iReadyDate?: string;
+  /** Today's learning sessions that make up the daily goal (1–3, default 1). */
+  dailyQuests?: number;
+  /** Brain Games and Build & Explore unlock once the daily goal is met. */
+  gamesAfterQuest?: boolean;
+  /** Soft screen-time reminder in minutes; 0 or unset means off. */
+  screenMinutes?: number;
+}
+
+export interface Engagement {
+  stickers: string[];
+  /** Stars moved into the sticker book. Lifetime stars are never reduced. */
+  spent: number;
+  bestStreak: number;
+  lastBackupAt?: number;
+  /** Today's-learning sessions finished per day (last 60 days). */
+  questDays: Record<string, number>;
 }
 
 export type GameId = 'garden-kitchen' | 'mystery-word' | 'number-path' | 'sentence-builder' | NewGameId;
@@ -117,6 +134,7 @@ export interface AppState {
   mocks?: MockResult[];
   /** A mock test paused part-way (resumable). */
   mockRun?: MockRun;
+  engagement?: Partial<Engagement>;
 }
 
 const KEY = 'learning-quest:v1';
@@ -157,7 +175,7 @@ export function upgradeState(data: unknown): UpgradeResult {
   }
   const parsed = s as unknown as AppState;
   const base = emptyState();
-  return { ok: true, state: { ...base, ...parsed, growth: normalizeGrowth(parsed.growth), garden: parsed.garden ? normalizeGarden(parsed.garden) : undefined, airport: normalizeAirport(parsed.airport), brainRuns: normalizeBrainRuns(parsed.brainRuns), settings: { ...base.settings, ...parsed.settings } } };
+  return { ok: true, state: { ...base, ...parsed, growth: normalizeGrowth(parsed.growth), garden: parsed.garden ? normalizeGarden(parsed.garden) : undefined, airport: normalizeAirport(parsed.airport), brainRuns: normalizeBrainRuns(parsed.brainRuns), engagement: normalizeEngagement(parsed.engagement), settings: { ...base.settings, ...parsed.settings } } };
 }
 
 /** Saved progress that could not be read is copied aside instead of being overwritten. */

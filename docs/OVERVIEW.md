@@ -50,7 +50,9 @@ Learning Quest is a private learning app for Aarav, a kindergartner in Forsyth C
   - ↻: due for a review
 - **⚡ Skip ahead** (on each island): tap it, then tap a topic. He gets 3 hard questions; all 3 right and the topic is skipped and the next ones unlock. Finished topics are greyed out in this mode.
 - **🧩 Brain Games**: three thinking games that get harder as he wins.
-- **⭐ Stars and a day streak** for motivation.
+- **⭐ Stars and a day streak** for motivation. A 7-day strip shows the days he learned; one missed day a week shows as a 💤 rest day and doesn't break the streak.
+- **📒 Sticker book:** stars buy cosmetic stickers (sky, garden, animals, space). Days-in-a-row stickers (3, 7, 14, 30) are free. Spending never lowers his lifetime star count.
+- **Today's path:** today's learning → a game he picks → free play. When the daily goal is met, the results screen says **Done for today!** and offers the sticker book or a game.
 
 **Inside a practice session**
 - 🔊 The question is read aloud; tap the speaker to hear it again.
@@ -73,7 +75,7 @@ Tap **🔒 Grown-ups** on the home screen and answer the multiplication question
 | **Check-ups** | Short adaptive tests per subject (12 questions, no hints). Also the **Find his level** placement test, which skips everything he proves he knows |
 | **Skill map** | Every topic, with its standard, grade and status. Tick **Knows it** to skip a topic yourself. **Mark all Kindergarten known** does a whole subject at once. 📌 **Focus** pins a topic to the daily Quest |
 | **Question bank** | Browse every question with its answer, the misconception behind each wrong choice, and the explanation |
-| **Settings** | Child's name and buddy, sound, curriculum (USA / India), Hindi and Kannada on/off, show stretch (higher-grade) topics, unlock all, **backup / restore**, reset |
+| **Settings** | **Daily routine:** daily goal (1–3 sessions), keep Brain Games and Build & Explore locked until it is met, and a soft screen-time reminder (nothing is blocked). Also child's name and buddy, sound, curriculum (USA / India), Hindi and Kannada on/off, show stretch (higher-grade) topics, unlock all, **backup / restore**, reset |
 
 ### Three ways to skip what he already knows
 1. **Find his level** (Check-ups tab, or the ⚡ button in Skill map): up to 24 hard questions per subject. It jumps ahead on success and checks back on a miss. Best first step for him.
@@ -166,7 +168,7 @@ Every question follows 11 rules (full list in `docs/VISION.md`). An automatic ch
 
 - **Everything stays on the device.** No accounts, no server, no tracking. Progress is saved in the browser.
 - **Each browser keeps its own progress.** Chrome, Firefox, and the phone vs the laptop each have separate progress. To move progress: **Grown-ups → Settings → Backup**, then **Restore** on the other device.
-- Clearing the browser's site data erases progress, so take a backup now and then.
+- Clearing the browser's site data erases progress, so take a backup now and then. The parent area shows a reminder when there has been no backup for 14 days.
 - **Passcode:** set from the `CLASSROOM_PASSCODE` repository secret at deploy time. It keeps casual visitors out, but it is not strong security because it ships inside the web page.
 
 ---

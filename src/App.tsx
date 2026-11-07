@@ -33,6 +33,9 @@ import { isWorkshop } from './games/workshop';
 import { BrainLab } from './ui/brain/BrainLab';
 import { isNewGame, newBrainRun } from './games/brain';
 import { itemFingerprint } from './engine/itemPools';
+import { addScreenTime, claimStreakStickers, gentleStreak, goalMet, playLocked, recordQuestDone, starsToSpend } from './engine/engagement';
+import { StickerBook } from './ui/StickerBook';
+import type { DoneToday } from './ui/Results';
 
 type View =
   | { name: 'home' }
@@ -42,7 +45,8 @@ type View =
   | { name: 'portfolio' }
   | { name: 'island'; subject: SubjectId }
   | { name: 'play'; mode: Mode; title: string; color: string; total: number; first: QuestStep | null; again?: () => void; startAt?: number }
-  | { name: 'results'; mode: Mode; correct: number; total: number; note?: string; again?: () => void }
+  | { name: 'results'; mode: Mode; correct: number; total: number; note?: string; again?: () => void; doneToday?: boolean }
+  | { name: 'stickers' }
   | { name: 'games' }
   | { name: 'game'; id: GameId; level: 1 | 2 | 3; run: number }
   | { name: 'gate' }
@@ -76,6 +80,12 @@ export default function App() {
   const update = useCallback((fn: (s: AppState) => AppState) => setStateRaw((s) => fn(s)), []);
   useEffect(() => setStorageOk(saveState(state)), [state]);
   useEffect(() => soundEngine.setMuted(state.settings.muted), [state.settings.muted]);
+  useEffect(() => update(claimStreakStickers), [state.days, update]);
+  useEffect(() => {
+    const tick = 30_000;
+    const id = window.setInterval(() => document.visibilityState === 'visible' && addScreenTime(tick), tick);
+    return () => window.clearInterval(id);
+  }, []);
   const locale = CURRICULA[state.settings.primary].locale;
   useEffect(() => soundEngine.setLocale(locale), [locale]);
 
@@ -231,8 +241,14 @@ export default function App() {
         note: passed ? 'You can try the next challenge! This skill will come back for review.' : allCorrect ? 'You finished the check. We’ll try fresh examples before skipping this skill.' : 'Thank you for trying. Let’s practise this one together!',
       });
       return;
+    } else if (mode === 'quest') {
+      const before = goalMet(stateRef.current);
+      const after = recordQuestDone({ ...stateRef.current, stars: stateRef.current.stars + 3 });
+      update((s) => recordQuestDone({ ...s, stars: s.stars + 3 }));
+      setView({ name: 'results', mode, ...summary, again, doneToday: !before && goalMet(after) });
+      return;
     } else {
-      update((s) => ({ ...s, stars: s.stars + (mode === 'quest' ? 3 : 1) }));
+      update((s) => ({ ...s, stars: s.stars + 1 }));
     }
     setView({ name: 'results', mode, ...summary, again });
   };
@@ -241,7 +257,9 @@ export default function App() {
     if (view.name === 'starting-point' || (view.name === 'home' && !state.startupCheck?.finished)) return <StartingPoint state={state} onStart={subject => startPlacementRun(subject, true)} onContinue={() => { update(s => ({ ...s, startupCheck: { ...s.startupCheck, finished: true } })); setView({ name: 'home' }); }} />;
     switch (view.name) {
       case 'home':
-        return <Home state={state} onResumeGame={startGame} onExplore={() => setView({ name: 'explore' })} onQuest={startQuest} onGames={() => setView({ name: 'games' })} onIsland={(subject) => setView({ name: 'island', subject })} onGrownUps={() => setView({ name: 'gate' })} />;
+        return <Home state={state} onResumeGame={startGame} onExplore={() => setView({ name: 'explore' })} onQuest={startQuest} onGames={() => setView({ name: 'games' })} onIsland={(subject) => setView({ name: 'island', subject })} onGrownUps={() => setView({ name: 'gate' })} onStickers={() => setView({ name: 'stickers' })} />;
+      case 'stickers':
+        return <StickerBook state={state} update={update} onBack={() => setView({ name: 'home' })} />;
       case 'explore':
         return <BuildExplore state={state} onBack={() => setView({ name: 'home' })} onAirport={() => setView({ name: 'airport' })} onPassport={() => setView({ name: 'portfolio' })} />;
       case 'airport':
@@ -283,7 +301,10 @@ export default function App() {
           />
         );
       case 'results':
-        return <Results correct={view.correct} total={view.total} mode={view.mode} note={view.note} onHome={() => setView({ name: 'home' })} onAgain={view.again} />;
+      {
+        const doneToday: DoneToday | undefined = view.doneToday ? { streak: gentleStreak(state), stars: starsToSpend(state), onStickers: () => setView({ name: 'stickers' }), onGames: playLocked(state) ? undefined : () => setView({ name: 'games' }) } : undefined;
+        return <Results correct={view.correct} total={view.total} mode={view.mode} note={view.note} onHome={() => setView({ name: 'home' })} onAgain={view.again} doneToday={doneToday} />;
+      }
       case 'gate':
         return <Gate onPass={() => setView({ name: 'parent' })} onCancel={() => setView({ name: 'home' })} />;
       case 'parent':

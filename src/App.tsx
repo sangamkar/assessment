@@ -1,3 +1,4 @@
+import { GardenKitchen } from './ui/games/GardenKitchen';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CURRICULA, getSkill, getSubject } from './content';
 import type { SubjectId } from './content/types';
@@ -80,6 +81,7 @@ export default function App() {
 
   const startGame = (id: GameId) => {
     const level = gameState(stateRef.current, id).level;
+    if (id === 'garden-kitchen') update(s => ({ ...s, lastGame: id }));
     if (isNewGame(id)) update(s => ({
       ...s, lastGame: id,
       brainRuns: {...s.brainRuns, [id]: s.brainRuns?.[id] ?? newBrainRun(id, level)},
@@ -249,6 +251,7 @@ export default function App() {
       case 'games':
         return <Games state={state} onBack={() => setView({ name: 'home' })} onPlay={startGame} />;
       case 'game': {
+        if (view.id === 'garden-kitchen') return <GardenKitchen state={state} update={update} onExit={() => setView({name:'games'})} />;
         if (isWorkshop(view.id)) return <Workshop id={view.id} state={state} update={update} onExit={() => setView({ name: 'games' })} />;
         if (isNewGame(view.id)) return <BrainLab id={view.id} state={state} update={update} onExit={() => setView({ name: 'games' })} />;
         // Level is fixed for a session; the next session starts at the updated level.

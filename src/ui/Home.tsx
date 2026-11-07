@@ -19,7 +19,7 @@ interface Props {
 
 export function Home({ state, onQuest, onGames, onIsland, onGrownUps, onExplore, onResumeGame }: Props) {
   const saved = state.lastGame && isNewGame(state.lastGame) ? state.brainRuns?.[state.lastGame] : undefined;
-  const resume = saved && saved.round < 4 && !(saved.round === 3 && saved.board.status !== 'playing')
+  const resume = state.lastGame === 'garden-kitchen' && state.garden ? GAMES.find(game => game.id === 'garden-kitchen') : saved && saved.round < 4 && !(saved.round === 3 && saved.board.status !== 'playing')
     ? GAMES.find(game => game.id === state.lastGame) : undefined;
   const name = state.profile?.name?.trim() || 'Explorer';
   return (

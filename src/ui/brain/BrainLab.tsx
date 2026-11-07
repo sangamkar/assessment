@@ -1,3 +1,4 @@
+import { WORKSHOP_TITLES } from "../../games/workshop";
 import React, { useEffect, useRef } from "react";
 import {
   ArrowUp,
@@ -33,6 +34,7 @@ import { GameBar } from "../games/GameFrame";
 import { SpeakButton } from "../SpeakButton";
 import { soundEngine } from "../../utils/audio";
 export const LAB_TITLES: Record<NewGameId, string> = {
+  ...WORKSHOP_TITLES,
   "word-detective": "Word Detective",
   "target-number": "Target Number",
   "connections-junior": "Connections Junior",

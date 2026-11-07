@@ -1,6 +1,8 @@
 import { createRng } from "../engine/rng";
 import { VOCABULARY, CONNECTIONS } from "./brainContent";
+import { WORKSHOP_IDS, isWorkshop } from "./workshop";
 export const NEW_GAME_IDS = [
+  ...WORKSHOP_IDS,
   "word-detective",
   "target-number",
   "connections-junior",
@@ -18,6 +20,7 @@ export interface NumberTile {
   expression: string;
 }
 export interface Board {
+  work?: number[];
   selection: number[];
   cards: NumberTile[];
   history: NumberTile[][];
@@ -298,6 +301,13 @@ export function normalizeBrainRuns(value: unknown): BrainRuns {
     )
       continue;
     const b = r.board;
+    if (isWorkshop(id) && b?.work !== undefined) {
+      const w = b.work;
+      const maxLength = id === 'shape-builder' ? 17 : id === 'water-pipes' ? (r.level + 2) ** 2 : id === 'pattern-machine' ? 2 : 1;
+      const maxValue = id === 'shape-builder' ? 5 : id === 'water-pipes' ? 15 : id === 'clock-quest' ? 719 : 3;
+      if (!Array.isArray(w) || w.length > maxLength || !w.every(n => integer(n, 0, maxValue))) continue;
+    }
+    if (b?.work !== undefined && (!Array.isArray(b.work) || b.work.length > 25 || !b.work.every(n => integer(n, 0, 720)))) continue;
     if (
       !b ||
       typeof b !== "object" ||

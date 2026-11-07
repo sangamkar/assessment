@@ -37,12 +37,18 @@ export const GAMES: { id: GameId; title: string; emoji: string; kid: string; bui
   {id:'balance-lab',title:'Balance Lab',emoji:'⚖️',kid:'Choose the missing number and make both sides balance.',builds:'Equality, missing numbers and flexible arithmetic.',color:'#315aa2',soft:'#e5edff'},
   {id:'robot-delivery',title:'Robot Delivery',emoji:'🤖',kid:'Move your robot, collect the right parcels, and find the correct station.',builds:'Quantities, comparison words and spatial directions.',color:'#9a4b31',soft:'#ffeadf'},
 
+  {id:'shape-builder',title:'Shape Builder',emoji:'🔺',kid:'Choose, turn and place shapes to build a picture.',builds:'Shape composition and rotation.',color:'#7c3aed',soft:'#ede9fe'},
+  {id:'clock-quest',title:'Clock Quest',emoji:'🕒',kid:'Move the clock hands to get ready for launch.',builds:'Whole hours, half-hours and quarter-hours.',color:'#b45309',soft:'#fef3c7'},
+  {id:'pattern-machine',title:'Pattern Machine',emoji:'⚙️',kid:'Find the repeating rule and repair the machine.',builds:'Repeating patterns and prediction.',color:'#0f766e',soft:'#dcf5ee'},
+  {id:'sound-switch',title:'Sound Switch',emoji:'🔊',kid:'Change one sound and discover a different word.',builds:'Sound substitution and letter–sound connections.',color:'#be185d',soft:'#fce7f3'},
+  {id:'water-pipes',title:'Water Pipes',emoji:'💧',kid:'Turn the pipes and send water all the way to the flower.',builds:'Spatial connections, planning and testing a solution.',color:'#0369a1',soft:'#e0f2fe'},
+
 ];
 
 export function Games({ state, onPlay, onBack }: { state: AppState; onPlay: (id: GameId) => void; onBack: () => void }) {
-  const [filter, setFilter] = useState<'all' | 'words' | 'numbers'>('all');
-  const wordGames = ['mystery-word', 'sentence-builder', 'word-detective', 'connections-junior', 'robot-delivery'];
-  const numberGames = ['number-path', 'target-number', 'balance-lab', 'robot-delivery'];
+  const [filter, setFilter] = useState<'all' | 'words' | 'numbers' | 'thinking'>('all');
+  const wordGames = ['sound-switch','mystery-word', 'sentence-builder', 'word-detective', 'connections-junior', 'robot-delivery'];
+  const numberGames = ['clock-quest', 'pattern-machine', 'shape-builder','number-path', 'target-number', 'balance-lab', 'robot-delivery'];
   return (
     <div className="mx-auto min-h-screen max-w-4xl px-4 py-6">
       <header className="mb-6 flex items-center gap-4">
@@ -52,9 +58,9 @@ export function Games({ state, onPlay, onBack }: { state: AppState; onPlay: (id:
         <span className="text-5xl">🎮</span>
         <h1 className="font-kid text-3xl font-bold text-slate-800">Brain Games</h1>
       </header>
-      <nav aria-label="Game categories" className="mb-5 flex flex-wrap gap-2">{([['all','All games'],['words','Words & vocabulary'],['numbers','Numbers & maths']] as const).map(([id,label]) => <button key={id} aria-pressed={filter === id} className={filter === id ? 'growth-primary' : 'growth-secondary'} onClick={() => setFilter(id)}>{label}</button>)}</nav>
+      <nav aria-label="Game categories" className="mb-5 flex flex-wrap gap-2">{([['all','All games'],['words','Words & vocabulary'],['numbers','Numbers & maths'],['thinking','Shapes & logic']] as const).map(([id,label]) => <button key={id} aria-pressed={filter === id} className={filter === id ? 'growth-primary' : 'growth-secondary'} onClick={() => setFilter(id)}>{label}</button>)}</nav>
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {GAMES.filter((g) => filter === 'all' || (filter === 'words' ? wordGames : numberGames).includes(g.id)).map((g) => {
+        {GAMES.filter((g) => filter === 'all' || (filter === 'words' ? wordGames : filter === 'numbers' ? numberGames : ['shape-builder','pattern-machine','water-pipes','number-path','robot-delivery']).includes(g.id)).map((g) => {
           const st = gameState(state, g.id);
           const saved = isNewGame(g.id) ? state.brainRuns?.[g.id] : undefined;
           const shownLevel = saved && saved.round < 4 ? saved.level : st.level;

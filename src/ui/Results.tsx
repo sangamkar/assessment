@@ -10,14 +10,18 @@ export interface DoneToday {
   onGames?: () => void;
 }
 
+/** Primitive identity of a finished session, so parent rerenders with fresh prop objects don't replay the celebration. */
+export const celebrationKey = (mode: Mode, stars: number, note: string | undefined, doneToday: boolean) => `${mode}|${stars}|${doneToday ? 1 : 0}|${note ?? ''}`;
+
 export function Results({ correct, total, mode, note, onHome, onAgain, doneToday }: { correct: number; total: number; mode: Mode; note?: string; onHome: () => void; onAgain?: () => void; doneToday?: DoneToday }) {
   const tested = mode === 'checkup' || mode === 'placement' || mode === 'skip' || mode === 'mock';
   const stars = tested ? 0 : correct + (mode === 'quest' ? 3 : 1);
+  const celebrate = celebrationKey(mode, stars, note, !!doneToday);
   useEffect(() => {
     soundEngine.playCorrectChime();
     soundEngine.speak(note ?? (tested ? 'All done! Thank you for trying your best!' : doneToday ? `Hooray! You earned ${stars} stars. You finished today’s learning!` : `Hooray! You earned ${stars} stars!`));
     confetti({ particleCount: 140, spread: 80, origin: { y: 0.6 } });
-  }, [mode, stars, note, tested, doneToday]);
+  }, [celebrate]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 px-4 text-center">

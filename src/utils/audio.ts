@@ -206,14 +206,14 @@ class SoundEngine {
    * Text-To-Speech with Kindergarten-friendly tempo and friendly voice
    */
   public speak(text: string, onEnd?: () => void, lang?: string) {
-    return this.speakParts([{ text, lang }], onEnd);
+    this.speakParts([{ text, lang }], onEnd);
   }
 
   /** Speaks several parts in a row, each in its own language (English prompt, then a Hindi word). */
   public speakParts(parts: { text: string; lang?: string; roman?: string }[], onEnd?: () => void) {
     if (this.isMuted || typeof window === 'undefined' || !('speechSynthesis' in window)) {
       if (onEnd) onEnd();
-      return () => {};
+      return;
     }
     this.stopSpeech();
     const run = ++this.sequence;
@@ -237,29 +237,12 @@ class SoundEngine {
       utterance.pitch = 1.05;
       const voice = this.pickVoice(lang);
       if (voice) utterance.voice = voice;
-      utterance.onstart = () => {
-        if (run === this.sequence) this.speechNotice('');
-      };
-      utterance.onend = () => { if (run === this.sequence && this.currentUtterance === utterance) next(i + 1); };
-      utterance.onerror = (event) => {
-        if (run !== this.sequence || this.currentUtterance !== utterance) return;
-        this.stopSpeech();
-        this.speechNotice(event.error === 'not-allowed'
-          ? 'Your browser blocked speech. Check that sound is allowed for this site, then tap a blue speaker.'
-          : 'Speech could not play. Try the speaker again. Your progress is saved.');
-        onEnd?.();
-      };
+      utterance.onend = () => next(i + 1);
+      utterance.onerror = () => next(i + 1);
       this.currentUtterance = utterance;
-      if (window.speechSynthesis.paused) window.speechSynthesis.resume();
-      // Keep the first request inside the click handler: no timer, promise or retry.
       window.speechSynthesis.speak(utterance);
     };
     next(0);
-    return () => { if (run === this.sequence) this.stopSpeech(); };
-  }
-
-  private speechNotice(message: string) {
-    window.dispatchEvent(new CustomEvent('learning-quest:speech-status', { detail: message }));
   }
 
   public stopSpeech() {

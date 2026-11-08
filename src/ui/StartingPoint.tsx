@@ -1,5 +1,3 @@
-import { AudioGuide } from './AudioGuide';
-import { SpeakButton } from './SpeakButton';
 import React from 'react';
 import type { AppState } from '../engine/progress';
 
@@ -15,7 +13,6 @@ export function StartingPoint({
   const checks = state.startupCheck;
   return (
     <main className="growth-page max-w-3xl">
-      <AudioGuide text="Let’s find your starting point. Try a short math check, or tap start with basics to begin learning." />
       <p className="growth-eyebrow">For the grown-up · First steps</p>
       <h1 className="font-kid text-4xl font-semibold text-teal-950">Find a comfortable starting point</h1>
       <p className="mt-4 text-lg text-slate-600">
@@ -40,7 +37,6 @@ export function StartingPoint({
                 ? 'Check completed. The skills demonstrated will guide practice.'
                 : 'We’ll try a few skills and adjust the challenge.'}
             </p>
-            <SpeakButton text={subject === 'math' ? 'Try a short math check to find your starting point.' : 'Try a short reading check to find your starting point.'} label={`Hear ${subject} check`} />
             <button className="growth-primary mt-5 w-full" onClick={() => onStart(subject)}>
               {checks?.[subject] ? 'Try again' : 'Start check'} →
             </button>

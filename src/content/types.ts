@@ -105,8 +105,6 @@ export interface Item {
   id: string;
   skill: string;
   difficulty: Difficulty;
-  /** Keep an edited authored task in its original assessment pool. */
-  assessmentPool?: 'practice' | 'mock';
   /** Spoken prompt (always read aloud). Must not reveal the answer. */
   say: string;
   /** Short on-screen prompt for grown-ups and early readers. */

@@ -34,7 +34,9 @@ describe('independent use',()=>{
  it('speaks personalized guidance and explains locked cards without opening games',()=>{
   const games=vi.fn(),explore=vi.fn();const state={...emptyState(),profile:{name:'Aarav',avatar:'🦁',createdAt:1}};
   const host=mount(<Home state={state} onQuest={()=>{}} onGames={games} onExplore={explore} onIsland={()=>{}} onGrownUps={()=>{}}/>);
-  expect(soundEngine.speak).toHaveBeenCalledWith(expect.stringContaining('Hi Aarav!'));
+  expect(soundEngine.speak).not.toHaveBeenCalled();
+  click(host,'Hear what to do next');
+  expect(soundEngine.speakParts).toHaveBeenCalledWith([{text:expect.stringContaining('Hi Aarav!')}],expect.any(Function));
   expect(host.textContent).toContain('Learn today to get your first');expect(host.querySelector('[aria-label="This week"]')).toBeNull();
   click(host,'Brain Games: open after today’s learning');click(host,'Build and Explore: open after today’s learning');expect(games).not.toHaveBeenCalled();expect(explore).not.toHaveBeenCalled();
   expect(soundEngine.speak).toHaveBeenCalledWith('Learning first, then games!');

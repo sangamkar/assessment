@@ -28,8 +28,15 @@ function Study({intro=false}:{intro?:boolean}){
  return <Player locale="en-US" mode="quest" title="Today’s learning" color="#123456" total={1} first={step} getNext={()=>null} introSeen={()=>!intro} onIntroDone={()=>{}} onAnswer={()=>{}} onFinish={()=>{}} onExit={()=>{}} />;
 }
 describe('narration lifecycle',()=>{
+ it('does not autoplay guidance on load and speaks directly when its button is clicked',()=>{
+  act(()=>root.render(<AudioGuide text="Home guidance"/>));vi.runAllTimers();expect(spoken).toHaveLength(0);
+  let gesture=false;
+  vi.mocked(window.speechSynthesis.speak).mockImplementation(u=>{expect(gesture).toBe(true);active=u;spoken.push(u);});
+  act(()=>{gesture=true;host.querySelector('button')!.click();gesture=false;});
+  expect(active?.text).toBe('Home guidance');expect(spoken).toHaveLength(1);
+ });
  it('reads the question after moving from Home to the Player',()=>{
-  act(()=>root.render(<AudioGuide text="Home guidance"/>));act(()=>vi.advanceTimersByTime(0));
+  act(()=>root.render(<AudioGuide text="Home guidance"/>));act(()=>host.querySelector("button")!.click());act(()=>vi.advanceTimersByTime(0));
   act(()=>root.render(<Study/>));act(()=>vi.advanceTimersByTime(0));
   expect(active?.text).toBe(step.item.say);
  });
@@ -39,7 +46,7 @@ describe('narration lifecycle',()=>{
   expect(next).toBeTruthy();act(()=>next.click());act(()=>vi.advanceTimersByTime(0));expect(active?.text).toBe(step.item.say);
  });
  it('does not let an old guidance cleanup cancel newer question speech',()=>{
-  act(()=>root.render(<AudioGuide text="Home guidance"/>));act(()=>vi.advanceTimersByTime(0));
+  act(()=>root.render(<AudioGuide text="Home guidance"/>));act(()=>host.querySelector("button")!.click());act(()=>vi.advanceTimersByTime(0));
   act(()=>soundEngine.speak('A new question'));act(()=>vi.advanceTimersByTime(0));
   act(()=>root.render(<div/>));
   expect(active?.text).toBe('A new question');

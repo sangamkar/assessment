@@ -7,7 +7,7 @@ import { emptyState, attemptsFor } from '../src/engine/progress';
 import { itemFingerprint, isMockItem, poolItems } from '../src/engine/itemPools';
 import * as pools from '../src/engine/itemPools';
 import { questionFingerprint } from '../src/engine/evidence';
-import { pickAssessmentItem, topMisconceptions } from '../src/engine/planner';
+import { pickAssessmentItem, topMisconceptions, startPlacement, placementNext, placementAnswer } from '../src/engine/planner';
 import { contentIssue } from '../src/engine/contentIssues';
 import { learningSummary } from '../src/engine/insights';
 import { QuestionReview } from '../src/ui/LearningSummary';
@@ -37,6 +37,17 @@ describe('assessment question variety',()=>{
   }
   expect(run.answers).toHaveLength(mockTotal('math'));expect(run.answers.filter(a=>a.strand==='geometry'&&a.repeated)).toHaveLength(6);
   for(const item of only)expect(run.answers.filter(a=>a.itemId===item.id)).toHaveLength(4);
+ });
+ it('does not credit a placement skill when fallback questions are easier than the hard level',()=>{
+  const state=emptyState(),skill=getSkill('m2.shapes')!;
+  const run=startPlacement(state,'math');
+  run.strands=[{strand:'geometry',title:'Geometry',skills:[skill]}];run.strandIndex=0;run.idx=0;
+  // All hard questions have been used; the picker should use different easier
+  // questions, and those cannot establish the two-hard-pass skip criterion.
+  for(const item of skill.items!.filter(i=>i.difficulty===3))run.seen.add(item.id);
+  const first=placementNext(state,run)!;expect(first.item.difficulty).toBeLessThan(3);placementAnswer(run,true);
+  const second=placementNext(state,run)!;expect(second.item.difficulty).toBeLessThan(3);placementAnswer(run,true);
+  expect(run.known).not.toContain(skill.id);
  });
  it('uses other difficulty items before repeating a check-up item',()=>{
   const state=emptyState(),skill=getSkill('m2.shapes')!,answered:{itemId:string;fingerprint:string}[]=[];

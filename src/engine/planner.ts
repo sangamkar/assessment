@@ -408,7 +408,7 @@ function placementAnswerCore(run: PlacementRun, correct: boolean) {
   const st = run.strands[run.strandIndex];
   run.asked++;
   run.inSkill++;
-  if (correct && !run.current?.repeated) run.freshPasses = (run.freshPasses ?? 0) + 1;
+  if (correct && run.current?.item.difficulty === 3 && !run.current.repeated) run.freshPasses = (run.freshPasses ?? 0) + 1;
   if (correct && run.inSkill < 2) return; // ask the second question on this skill
   run.inSkill = 0;
   const passes = run.freshPasses ?? 0;

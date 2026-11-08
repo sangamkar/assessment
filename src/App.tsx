@@ -1,4 +1,3 @@
-import { SpeechNotice } from './ui/SpeechNotice';
 import { completeDailyQuest, gamesUnlocked } from './engine/dailyQuest';
 import { dayKey } from './engine/progress';
 import { GardenKitchen } from './ui/games/GardenKitchen';
@@ -349,7 +348,7 @@ export default function App() {
         return <Parent state={state} setState={(s) => update(() => s)} onClose={() => setView({ name: 'home' })} onStartCheckup={startCheckup} onStartPlacement={startPlacementRun} onPractice={startSkill} onStartingPoint={() => setView({ name: 'starting-point' })} onStartMock={startMock} />;
     }
   })();
-  return <><SpeechNotice />{!storageOk && <div role="alert" className="sticky top-0 z-50 bg-amber-100 px-4 py-3 text-sm font-semibold text-amber-950">Recent changes could not be saved on this device. Keep this page open and use Grown-ups → Settings → Backup to keep a copy.</div>}{content}</>;
+  return <>{!storageOk && <div role="alert" className="sticky top-0 z-50 bg-amber-100 px-4 py-3 text-sm font-semibold text-amber-950">Recent changes could not be saved on this device. Keep this page open and use Grown-ups → Settings → Backup to keep a copy.</div>}{content}</>;
 }
 
 function getSkillOrThrow(id: string) {

@@ -1,4 +1,3 @@
-import { AudioGuide, AudioCard } from '../AudioGuide';
 import React, { useState } from 'react';
 import type { AppState, GameId } from '../../engine/progress';
 import { gameState } from '../../engine/progress';
@@ -68,7 +67,6 @@ export function Games({ state, onPlay, onBack }: { state: AppState; onPlay: (id:
         </button>
         <span className="text-5xl">🎮</span>
         <h1 className="font-kid text-3xl font-bold text-slate-800">Brain Games</h1>
-        <AudioGuide text="Pick a game. Tap a speaker to hear how to play, or tap a picture to start." />
       </header>
       <nav aria-label="Game categories" className="mb-5 flex flex-wrap gap-2">{([['all','All games'],['words','Words & vocabulary'],['numbers','Numbers & maths'],['thinking','Shapes & logic']] as const).map(([id,label]) => <button key={id} aria-pressed={filter === id} className={filter === id ? 'growth-primary' : 'growth-secondary'} onClick={() => setFilter(id)}>{label}</button>)}</nav>
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -77,7 +75,7 @@ export function Games({ state, onPlay, onBack }: { state: AppState; onPlay: (id:
           const saved = isNewGame(g.id) ? state.brainRuns?.[g.id] : undefined;
           const shownLevel = saved && saved.round < 4 ? saved.level : st.level;
           return (
-            <AudioCard key={g.id} label={g.title} text={`${g.title}. ${g.kid}`}><button onClick={() => onPlay(g.id)} className="flex flex-col items-center gap-3 rounded-[2.5rem] p-6 text-center shadow-lg transition active:scale-95" style={{ background: g.soft }}>
+            <button key={g.id} onClick={() => onPlay(g.id)} className="flex flex-col items-center gap-3 rounded-[2.5rem] p-6 text-center shadow-lg transition active:scale-95" style={{ background: g.soft }}>
               <span className="text-8xl">{g.emoji}</span>
               <span className="font-kid text-3xl font-bold" style={{ color: g.color }}>
                 {g.title}
@@ -87,7 +85,7 @@ export function Games({ state, onPlay, onBack }: { state: AppState; onPlay: (id:
               <span className="mt-1 inline-flex h-14 w-14 items-center justify-center rounded-full text-2xl text-white shadow" style={{ background: g.color }}>
                 ▶
               </span>
-            </button></AudioCard>
+            </button>
           );
         })}
       </div>

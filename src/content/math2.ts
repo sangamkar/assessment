@@ -461,13 +461,12 @@ const shapes2: Skill = {
     },
     {
       difficulty: 3,
-      assessmentPool: 'practice',
-      say: 'Count only the small squares in this grid, one space at a time. How many small squares are there? Do not count larger squares made by joining spaces.',
-      show: 'How many small squares?',
+      say: 'This rectangle is split into rows and columns of equal squares. How many squares are there?',
+      show: 'How many squares?',
       visual: { kind: 'map', rows: 2, cols: 3, cells: [] },
       choices: [num(3, 'counted_one_row'), num(5, 'count_skipped_one'), num(6), num(2, 'counted_one_column')],
       keepOrder: true,
-      explain: 'Count each small space once: 2 rows of 3 small squares make 6. Larger squares made from several spaces are not counted in this question.',
+      explain: '2 rows of 3 squares: 3 plus 3 is 6 squares.',
     },
     {
       difficulty: 3,
@@ -504,12 +503,11 @@ const shapes2: Skill = {
     },
     {
       difficulty: 2,
-      assessmentPool: 'mock',
-      say: 'Count only the small squares in this grid, one space at a time. How many small squares are there? Do not count larger squares made by joining spaces.',
-      show: 'How many small squares?',
+      say: 'This rectangle is split into rows and columns of equal squares. How many squares are there?',
+      show: 'How many squares?',
       visual: { kind: 'map', rows: 3, cols: 3, cells: [] },
-      choices: [num(3, 'counted_one_row'), num(8, 'count_skipped_one'), num(9), num(10, 'included_outer_square')],
-      explain: 'Count each small space once: 3 rows of 3 small squares make 9. The large outside square is not an extra small square.',
+      choices: [num(3, 'counted_one_row'), num(8, 'count_skipped_one'), num(9), num(10, 'count_double_tap')],
+      explain: '3 rows with 3 squares in each row: 3 plus 3 plus 3 is 9 squares.',
     },
     {
       difficulty: 2,

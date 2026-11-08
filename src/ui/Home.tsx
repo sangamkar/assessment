@@ -1,5 +1,3 @@
-import { AudioGuide, AudioCard } from './AudioGuide';
-import { soundEngine } from '../utils/audio';
 import React from 'react';
 import { SUBJECTS } from '../content';
 import type { SubjectId } from '../content/types';
@@ -59,18 +57,17 @@ export function Home({ state, onQuest, onGames, onIsland, onGrownUps, onExplore,
           </button>
         )}
 
-        <AudioGuide text={`Hi ${name}! ${locked ? "Tap the big orange button to start today's learning. Learning first, then games!" : "You finished today's learning. Pick a game or build your airport!"}`} />
       </header>
 
 
-      {state.days.length === 0 ? <p className="rounded-2xl bg-amber-50 p-4 font-kid text-lg">Learn today to get your first ⭐!</p> : <ol aria-label="This week" className="flex justify-between gap-1 rounded-[2rem] bg-white/60 p-3 shadow-sm sm:justify-start sm:gap-3">
+      <ol aria-label="This week" className="flex justify-between gap-1 rounded-[2rem] bg-white/60 p-3 shadow-sm sm:justify-start sm:gap-3">
         {weekStrip(state).map((d) => (
           <li key={d.key} className="flex flex-col items-center gap-1" aria-label={`${d.label}: ${MARK[d.mark].label}`}>
             <span className="font-kid text-xs font-bold text-slate-500">{d.label}</span>
             <span className={`flex h-10 w-10 items-center justify-center rounded-full text-xl ${MARK[d.mark].cls}`}>{MARK[d.mark].icon}</span>
           </li>
         ))}
-      </ol>}
+      </ol>
 
       {overScreenLimit(state) && <p role="status" className="rounded-2xl bg-sky-100 px-4 py-3 font-kid text-lg font-semibold text-sky-900">🌙 That’s lots of screen time today. Time to rest your eyes and play outside!</p>}
 
@@ -84,7 +81,7 @@ export function Home({ state, onQuest, onGames, onIsland, onGrownUps, onExplore,
         </ol>
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
-      <AudioCard className="sm:col-span-2" label="Today's learning" text="Tap the orange play button to start today's learning."><button
+      <button
         onClick={onQuest}
         className="group relative overflow-hidden rounded-[2.5rem] sm:col-span-2 bg-gradient-to-br from-amber-400 via-orange-400 to-rose-400 p-6 text-left shadow-xl transition active:scale-[0.98] sm:p-8"
       >
@@ -92,10 +89,10 @@ export function Home({ state, onQuest, onGames, onIsland, onGrownUps, onExplore,
         <div className="font-kid text-sm font-bold uppercase tracking-widest text-white/80">Math, reading & discovery · 8 questions{goal > 1 ? ` · ${today} of ${goal} done` : ''}</div>
         <div className="mt-1 font-kid text-4xl font-bold text-white sm:text-5xl">Today’s learning{done ? ' ✓' : ''}</div>
         <div className="mt-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-white text-3xl shadow-lg">▶</div>
-      </button></AudioCard>
-        <AudioCard label="Brain Games" text={locked ? 'Learning first, then games! Finish today’s learning to open your games.' : 'Choose a word, number or thinking game.'}><button
-          onClick={() => locked ? soundEngine.speak('Learning first, then games!') : onGames()}
-          aria-disabled={locked}
+      </button>
+        <button
+          onClick={onGames}
+          disabled={locked}
           aria-label={locked ? 'Brain Games: open after today’s learning' : undefined}
           className="relative flex disabled:opacity-60 flex-col justify-between overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-violet-500 to-fuchsia-500 p-6 text-left shadow-xl transition active:scale-[0.98]"
         >
@@ -104,7 +101,7 @@ export function Home({ state, onQuest, onGames, onIsland, onGrownUps, onExplore,
           <div className="mt-1 font-kid text-3xl font-bold leading-tight text-white">Word, number &amp; thinking puzzles</div>
           <div className="mt-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-white text-3xl shadow-lg">{locked ? '🔒' : '🎮'}</div>
           {locked && <div className="mt-2 font-kid text-sm font-bold text-white">Opens after today’s learning</div>}
-        </button></AudioCard>
+        </button>
       </div>
 
       {resume && onResumeGame && !locked && <button className="growth-secondary self-start" onClick={() => onResumeGame(resume.id)}>Continue playing · {resume.title} →</button>}
@@ -115,7 +112,7 @@ export function Home({ state, onQuest, onGames, onIsland, onGrownUps, onExplore,
           if (!sum.total) return null;
           const pct = sum.total ? Math.round((sum.mastered / sum.total) * 100) : 0;
           return (
-            <AudioCard key={s.id} label={s.kidTitle} text={`Explore ${s.kidTitle}. Tap this picture to practise.`}><button onClick={() => onIsland(s.id)} className="flex flex-col items-center gap-2 rounded-[2rem] p-4 shadow-md transition active:scale-95" style={{ background: s.soft }}>
+            <button key={s.id} onClick={() => onIsland(s.id)} className="flex flex-col items-center gap-2 rounded-[2rem] p-4 shadow-md transition active:scale-95" style={{ background: s.soft }}>
               <span className="text-6xl">{s.icon}</span>
               <span className="text-center font-kid text-lg font-bold leading-tight" style={{ color: s.color }}>
                 {s.kidTitle}
@@ -126,16 +123,16 @@ export function Home({ state, onQuest, onGames, onIsland, onGrownUps, onExplore,
               <span className="font-kid text-xs font-bold text-slate-500">
                 {sum.mastered} of {sum.total} ⭐
               </span>
-            </button></AudioCard>
+            </button>
           );
         })}
       </div>
 
-      <AudioCard label="Build and Explore" text={locked ? 'Learning first, then games! Finish today’s learning to build your airport.' : 'Build and test your own airport.'}><button onClick={() => locked ? soundEngine.speak('Learning first, then games!') : onExplore()} aria-disabled={locked} className="explore-entry text-left disabled:opacity-60" aria-label={locked ? 'Build and Explore: open after today’s learning' : 'Open Build and Explore'}>
+      <button onClick={onExplore} disabled={locked} className="explore-entry text-left disabled:opacity-60" aria-label={locked ? 'Build and Explore: open after today’s learning' : 'Open Build and Explore'}>
         <div className="explore-entry-art"><AirportPicture /></div>
         <div><p className="growth-eyebrow">Create &amp; discover</p><h2 className="font-kid text-2xl font-semibold text-teal-950">Build &amp; Explore</h2>
           <p className="mt-1 text-sm text-slate-600">Design an airport. Test your ideas.</p><span className="mt-3 inline-block font-bold text-teal-800">{locked ? '🔒 Opens after today’s learning' : 'Let’s build →'}</span></div>
-      </button></AudioCard>
+      </button>
       <div className="mt-auto flex justify-end">
         <button onClick={onGrownUps} className="rounded-full bg-white/80 px-4 py-2 text-sm font-semibold text-slate-500 shadow">
           🔒 Grown-ups

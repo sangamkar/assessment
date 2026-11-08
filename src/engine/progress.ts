@@ -1,4 +1,3 @@
-import { contentIssue } from './contentIssues';
 import { normalizeGarden } from '../games/garden';
 import type { GardenState } from '../games/garden';
 import type { CurriculumId, Difficulty, LanguageCode, Item } from '../content/types';
@@ -216,7 +215,7 @@ export function skillState(state: AppState, id: string): SkillState {
 }
 
 export function attemptsFor(state: AppState, skill: string): Attempt[] {
-  return state.attempts.filter((a) => a.skill === skill && !contentIssue(a));
+  return state.attempts.filter((a) => a.skill === skill);
 }
 
 export function accuracy(list: Attempt[]): number {
@@ -265,7 +264,7 @@ export function recordAttempt(state: AppState, attempt: Attempt): AppState {
     return metadata;
   }).reverse();
   const practice = attempt.mode === 'quest' || attempt.mode === 'skill';
-  const list = attempts.filter((a) => a.skill === attempt.skill && !contentIssue(a));
+  const list = attempts.filter((a) => a.skill === attempt.skill);
 
   if (prev.mastered && prev.nextReview && attempt.ts >= prev.nextReview && practice) {
     // A spaced review: success moves the next review further out, a miss brings it back.

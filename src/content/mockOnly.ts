@@ -1,5 +1,5 @@
 import type { Item } from "./types";
-import { items, txt, num, vis } from "./helpers";
+import { items, txt } from "./helpers";
 /** Fresh contexts for the two reading domains with only one authored skill each. */
 const vocab = items("r.vocab.mock", [
   {
@@ -371,116 +371,7 @@ const independentChecks = items("r2.readalone.mock", [
       "Moving from the hill to the sheltered bench shows how Tia changed her original plan.",
   },
 ]).map((i) => ({ ...i, skill: "r2.readalone" }));
-/** Geometry transfer tasks: enough varied Grade 2 items for a full strong-child domain. */
-const geometry = items("m2.shapes.mock", [
-  {
-    difficulty: 2,
-    say: "A garden plan has 2 rows of 4 small square spaces. Count only those small spaces. How many small squares are there?",
-    show: "How many small squares?",
-    visual: { kind: 'map', rows: 2, cols: 4, cells: [] },
-    choices: [num(8), num(4, 'counted_one_row'), num(2, 'counted_one_column'), num(9, 'included_outer_square')],
-    explain: "Each of the 2 rows contains 4 small squares. 4 plus 4 makes 8 small squares.",
-  },
-  {
-    difficulty: 2,
-    say: "Look at this diamond-shaped rhombus. How many corners does it have?",
-    visual: {kind:'shape',shape:'rhombus',color:'#14b8a6'},
-    choices: [num(4), num(3,'corner_count_confusion'), num(5,'corner_count_confusion')],
-    explain: "A rhombus has 4 corners and 4 straight sides.",
-  },
-  {
-    difficulty: 3,
-    say: "Which pair contains two shapes that both have four straight sides?",
-    show: "Both have 4 sides",
-    speakChoices: false,
-    choices: [
-      vis({kind:'shapeRow',shapes:[{shape:'square',color:'#3b82f6'},{shape:'trapezoid',color:'#ef4444'}]},undefined),
-      vis({kind:'shapeRow',shapes:[{shape:'triangle',color:'#3b82f6'},{shape:'rectangle',color:'#ef4444'}]},undefined,'side_count_confusion'),
-      vis({kind:'shapeRow',shapes:[{shape:'hexagon',color:'#3b82f6'},{shape:'pentagon',color:'#ef4444'}]},undefined,'side_count_confusion'),
-    ],
-    explain: "The square and trapezoid each have 4 straight sides. Both are quadrilaterals.",
-  },
-  {
-    difficulty: 3,
-    say: "A park sign has the shape shown here. How many angles, or corners, does its outline have?",
-    visual: {kind:'shape',shape:'hexagon',color:'#8b5cf6',rotate:30},
-    choices: [num(6), num(5,'corner_count_confusion'), num(8,'corner_count_confusion')],
-    explain: "A hexagon has 6 corners. Turning the sign does not change its number of angles.",
-  },
-  {
-    difficulty: 3,
-    say: "Which shape has exactly one more angle than a square?",
-    speakChoices: false,
-    choices: [
-      vis({kind:'shape',shape:'pentagon',color:'#f59e0b'},undefined),
-      vis({kind:'shape',shape:'triangle',color:'#ef4444'},undefined,'side_count_confusion'),
-      vis({kind:'shape',shape:'hexagon',color:'#3b82f6'},undefined,'side_count_confusion'),
-    ],
-    explain: "A square has 4 angles. One more is 5, so the pentagon fits.",
-  },
-  {
-    difficulty: 3,
-    say: "A floor plan has 3 rows of 4 small square tiles. Count only the small tiles, not larger squares made from several tiles. How many small tiles are there?",
-    show: "How many small tiles?",
-    visual: {kind:'map',rows:3,cols:4,cells:[]},
-    choices: [num(12),num(4,'counted_one_row'),num(7,'added_rows_and_columns'),num(13,'included_outer_square')],
-    explain: "There are 4 small tiles in each of 3 rows: 4 plus 4 plus 4 makes 12.",
-  },
-  {
-    difficulty: 3,
-    say: "Which solid has only flat faces, with no curved surface?",
-    speakChoices: false,
-    choices: [
-      vis({kind:'shape',shape:'cube',color:'#f59e0b'},undefined),
-      vis({kind:'shape',shape:'sphere',color:'#3b82f6'},undefined,'shape_name_confusion'),
-      vis({kind:'shape',shape:'cylinder',color:'#14b8a6'},undefined,'shape_name_confusion'),
-    ],
-    explain: "All 6 faces of a cube are flat. A sphere and a cylinder each have a curved surface.",
-  },
-  {
-    difficulty: 3,
-    say: "This shape is turned on its side. Which statement about it is true?",
-    visual: {kind:'shape',shape:'rectangle',rotate:25,color:'#3b82f6'},
-    choices: [txt('It still has four sides.'),txt('It now has three sides.','side_count_confusion'),txt('It has no corners.','corner_count_confusion')],
-    explain: "Turning a rectangle does not add or remove sides or corners. It still has 4 of each.",
-  },
-  {
-    difficulty: 3,
-    say: "Look at these two shapes. How many more corners does the hexagon have than the triangle?",
-    visual: {kind:'shapeRow',shapes:[{shape:'hexagon',color:'#f59e0b'},{shape:'triangle',color:'#8b5cf6'}]},
-    choices: [num(3),num(2,'corner_count_confusion'),num(9,'added_sides_and_angles')],
-    explain: "The hexagon has 6 corners and the triangle has 3. The difference is 3 corners.",
-  },
-  {
-    difficulty: 3,
-    say: "This empty box is a rectangular prism. Including the hidden ones, how many flat faces does it have?",
-    visual: {kind:'shape',shape:'rect-prism',color:'#14b8a6'},
-    choices: [num(6),num(3,'counted_visible_faces'),num(8,'faces_vertices_confusion')],
-    explain: "A rectangular prism has a top, bottom, front, back, left face and right face: 6 faces.",
-  },
-  {
-    difficulty: 3,
-    say: "Which shape has the same number of corners as this trapezoid?",
-    visual: {kind:'shape',shape:'trapezoid',color:'#ef4444'},
-    speakChoices: false,
-    choices: [
-      vis({kind:'shape',shape:'rhombus',color:'#14b8a6'},undefined),
-      vis({kind:'shape',shape:'pentagon',color:'#3b82f6'},undefined,'corner_count_confusion'),
-      vis({kind:'shape',shape:'triangle',color:'#f59e0b'},undefined,'corner_count_confusion'),
-    ],
-    explain: "The trapezoid and rhombus both have 4 corners.",
-  },
-  {
-    difficulty: 3,
-    say: "A large sticker sheet has 2 rows of 5 small square spaces. Count only the small spaces. How many are there?",
-    show: "Count only the small squares",
-    visual: {kind:'map',rows:2,cols:5,cells:[]},
-    choices: [num(10),num(5,'counted_one_row'),num(7,'added_rows_and_columns'),num(2,'counted_one_column')],
-    explain: "There are 5 small spaces in each row. 5 plus 5 makes 10 small spaces.",
-  },
-]).map(i => ({...i,skill:'m2.shapes'}));
 export const MOCK_ONLY_ITEMS: Item[] = [
-  ...geometry,
   ...vocab,
   ...info,
   ...coinComparisons,

@@ -60,8 +60,7 @@ export function Player({ locale, mode, title, color, total, first, getNext, intr
 
   // Read the question aloud whenever a new one appears.
   useEffect(() => {
-    if (phase === 'ask' && item) speakItem();
-    return () => soundEngine.stopSpeech();
+    if (phase === 'ask' && item) return speakItem();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item?.id, phase === 'intro']);
 

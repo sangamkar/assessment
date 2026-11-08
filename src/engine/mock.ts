@@ -163,7 +163,8 @@ export function nextMockStep(
       (usedSkills.get(a.id) ?? 0) - (usedSkills.get(b.id) ?? 0),
   );
   const nearest = dist(ranked[0]);
-  const ordered = ranked.filter((s) => dist(s) === nearest);
+  const ordered = ranked.filter(skill => dist(skill) === nearest);
+  const alternatives = ranked.filter(skill => dist(skill) !== nearest);
   // Prefer new tasks; repeats are allowed only inside the reserved mock pool.
   const seen = new Set([
     ...state.attempts.map((a) => a.itemId),
@@ -210,14 +211,19 @@ export function nextMockStep(
     !currentLegacyFamilies.has(legacyItemFamily(item.id)) &&
     !currentSignatures.has(itemFingerprint(item));
   const wasSeen = (item: Item) => !unseen(item);
+  const uses = (item: Item) => run.answers.filter(a => a.itemId === item.id ||
+    a.poolFingerprint === itemFingerprint(item) || a.fingerprint === itemFingerprint(item)).length;
+  const lastUse = (item: Item) => run.answers.reduce((last, a, index) => a.itemId === item.id ||
+    a.poolFingerprint === itemFingerprint(item) || a.fingerprint === itemFingerprint(item) ? index : last, -1);
   const select = (
     accept: (item: Item) => boolean,
+    skills = ordered,
   ): (QuestStep & { strand: string; level: number; target: number }) | null => {
-    for (const skill of ordered) {
+    for (const skill of skills) {
       const written = poolItems(skill, "mock")
         .filter((i) => (!i.regions || i.regions.includes("us-ga")) && accept(i))
         .sort(
-          (a, b) => Math.abs(a.difficulty - d) - Math.abs(b.difficulty - d),
+          (a, b) => uses(a) - uses(b) || Math.abs(a.difficulty - d) - Math.abs(b.difficulty - d) || lastUse(a) - lastUse(b),
         );
       // Draw at the intended difficulty first; use another authored level only if needed.
       if (written[0] && written[0].difficulty === d)
@@ -257,9 +263,10 @@ export function nextMockStep(
     }
     return null;
   };
-  // Prefer never-seen questions, then prior-test questions not used in this sitting.
-  // If even those run out, allow a repeat so the full test can finish.
-  return select(unseen) ?? select(notInThisRun) ?? select(() => true);
+  // Keep the intended grade while it has a task not used in this sitting.
+  // Then broaden within the domain before allowing any within-test repeat.
+  return select(unseen) ?? select(notInThisRun) ??
+    select(unseen, alternatives) ?? select(notInThisRun, alternatives) ?? select(() => true);
 }
 
 /** Estimate = average level of the last 4 questions, nudged by how many of them were right. */

@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { soundEngine } from '../utils/audio';
 import { SpeakButton } from './SpeakButton';
 export function AudioGuide({ text }: { text: string }) {
-  useEffect(() => { soundEngine.speak(text); return () => soundEngine.stopSpeech(); }, [text]);
+  useEffect(() => soundEngine.speak(text), [text]);
   return <SpeakButton text={text} label="Hear what to do next" />;
 }
 /** A separate sibling control so listening never activates the card. */

@@ -13,8 +13,7 @@ export function Intro({ skill, color, locale, onDone }: { skill: Skill; color: s
   const last = i === skill.intro.length - 1;
 
   useEffect(() => {
-    soundEngine.speak(`${i === 0 ? `Let's learn: ${skill.kidTitle}! ` : ''}${slide.say}`);
-    return () => soundEngine.stopSpeech();
+    return soundEngine.speak(`${i === 0 ? `Let's learn: ${skill.kidTitle}! ` : ''}${slide.say}`);
   }, [i, skill, slide.say]);
 
   return (

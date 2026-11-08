@@ -44,7 +44,8 @@ export function isMockItem(item: Item): boolean {
   return (
     !!assessed &&
     (exclusiveFingerprints.has(itemFingerprint(item)) ||
-      isMockFingerprint(itemFingerprint(item)))
+      item.assessmentPool === "mock" ||
+      (item.assessmentPool !== "practice" && isMockFingerprint(itemFingerprint(item))))
   );
 }
 export function poolItems(skill: Skill, pool: "practice" | "mock"): Item[] {

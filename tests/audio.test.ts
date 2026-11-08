@@ -34,7 +34,7 @@ describe('Chrome speech recovery',()=>{
  it('recovers from a voice that never starts and reports persistent failure',()=>{
   const notice=vi.fn();window.addEventListener('learning-quest:speech-status',notice);
   const done=vi.fn();soundEngine.speak('Question',done);start();vi.advanceTimersByTime(5080);expect(spoken).toHaveLength(2);
-  vi.advanceTimersByTime(5000);expect(done).toHaveBeenCalledOnce();expect(notice).toHaveBeenCalled();expect((notice.mock.calls.at(-1)![0] as CustomEvent).detail).toContain('could not play');
+  vi.advanceTimersByTime(5000);expect(synth.cancel).toHaveBeenCalledTimes(3);expect(done).toHaveBeenCalledOnce();expect(notice).toHaveBeenCalled();expect((notice.mock.calls.at(-1)![0] as CustomEvent).detail).toContain('could not play');
   window.removeEventListener('learning-quest:speech-status',notice);
  });
  it('keeps multilingual parts in order and cancels pending speech on exit',()=>{

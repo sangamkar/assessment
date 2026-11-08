@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { getSkill } from "../src/content";
+import { ALL_SKILLS, getSkill } from "../src/content";
 import { emptyState } from "../src/engine/progress";
 import type { AppState } from "../src/engine/progress";
+import { poolItems } from "../src/engine/itemPools";
 import { buildQuest } from "../src/engine/planner";
 import {
   LADDER_MAX,
@@ -126,8 +127,10 @@ describe("mock i-Ready", () => {
     ).not.toContain(next.item.id);
   });
 
-  it("flags repeated questions while completing a thin mock pool", () => {
+  it("flags familiar questions while completing an already-seen mock pool", () => {
     const state = emptyState();
+    for (const skill of ALL_SKILLS.filter(s => s.subject === 'math' && s.strand === 'geometry'))
+      for (const item of poolItems(skill, 'mock')) state.attempts.push({itemId:item.id,skill:skill.id,d:item.difficulty,correct:true,ts:T0-1,mode:'mock'});
     const run = newMockRun("math", 2, T0);
     const ids = new Set<string>();
     for (

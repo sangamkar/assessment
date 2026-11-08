@@ -1,3 +1,4 @@
+import { contentIssue } from '../engine/contentIssues';
 import React, { useState } from 'react';
 import { SUBJECTS, getSkill } from '../content';
 import type { AppState, Mode } from '../engine/progress';
@@ -262,6 +263,7 @@ export function QuestionReview({ state, initialSkill = 'all' }: { state: AppStat
                 : 'No prior answer to this question was recorded.'}
             </p>
           )}
+          {contentIssue(a) && <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm font-semibold text-amber-950">{contentIssue(a)}</p>}
           {a.question ? (
             <div className="mt-4 space-y-4">
               <div className="flex items-start gap-3">
@@ -287,7 +289,7 @@ export function QuestionReview({ state, initialSkill = 'all' }: { state: AppStat
                       {c.id === a.selectedChoiceId
                         ? 'Child’s first answer'
                         : c.correct
-                          ? 'Correct answer'
+                          ? (contentIssue(a) ? 'Original answer key (wording issue)' : 'Correct answer')
                           : 'Other option'}
                     </p>
                     {c.visual ? (
@@ -300,7 +302,7 @@ export function QuestionReview({ state, initialSkill = 'all' }: { state: AppStat
                 ))}
               </div>
               <p className="rounded-xl bg-sky-50 p-3 text-sm text-slate-700">
-                <strong>Explanation:</strong> {a.question.explain}
+                <strong>{contentIssue(a) ? "Original explanation:" : "Explanation:"}</strong> {a.question.explain}
               </p>
             </div>
           ) : (

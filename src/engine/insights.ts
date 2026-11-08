@@ -1,3 +1,4 @@
+import { contentIssue } from './contentIssues';
 import { ALL_SKILLS } from '../content';
 import { isVisible } from './planner';
 import { dayKey, skillState } from './progress';
@@ -7,7 +8,7 @@ export function learningSummary(state: AppState, now = Date.now()) {
   const since = now - 14 * 86400000;
   const rows = ALL_SKILLS.filter((s) => ['math', 'reading'].includes(s.subject) && isVisible(state, s)).map((skill) => {
     const attempts = state.attempts
-      .filter((a) => a.skill === skill.id && a.ts >= since)
+      .filter((a) => a.skill === skill.id && a.ts >= since && !contentIssue(a))
       .sort((a, b) => a.ts - b.ts)
       .slice(-8);
     const misses = attempts.filter((a) => !a.correct).length;

@@ -1,3 +1,4 @@
+import { contentIssue } from './contentIssues';
 import { ALL_SKILLS, SUBJECTS, getSkill, getSubject } from '../content';
 import type { Difficulty, Item, Skill, SubjectId } from '../content/types';
 import { NOISE_TAGS } from '../content/misconceptions';
@@ -83,11 +84,17 @@ export function pickAssessmentItem(state: AppState, skill: Skill, level: Difficu
     if (inRegion(state, item)) candidates.push(item);
   }
   if (!candidates.length) throw new Error(`No questions available for ${skill.id}`);
-  const nearest = Math.min(...candidates.map(i => Math.abs(i.difficulty - level)));
-  const appropriate = candidates.filter(i => Math.abs(i.difficulty - level) === nearest);
-  const fresh = appropriate.filter(i => !seenQuestion(state, i, answered));
-  const item = present(rng.pick(fresh.length ? fresh : appropriate));
-  return { item, repeated: !fresh.length };
+  const fresh = candidates.filter(i => !seenQuestion(state, i, answered));
+  const unusedInSession = candidates.filter(i => !seenQuestion({ ...state, attempts: [] }, i, answered));
+  let pool = fresh.length ? fresh : unusedInSession.length ? unusedInSession : candidates;
+  if (!fresh.length && !unusedInSession.length) {
+    const uses = (item: Item) => answered.filter(a => a.itemId === item.id || a.fingerprint === questionFingerprint(item)).length;
+    const leastUsed = Math.min(...pool.map(uses));
+    pool = pool.filter(i => uses(i) === leastUsed);
+  }
+  const nearest = Math.min(...pool.map(i => Math.abs(i.difficulty - level)));
+  const item = present(rng.pick(pool.filter(i => Math.abs(i.difficulty - level) === nearest)));
+  return { item, repeated: seenQuestion(state, item, answered) };
 }
 
 /* ------------------------------------------------------------------------ */
@@ -237,7 +244,6 @@ export interface CheckupAnswer {
  * Correct → difficulty 3, then on to the next skill. Wrong → one step easier.
  */
 export function nextCheckupItem(state: AppState, plan: CheckupPlan, answered: CheckupAnswer[]): (QuestStep & { strand: string }) | null {
-  const seen = new Set(answered.map((a) => a.itemId));
   for (const st of plan.strands) {
     const mine = answered.filter((a) => a.strand === st.strand);
     if (mine.length >= plan.perStrand) continue;
@@ -305,7 +311,7 @@ export function topMisconceptions(state: AppState, sinceDays = 30, limit = 6) {
   const since = Date.now() - sinceDays * 24 * 60 * 60 * 1000;
   const tags = new Map<string, { count: number; skills: Set<string> }>();
   for (const a of state.attempts) {
-    if (a.ts < since || a.correct || !a.why || NOISE_TAGS.has(a.why)) continue;
+    if (contentIssue(a) || a.ts < since || a.correct || !a.why || NOISE_TAGS.has(a.why)) continue;
     const t = tags.get(a.why) ?? { count: 0, skills: new Set<string>() };
     t.count++;
     t.skills.add(a.skill);

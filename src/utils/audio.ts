@@ -212,14 +212,14 @@ class SoundEngine {
    * Text-To-Speech with Kindergarten-friendly tempo and friendly voice
    */
   public speak(text: string, onEnd?: () => void, lang?: string) {
-    this.speakParts([{ text, lang }], onEnd);
+    return this.speakParts([{ text, lang }], onEnd);
   }
 
   /** Speaks several parts in a row, each in its own language (English prompt, then a Hindi word). */
   public speakParts(parts: { text: string; lang?: string; roman?: string }[], onEnd?: () => void) {
     if (this.isMuted || typeof window === 'undefined' || !('speechSynthesis' in window)) {
       if (onEnd) onEnd();
-      return;
+      return () => {};
     }
     this.stopSpeech();
     const run = ++this.sequence;
@@ -293,6 +293,8 @@ class SoundEngine {
       this.speechTimer = setTimeout(() => launch(), 0);
     };
     next(0);
+    // An unmount cleanup must never cancel a newer request from another screen.
+    return () => { if (run === this.sequence) this.stopSpeech(); };
   }
 
   public stopSpeech() {

@@ -178,6 +178,11 @@ class SoundEngine {
 
   private locale = 'en-US';
   private sequence = 0;
+  private speechTimer: ReturnType<typeof setTimeout> | undefined;
+  private startingSpeech = false;
+  private speechNotice(message: string) {
+    window.dispatchEvent(new CustomEvent('learning-quest:speech-status', { detail: message }));
+  }
 
   /** English accent for the active curriculum (en-US or en-IN). */
   public setLocale(locale: string) {
@@ -189,6 +194,7 @@ class SoundEngine {
     const prefix = lang.split('-')[0];
     const friendly = (v: SpeechSynthesisVoice) => /Natural|Samantha|Google|Karen|Victoria|Lekha|Veena|Rishi/.test(v.name);
     return (
+      voices.find((v) => v.lang.replace('_', '-') === lang && v.localService) ||
       voices.find((v) => v.lang.replace('_', '-') === lang && friendly(v)) ||
       voices.find((v) => v.lang.replace('_', '-') === lang) ||
       (prefix === 'en' ? voices.find((v) => v.lang.startsWith('en') && friendly(v)) : undefined) ||
@@ -231,22 +237,68 @@ class SoundEngine {
         text = parts[i].roman!;
         lang = this.locale;
       }
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = lang;
-      utterance.rate = lang.startsWith('hi') ? 0.8 : 0.88;
-      utterance.pitch = 1.05;
-      const voice = this.pickVoice(lang);
-      if (voice) utterance.voice = voice;
-      utterance.onend = () => next(i + 1);
-      utterance.onerror = () => next(i + 1);
-      this.currentUtterance = utterance;
-      window.speechSynthesis.speak(utterance);
+      const synth = window.speechSynthesis;
+      const launch = (fallback = false) => {
+        if (run !== this.sequence) return;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = lang;
+        utterance.rate = lang.startsWith('hi') ? 0.8 : 0.88;
+        utterance.pitch = 1.05;
+        const voice = fallback ? undefined : this.pickVoice(lang);
+        if (voice) utterance.voice = voice;
+        let started = false;
+        const failed = (error: string) => {
+          if (run !== this.sequence || this.currentUtterance !== utterance) return;
+          clearTimeout(this.speechTimer);
+          this.currentUtterance = null;
+          this.startingSpeech = false;
+          // A failed selected voice may still have a working device-default voice.
+          if (!fallback && error !== 'not-allowed' && error !== 'canceled' && error !== 'interrupted') {
+            synth.cancel();
+            this.startingSpeech = true;
+            this.speechTimer = setTimeout(() => launch(true), 80);
+            return;
+          }
+          this.speechNotice(error === 'not-allowed'
+            ? 'Chrome blocked narration. Tap the blue speaker to read the question.'
+            : 'Narration could not play. Tap the blue speaker to retry. If it stays silent, restart Chrome and check the device’s speech voices.');
+          onEnd?.();
+        };
+        utterance.onstart = () => {
+          if (run !== this.sequence || this.currentUtterance !== utterance) return;
+          started = true;
+          this.startingSpeech = false;
+          clearTimeout(this.speechTimer);
+          this.speechNotice('');
+        };
+        utterance.onend = () => {
+          if (run !== this.sequence || this.currentUtterance !== utterance) return;
+          clearTimeout(this.speechTimer);
+          this.startingSpeech = false;
+          next(i + 1);
+        };
+        utterance.onerror = event => failed(event.error);
+        this.currentUtterance = utterance;
+        this.startingSpeech = true;
+        this.speechTimer = setTimeout(() => {
+          if (!started) failed('speech-start-timeout');
+        }, 5000);
+        try {
+          if (synth.paused) synth.resume();
+          synth.speak(utterance);
+        } catch { failed('synthesis-failed'); }
+      };
+      // Let cancellation finish before queueing the next voice request.
+      this.startingSpeech = true;
+      this.speechTimer = setTimeout(() => launch(), 0);
     };
     next(0);
   }
 
   public stopSpeech() {
     this.sequence++;
+    clearTimeout(this.speechTimer);
+    this.startingSpeech = false;
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       this.currentUtterance = null;
@@ -255,7 +307,7 @@ class SoundEngine {
 
   public isSpeaking(): boolean {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      return window.speechSynthesis.speaking || window.speechSynthesis.pending;
+      return this.startingSpeech || window.speechSynthesis.speaking || window.speechSynthesis.pending;
     }
     return false;
   }

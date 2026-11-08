@@ -252,9 +252,9 @@ class SoundEngine {
           clearTimeout(this.speechTimer);
           this.currentUtterance = null;
           this.startingSpeech = false;
+          synth.cancel();
           // A failed selected voice may still have a working device-default voice.
           if (!fallback && error !== 'not-allowed' && error !== 'canceled' && error !== 'interrupted') {
-            synth.cancel();
             this.startingSpeech = true;
             this.speechTimer = setTimeout(() => launch(true), 80);
             return;

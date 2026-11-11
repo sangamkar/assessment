@@ -5,19 +5,15 @@ import { canStep, hintPath, isSolved, key, makePuzzle } from '../../games/number
 import { soundEngine } from '../../utils/audio';
 import { SpeakButton } from '../SpeakButton';
 import { GameBar, GameOver } from './GameFrame';
-import type { GameEvidence } from '../../engine/progress';
 import type { RoundResult } from './GameFrame';
 
 const ROUNDS = 3;
 const COLOR = '#7c3aed';
 const RULES = 'Start at number 1. Draw one path through every square. Go through the numbers in order: 1, 2, 3!';
 
-export function NumberPath({ level, onRound, onExit }: { level: 1 | 2 | 3; onRound: (r: RoundResult, evidence?: GameEvidence) => void; onExit: () => void }) {
+export function NumberPath({ level, onRound, onExit }: { level: 1 | 2 | 3; onRound: (r: RoundResult) => void; onExit: () => void }) {
   const [round, setRound] = useState(0);
   const [wins, setWins] = useState(0);
-  const [completed, setCompleted] = useState(0);
-  const solvedRef = useRef(false);
-  const mistakes = useRef<string[]>([]);
   const [seed, setSeed] = useState(() => Date.now());
   const puzzle = useMemo(() => makePuzzle(level, createRng(seed + round)), [level, seed, round]);
   const [path, setPathState] = useState<Cell[]>([]);
@@ -34,8 +30,6 @@ export function NumberPath({ level, onRound, onExit }: { level: 1 | 2 | 3; onRou
 
   const goTo = (r: number) => {
     setPath([]);
-    solvedRef.current = false;
-    mistakes.current = [];
     setHints(0);
     setSolved(false);
     setMessage('');
@@ -51,12 +45,10 @@ export function NumberPath({ level, onRound, onExit }: { level: 1 | 2 | 3; onRou
       <Wrap>
         <GameOver
           wins={wins}
-          completed={completed}
           rounds={ROUNDS}
           onAgain={() => {
             setSeed(Date.now());
             setWins(0);
-            setCompleted(0);
             goTo(0);
           }}
           onExit={onExit}
@@ -65,27 +57,20 @@ export function NumberPath({ level, onRound, onExit }: { level: 1 | 2 | 3; onRou
     );
   }
 
-  const describeRound = (route: Cell[], hintsUsed: number): GameEvidence => ({
-    prompt: `Number Path ${puzzle.size}×${puzzle.size}. ` + [...puzzle.numbers].map(([position, value]) => { const [r, c] = position.split(',').map(Number); return `${value} at row ${r + 1}, column ${c + 1}`; }).join('; '),
-    answer: 'One working path: ' + route.map(cell => `(${cell.r + 1}, ${cell.c + 1})`).join(' → '),
-    hints: hintsUsed, mistakes: [...mistakes.current],
-  });
   const finish = (next: Cell[], hintsUsed = hints) => {
-    if (solvedRef.current || !isSolved(puzzle, next)) return;
-    solvedRef.current = true;
-    setCompleted(n => n + 1);
+    if (!isSolved(puzzle, next)) return;
     setSolved(true);
-    const result: RoundResult = hintsUsed === 0 && mistakes.current.length === 0 ? 'win' : 'assisted';
+    const result: RoundResult = hintsUsed <= 1 ? 'win' : 'assisted';
     if (result === 'win') setWins((w) => w + 1);
-    onRound(result, describeRound(next, hintsUsed));
+    onRound(result);
     soundEngine.playCorrectChime();
-    const msg = result === 'win' ? 'You did it! Every square, every number!' : 'You finished it! You tried again or used clues and found a complete path.';
+    const msg = result === 'win' ? 'You did it! Every square, every number!' : 'You finished it! Next time, try with fewer hints.';
     setMessage(msg);
     soundEngine.speak(msg);
   };
 
   const step = (cell: Cell, fromTap: boolean) => {
-    if (solvedRef.current) return;
+    if (solved) return;
     const path = pathRef.current;
     const idx = path.findIndex((q) => q.r === cell.r && q.c === cell.c);
     if (idx >= 0) {
@@ -95,18 +80,18 @@ export function NumberPath({ level, onRound, onExit }: { level: 1 | 2 | 3; onRou
     }
     if (!canStep(puzzle, path, cell)) {
       if (fromTap) {
+        soundEngine.playGentleBuzzer();
         const reached = path.filter((q) => puzzle.numbers.has(key(q))).length;
         const n = puzzle.numbers.get(key(cell));
-        const feedback = !path.length
+        setMessage(
+          !path.length
             ? 'Start on number 1!'
             : n && n !== reached + 1
               ? `Go to number ${reached + 1} first!`
               : n === puzzle.numbers.size
                 ? `Number ${n} is the very last square. Fill the others first!`
-                : 'Move to a square right next to the end of your path.';
-        setMessage(feedback);
-        soundEngine.speak(feedback);
-        mistakes.current = [...mistakes.current, `Row ${cell.r + 1}, column ${cell.c + 1}: ${feedback}`].slice(-50);
+                : 'Move to a square right next to the end of your path.',
+        );
       }
       return;
     }
@@ -183,7 +168,7 @@ export function NumberPath({ level, onRound, onExit }: { level: 1 | 2 | 3; onRou
       <div className="mt-4 text-center font-kid text-lg font-bold text-slate-500">
         {path.length} / {n * n} squares
       </div>
-      {message && <div role="status" className={`mx-auto mt-3 max-w-xl rounded-3xl px-5 py-3 text-center font-kid text-xl font-bold ${solved ? 'bg-emerald-100 text-emerald-800' : 'bg-sky-100 text-sky-900'}`}>{message}</div>}
+      {message && <div className={`mx-auto mt-3 max-w-xl rounded-3xl px-5 py-3 text-center font-kid text-xl font-bold ${solved ? 'bg-emerald-100 text-emerald-800' : 'bg-sky-100 text-sky-900'}`}>{message}</div>}
 
       <div className="mt-5 flex flex-wrap justify-center gap-3">
         {solved ? (
@@ -210,7 +195,7 @@ export function NumberPath({ level, onRound, onExit }: { level: 1 | 2 | 3; onRou
             </button>
             <button
               onClick={() => {
-                onRound('loss', describeRound(puzzle.solution, hints));
+                onRound('loss');
                 goTo(round + 1);
               }}
               className="rounded-full bg-white/70 px-6 py-3 font-kid text-xl font-bold text-slate-500"

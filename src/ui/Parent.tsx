@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { ALL_SKILLS, CURRICULA, LANGUAGES, SUBJECTS, getSkill, getSubject, localize } from '../content';
 import type { CurriculumId } from '../content/types';
 import { soundEngine } from '../utils/audio';
@@ -13,19 +13,13 @@ import { AVATARS } from './Setup';
 import { QuestionBank } from './QuestionBank';
 import { IReadyPrep } from './IReadyPrep';
 import type { MockSubject } from '../engine/mock';
-import { getActivity } from '../content/missions';
-import { LearningSummary, QuestionReview } from './LearningSummary';
-import { AirportJournal } from './airport/AirportDesigner';
-import { BACKUP_EVERY_DAYS, backupDue, downloadBackup, screenMinutesToday } from '../engine/engagement';
 
-type Tab = 'summary' | 'answers' | 'airport' | 'growth' | 'overview' | 'iready' | 'focus' | 'checkups' | 'skills' | 'bank' | 'settings';
+type Tab = 'overview' | 'iready' | 'focus' | 'checkups' | 'skills' | 'bank' | 'settings';
 
 interface Props {
   state: AppState;
   setState: (s: AppState) => void;
   onClose: () => void;
-  onPractice: (id: string) => void;
-  onStartingPoint: () => void;
   onStartCheckup: (subject: SubjectId) => void;
   onStartPlacement: (subject: SubjectId) => void;
   onStartMock: (subject: MockSubject) => void;
@@ -60,14 +54,14 @@ function Card({ title, children, right }: { title: string; children: React.React
 
 function Overview({ state }: { state: AppState }) {
   const week = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  const recent = state.attempts.filter((a) => a.ts >= week && ['quest', 'skill'].includes(a.mode));
+  const recent = state.attempts.filter((a) => a.ts >= week && a.mode !== 'checkup');
   const daysThisWeek = new Set(recent.map((a) => dayKey(a.ts))).size;
-  const mastered = ALL_SKILLS.filter((s) => isVisible(state, s) && skillState(state, s.id).mastered && !skillState(state, s.id).known).length;
+  const mastered = ALL_SKILLS.filter((s) => isVisible(state, s) && skillState(state, s.id).mastered).length;
   const stats = [
     { label: 'Days practised (7d)', value: `${daysThisWeek}/7` },
     { label: 'Questions (7d)', value: recent.length },
     { label: 'First-try accuracy (7d)', value: recent.length ? pct(accuracy(recent)) : '—' },
-    { label: 'Practice rule met', value: `${mastered}/${ALL_SKILLS.filter((s) => isVisible(state, s)).length}` },
+    { label: 'Skills mastered', value: `${mastered}/${ALL_SKILLS.filter((s) => isVisible(state, s)).length}` },
   ];
   return (
     <div className="flex flex-col gap-4">
@@ -83,12 +77,12 @@ function Overview({ state }: { state: AppState }) {
         const sum = subjectSummary(state, subject.id);
         if (!sum.total) return null;
         return (
-          <Card key={subject.id} title={`${subject.icon} ${tr(state, subject.title)}`} right={<span className="text-xs font-semibold text-slate-500">{ALL_SKILLS.filter(s => s.subject === subject.id && isVisible(state, s) && skillState(state, s.id).mastered && !skillState(state, s.id).known).length} practice rule met · {sum.learning} learning · {sum.ready} ready · {sum.locked} locked</span>}>
+          <Card key={subject.id} title={`${subject.icon} ${tr(state, subject.title)}`} right={<span className="text-xs font-semibold text-slate-500">{sum.mastered} mastered · {sum.learning} learning · {sum.ready} ready · {sum.locked} locked</span>}>
             <div className="flex flex-col gap-2">
               {subject.strands.map((st) => {
                 const skills = ALL_SKILLS.filter((s) => s.subject === subject.id && s.strand === st.id && isVisible(state, s));
-                const list = skills.flatMap((s) => attemptsFor(state, s.id)).filter(a => ['quest', 'skill'].includes(a.mode)).sort((a, b) => a.ts - b.ts).slice(-30);
-                const done = skills.filter(s => skillState(state, s.id).mastered && !skillState(state, s.id).known).length;
+                const list = skills.flatMap((s) => attemptsFor(state, s.id)).filter((a) => a.mode !== 'checkup').slice(-30);
+                const done = skills.filter((s) => skillState(state, s.id).mastered).length;
                 return (
                   <div key={st.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 text-sm sm:grid-cols-[14rem_minmax(0,1fr)_7rem]">
                     <span className="font-medium text-slate-700">{st.title}</span>
@@ -124,7 +118,7 @@ function Overview({ state }: { state: AppState }) {
         </div>
       </Card>
       <p className="text-xs text-slate-500">
-        Bars show skills that met the app’s sustained practice rule; marked-known skills are excluded. Percent is first-try accuracy over the last 30 practice questions in that strand. Mastery rule: ≥{pct(MASTERY.accuracy)} over the last {MASTERY.window} tries, at least {MASTERY.minHardAttempts} at level 2+ (familiar correct answers excluded from new mastery evidence), correct on {MASTERY.minDays}+ different days within the last {MASTERY.dayWindow} days.
+        Bars show skills mastered. Percent is first-try accuracy over the last 30 practice questions in that strand. Mastery rule: ≥{pct(MASTERY.accuracy)} over the last {MASTERY.window} tries, at least {MASTERY.minHardAttempts} at level 2+, correct on {MASTERY.minDays}+ different days within the last {MASTERY.dayWindow} days.
       </p>
     </div>
   );
@@ -201,7 +195,7 @@ function Checkups({ state, onStart, onPlacement }: { state: AppState; onStart: (
       <PlacementCard state={state} onPlacement={onPlacement} />
       <Card title="Start a Check-up">
         <p className="mb-3 text-sm text-slate-600">
-          About 12 adaptive questions, with no hints or feedback. Hand the device to your child after tapping a subject. Results are a practice signal, not an official score.
+          About 12 adaptive questions, no hints or feedback — like the i-Ready Diagnostic format. Hand the device to your child after tapping a subject. Results are a practice signal, not an official score.
         </p>
         <div className="flex flex-wrap gap-2">
           {SUBJECTS.filter((s) => subjectSummary(state, s.id).total).map((s) => (
@@ -216,11 +210,10 @@ function Checkups({ state, onStart, onPlacement }: { state: AppState; onStart: (
         const subject = getSubject(c.subject as SubjectId);
         return (
           <Card key={c.id} title={`${subject.icon} ${tr(state, subject.title)} · ${new Date(c.ts).toLocaleDateString()}`} right={<span className="text-sm font-semibold text-slate-600">{c.correct}/{c.total} correct</span>}>
-            <p className="mb-3 text-sm text-slate-500">Results describe this question sample, not school norms. {c.repeated === undefined || c.untracked ? 'Question familiarity was not fully recorded.' : `${c.repeated} familiar question(s).`}</p>
             <div className="flex flex-wrap gap-2">
               {c.strands.map((s) => (
                 <span key={s.strand} className={`rounded-full px-3 py-1 text-xs font-bold ${BAND_STYLE[s.band]}`}>
-                  {s.title}: {s.band === 'On track' ? 'Mixed success on this sample' : s.band === 'Strong' ? 'Successful on this sample' : 'More practice suggested'}
+                  {s.title}: {s.band}
                 </span>
               ))}
             </div>
@@ -247,7 +240,7 @@ function PlacementCard({ state, onPlacement }: { state: AppState; onPlacement: (
   return (
     <Card title={`⚡ Find ${childName(state)}’s level (placement)`}>
       <p className="mb-3 text-sm text-slate-600">
-        For a child who is ahead. It samples each area with 2 hard questions per step and skips only skills actually demonstrated (up to {PLACEMENT_CAP} questions, no hints). These are tentative starting points. Skipped skills return for review in two weeks; this is not a validated school placement.
+        For a child who is ahead. It tests upward through each area with 2 hard questions per step and skips everything already proven (up to {PLACEMENT_CAP} questions, no hints). Skipped skills come back once as a review in two weeks, so a lucky guess fixes itself.
       </p>
       <div className="flex flex-wrap gap-2">
         {SUBJECTS.filter((s) => subjectSummary(state, s.id).total).map((s) => (
@@ -322,7 +315,7 @@ function SkillMap({ state, setState, onPlacement }: { state: AppState; setState:
                         </td>
                       ))}
                       <td className="pr-2">
-                        {st.known ? 'Marked known' : st.provisional ? 'Provisional starting point · review due within a week' : STATUS_LABEL[skillStatus(state, s)]}
+                        {STATUS_LABEL[skillStatus(state, s)]}
                         {st.known ? (st.known === 'tested' ? ' (tested out)' : ' (marked known)') : st.credited && !st.mastered ? ' (credited)' : ''}
                       </td>
                       <td className="pr-2">{st.level}</td>
@@ -368,7 +361,6 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
   const [msg, setMsg] = useState('');
   // The name field may be empty while typing, but an empty name is never saved.
   const [nameDraft, setNameDraft] = useState(state.profile?.name ?? '');
-  useEffect(() => setNameDraft(state.profile?.name ?? ''), [state.profile?.name]);
   const set = (patch: Partial<AppState['settings']>) => setState({ ...state, settings: { ...state.settings, ...patch } });
   const toggle = (label: string, hint: string, key: 'muted' | 'unlockAll' | 'showStretch') => (
     <label className="flex items-start justify-between gap-4 py-2">
@@ -379,7 +371,14 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
       <input type="checkbox" className="mt-1 h-5 w-5" checked={state.settings[key]} onChange={(e) => set({ [key]: e.target.checked })} />
     </label>
   );
-  const exportData = () => setState(downloadBackup(state));
+  const exportData = () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `learning-quest-backup-${dayKey(Date.now())}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
   const importData = async (file: File) => {
     try {
       const result = upgradeState(JSON.parse(await file.text()));
@@ -498,23 +497,8 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
         {toggle('Unlock every skill', 'Skip prerequisites (useful when earlier skills are already known).', 'unlockAll')}
         {toggle('Mute sound', 'Turns off speech and sound effects. Not recommended for non-readers.', 'muted')}
       </Card>
-      <Card title="Daily routine">
-        <label className="block py-2 text-sm font-semibold text-slate-600">
-          Daily goal
-          <select value={state.settings.dailyQuests ?? 1} onChange={(e) => set({ dailyQuests: Number(e.target.value) })} className="mt-1 block w-full rounded-lg border border-slate-300 px-2 py-1.5">
-            {[1, 2, 3].map((n) => <option key={n} value={n}>{n} × Today’s learning (about {n * 10} minutes)</option>)}
-          </select>
-        </label>
-        <label className="block py-2 text-sm font-semibold text-slate-600">
-          Screen-time reminder
-          <select value={state.settings.screenMinutes ?? 0} onChange={(e) => set({ screenMinutes: Number(e.target.value) })} className="mt-1 block w-full rounded-lg border border-slate-300 px-2 py-1.5">
-            {[0, 15, 20, 30, 45, 60].map((n) => <option key={n} value={n}>{n ? `After ${n} minutes` : 'Off'}</option>)}
-          </select>
-          <span className="mt-1 block text-xs font-normal text-slate-500">A gentle reminder on the home screen; nothing is blocked. {screenMinutesToday()} minutes on this device today.</span>
-        </label>
-      </Card>
       <Card title="Backup">
-        <p className="mb-3 text-sm text-slate-600">Academic progress, discoveries, sketches and observations are saved in this browser only. Download a backup now and then, and restore it on a new device.</p>
+        <p className="mb-3 text-sm text-slate-600">Progress is saved in this browser only. Download a backup now and then, and restore it on a new device.</p>
         <div className="flex flex-wrap gap-2">
           <button onClick={exportData} className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white">
             Download backup
@@ -527,7 +511,7 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
         {msg && <p className="mt-2 text-sm font-semibold text-slate-600">{msg}</p>}
       </Card>
       <Card title="Reset">
-        <p className="mb-3 text-sm text-slate-600">Erases all academic progress, discoveries, sketches, observations, stars and check-ups on this device.</p>
+        <p className="mb-3 text-sm text-slate-600">Erases all progress, stars and check-ups on this device.</p>
         <button
           onClick={() => {
             if (window.confirm('Erase all progress? This cannot be undone.')) setState({ ...emptyState(), profile: state.profile });
@@ -541,14 +525,10 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
   );
 }
 
-export function Parent({ state, setState, onClose, onStartCheckup, onStartPlacement, onStartMock, onPractice, onStartingPoint }: Props) {
-  const [tab, setTab] = useState<Tab>('summary');
+export function Parent({ state, setState, onClose, onStartCheckup, onStartPlacement, onStartMock }: Props) {
+  const [tab, setTab] = useState<Tab>('overview');
   const tabs: { id: Tab; label: string }[] = [
-    { id: 'summary', label: 'Summary & next steps' },
-    { id: 'answers', label: 'Missed questions' },
-    { id: 'airport', label: 'Screen-time progress' },
-    ...(state.growth.sessions.length ? [{ id: 'growth' as const, label: 'Earlier records' }] : []),
-    { id: 'overview', label: 'Academic overview' },
+    { id: 'overview', label: 'Overview' },
     { id: 'iready', label: 'i-Ready prep' },
     { id: 'focus', label: 'Focus areas' },
     { id: 'checkups', label: 'Check-ups' },
@@ -575,16 +555,6 @@ export function Parent({ state, setState, onClose, onStartCheckup, onStartPlacem
         </nav>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-5">
-        {backupDue(state) && (
-          <div role="status" className="mb-4 flex flex-wrap items-center gap-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-950">
-            <span className="flex-1">{state.engagement?.lastBackupAt ? `No backup in the last ${BACKUP_EVERY_DAYS} days.` : 'Progress has never been backed up.'} It lives only in this browser, so clearing site data would erase it.</span>
-            <button onClick={() => setState(downloadBackup(state))} className="rounded-xl bg-indigo-600 px-4 py-2 font-bold text-white">Download backup</button>
-          </div>
-        )}
-        {tab === 'summary' && <LearningSummary state={state} setState={setState} onPractice={onPractice} onStartingPoint={onStartingPoint} />}
-        {tab === 'answers' && <QuestionReview state={state} />}
-        {tab === 'airport' && <AirportJournal state={state} parent />}
-        {tab === 'growth' && <section className="growth-card"><h2 className="text-lg font-bold text-slate-800">Earlier portfolio records</h2><p className="mt-2 text-sm text-slate-600">These records were saved before the portal moved to on-screen activities. They remain in your backup.</p><div className="mt-5 space-y-4">{state.growth.sessions.map((session) => <article key={session.id} className="rounded-xl bg-slate-50 p-4"><h3 className="font-semibold text-slate-800">{getActivity(session.activityId)?.title ?? 'Earlier activity'}</h3>{session.reflection && <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">{session.reflection}</p>}{session.drawing.length > 0 && <svg viewBox="0 0 600 300" aria-label="Earlier sketch" role="img" className="mt-3 max-w-sm rounded-xl bg-white">{session.drawing.map((d, i) => <path key={i} d={d} fill="none" stroke="#136f78" strokeWidth="4" />)}</svg>}{state.growth.observations.filter((o) => o.sessionId === session.id).map((o) => <p key={o.id} className="mt-2 whitespace-pre-wrap text-sm text-slate-600">{new Date(o.ts).toLocaleDateString()} · {o.stage}: {o.note}</p>)}</article>)}</div></section>}
         {tab === 'overview' && <Overview state={state} />}
         {tab === 'iready' && <IReadyPrep state={state} setState={setState} onStartMock={onStartMock} />}
         {tab === 'focus' && <Focus state={state} />}

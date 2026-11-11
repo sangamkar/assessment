@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { getSkill } from '../src/content';
 import { KINDERGARTEN_NUMBER_SKILLS } from '../src/content/kindergartenNumbers';
+import { KINDERGARTEN_VISUAL_SKILLS } from '../src/content/kindergartenVisual';
 import { buildQuest, buildSkillSession, buildSkipChallenge, planCheckup, skillStatus, startPlacement } from '../src/engine/planner';
 import { emptyState } from '../src/engine/progress';
 import { createRng } from '../src/engine/rng';
 
 describe('kindergarten number additions', () => {
   it('makes each concept individually available and eligible for the existing flows', () => {
-    for (const skill of KINDERGARTEN_NUMBER_SKILLS) {
+    for (const skill of [...KINDERGARTEN_NUMBER_SKILLS, ...KINDERGARTEN_VISUAL_SKILLS]) {
       const state = emptyState();
       state.settings.focus = [skill.id];
       expect(getSkill(skill.id)).toBe(skill);

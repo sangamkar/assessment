@@ -70,6 +70,9 @@ export type Visual =
   | { kind: 'number'; value: string | number }
   | { kind: 'sequence'; items: string[]; blank: number }
   | { kind: 'numberLine'; start: number; blank: number }
+  | { kind: 'ribbon'; width: number; color: string }
+  | { kind: 'capacityBox'; cubes: number; columns?: 1 | 2 }
+  | { kind: 'venn'; redOnly: number; both: number; circleOnly: number; neither: number; colorName?: string; color?: string; otherColor?: string; targetShape?: 'circle' | 'square' | 'triangle'; otherShape?: 'circle' | 'square' | 'triangle' }
   | { kind: 'text'; text: string; size?: 'md' | 'lg' | 'xl' }
   | ({ kind: 'shape' } & ShapeSpec)
   | { kind: 'shapeRow'; shapes: ShapeSpec[]; blank?: number }

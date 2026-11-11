@@ -7,6 +7,7 @@ describe('grid counting questions', () => {
       item.visual?.kind === 'map' && item.visual.cells.length === 0,
     );
     expect(gridItems.length).toBe(2);
+    expect(gridItems.map((item) => item.id)).toEqual(['m2.shapes.4-small-squares', 'm2.shapes.8-small-squares']);
     for (const item of gridItems) {
       expect(item.say).toMatch(/small squares in this grid/i);
       expect(item.say).toMatch(/do not count larger squares/i);

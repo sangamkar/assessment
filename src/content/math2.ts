@@ -525,7 +525,9 @@ const shapes2: Skill = {
       hint: 'A cube has 4 corners on the top and 4 corners on the bottom.',
       explain: 'A cube has 4 corners on top and 4 corners on the bottom. 4 plus 4 is 8 vertices. In the picture, one corner is hidden at the back.',
     },
-  ]),
+  ]).map((item) => ['m2.shapes.4', 'm2.shapes.8'].includes(item.id)
+    ? { ...item, id: `${item.id}-small-squares` }
+    : item),
 };
 
 export const MATH2_SKILLS: Skill[] = [shapes2, placeValue, compare1000, skipCount, oddEven, add2d, sub2d, groups, wordProblems, time5, usMoney];

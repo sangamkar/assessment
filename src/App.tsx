@@ -22,12 +22,14 @@ import type { AnswerEvent } from './ui/Player';
 import { Player } from './ui/Player';
 import { Results } from './ui/Results';
 import { Setup } from './ui/Setup';
+import { Discovery } from './ui/growth/Discovery';
 
 type View =
   | { name: 'home' }
   | { name: 'island'; subject: SubjectId }
   | { name: 'play'; mode: Mode; title: string; color: string; total: number; first: QuestStep | null; again?: () => void; startAt?: number }
   | { name: 'results'; mode: Mode; correct: number; total: number; note?: string; again?: () => void }
+  | { name: 'discovery' }
   | { name: 'games' }
   | { name: 'game'; id: GameId; level: 1 | 2 | 3; run: number }
   | { name: 'gate' }
@@ -52,12 +54,13 @@ export default function App() {
   });
   const [state, setStateRaw] = useState<AppState>(loadState);
   const [view, setView] = useState<View>({ name: 'home' });
+  const [storageError, setStorageError] = useState(false);
   const session = useRef<Session>({ queue: [], index: 0, answers: [] });
   const stateRef = useRef(state);
   stateRef.current = state;
 
   const update = useCallback((fn: (s: AppState) => AppState) => setStateRaw((s) => fn(s)), []);
-  useEffect(() => saveState(state), [state]);
+  useEffect(() => { setStorageError(!saveState(state)); }, [state]);
   useEffect(() => soundEngine.setMuted(state.settings.muted), [state.settings.muted]);
   const locale = CURRICULA[state.settings.primary].locale;
   useEffect(() => soundEngine.setLocale(locale), [locale]);
@@ -206,7 +209,9 @@ export default function App() {
 
   switch (view.name) {
     case 'home':
-      return <Home state={state} onQuest={startQuest} onGames={() => setView({ name: 'games' })} onIsland={(subject) => setView({ name: 'island', subject })} onGrownUps={() => setView({ name: 'gate' })} />;
+      return <Home state={state} onQuest={startQuest} onGames={() => setView({ name: 'games' })} onDiscovery={() => setView({ name: 'discovery' })} onIsland={(subject) => setView({ name: 'island', subject })} onGrownUps={() => setView({ name: 'gate' })} />;
+    case 'discovery':
+      return <Discovery storageError={storageError} growth={state.growth} update={(fn) => update((s) => ({ ...s, growth: fn(s.growth) }))} onBack={() => setView({ name: 'home' })} />;
     case 'games':
       return <Games state={state} onBack={() => setView({ name: 'home' })} onPlay={(id) => setView({ name: 'game', id, level: gameState(stateRef.current, id).level, run: Date.now() })} />;
     case 'game': {

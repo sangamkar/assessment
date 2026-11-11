@@ -1,5 +1,7 @@
 import type { CurriculumId, Difficulty, LanguageCode } from '../content/types';
 import type { MockResult, MockRun } from './mock';
+import { emptyGrowth, mergeGrowth } from './growth';
+import type { GrowthState } from './growth';
 
 export type Mode = 'quest' | 'skill' | 'checkup' | 'placement' | 'skip' | 'mock';
 
@@ -73,7 +75,8 @@ export interface GameState {
 }
 
 export interface AppState {
-  version: 1;
+  version: 4;
+  growth: GrowthState;
   profile?: { name: string; avatar: string; createdAt: number };
   settings: Settings;
   skills: Record<string, SkillState>;
@@ -97,30 +100,34 @@ const DAY = 24 * 60 * 60 * 1000;
 export const MASTERY = { window: 8, minAttempts: 6, accuracy: 0.85, minHardAttempts: 3, minDays: 3, dayWindow: 21 };
 
 export function emptyState(): AppState {
-  return { version: 1, settings: { muted: false, unlockAll: false, showStretch: true, curricula: ['us-ga'], primary: 'us-ga', languages: ['hi'] }, skills: {}, attempts: [], stars: 0, days: [], checkups: [], games: {} };
+  return { version: 4, growth: emptyGrowth(), settings: { muted: false, unlockAll: false, showStretch: true, curricula: ['us-ga'], primary: 'us-ga', languages: ['hi'] }, skills: {}, attempts: [], stars: 0, days: [], checkups: [], games: {} };
 }
 
-export const STATE_VERSION = 1;
+export const STATE_VERSION = 4;
 
 /**
  * Upgrades saved progress from version n to n + 1. When the saved shape changes,
  * bump STATE_VERSION and add a step here; never drop old progress.
  */
-const MIGRATIONS: Record<number, (s: Record<string, unknown>) => Record<string, unknown>> = {};
+const MIGRATIONS: Record<number, (s: Record<string, unknown>) => Record<string, unknown>> = {
+  1: (s) => s, 2: (s) => s, 3: (s) => s,
+};
 
 export type UpgradeResult = { ok: true; state: AppState } | { ok: false; reason: 'not-progress' | 'newer-version' | 'no-migration' };
 
 /** Reads saved progress or a backup file, upgrading older versions. */
-export function upgradeState(data: unknown): UpgradeResult {
+export function upgradeState(data: unknown, backup?: unknown): UpgradeResult {
   if (!data || typeof data !== 'object') return { ok: false, reason: 'not-progress' };
   let s = data as Record<string, unknown>;
   const version = typeof s.version === 'number' ? s.version : NaN;
   if (!Number.isInteger(version) || version < 1 || !Array.isArray(s.attempts) || !s.skills || typeof s.skills !== 'object') return { ok: false, reason: 'not-progress' };
-  if (version > STATE_VERSION) {
-    if (version !== 2 && version !== 3) return { ok: false, reason: 'newer-version' };
-    // The former app kept the original academic fields; retain them on downgrade.
-    s = { ...s, version: STATE_VERSION };
-  }
+  if (version > STATE_VERSION) return { ok: false, reason: 'newer-version' };
+  const old = backup && typeof backup === 'object' ? backup as Record<string, unknown> : undefined;
+  const profile = s.profile as { createdAt?: unknown } | undefined;
+  const oldProfile = old?.profile as { createdAt?: unknown } | undefined;
+  const sameProfile = !profile?.createdAt || !oldProfile?.createdAt || profile.createdAt === oldProfile.createdAt;
+  const validBackup = old && [1, 2, 3].includes(Number(old.version)) && Array.isArray(old.attempts) && old.skills && typeof old.skills === 'object' && sameProfile;
+  const growth = mergeGrowth(s.growth, version < 4 && validBackup ? old.growth : undefined);
   for (let v = version; v < STATE_VERSION; v++) {
     const step = MIGRATIONS[v];
     if (!step) return { ok: false, reason: 'no-migration' };
@@ -128,7 +135,7 @@ export function upgradeState(data: unknown): UpgradeResult {
   }
   const parsed = s as unknown as AppState;
   const base = emptyState();
-  return { ok: true, state: { ...base, ...parsed, settings: { ...base.settings, ...parsed.settings } } };
+  return { ok: true, state: { ...base, ...parsed, growth, settings: { ...base.settings, ...parsed.settings } } };
 }
 
 /** Saved progress that could not be read is copied aside instead of being overwritten. */
@@ -140,7 +147,9 @@ export function loadState(): AppState {
     raw = localStorage.getItem(KEY);
     if (!raw) return emptyState();
     const saved = JSON.parse(raw);
-    const result = upgradeState(saved);
+    let backup: unknown;
+    try { const archived = localStorage.getItem(PRE_ROLLBACK_KEY); if (archived) backup = JSON.parse(archived); } catch { /* Preserve active state if the archive is unreadable. */ }
+    const result = upgradeState(saved, backup);
     if (result.ok) {
       if (saved.version === 2 || saved.version === 3) {
         try {
@@ -165,8 +174,10 @@ export function loadState(): AppState {
 export function saveState(state: AppState) {
   try {
     localStorage.setItem(KEY, JSON.stringify(state));
+    return true;
   } catch {
     // Storage full or blocked: progress for this session still lives in memory.
+    return false;
   }
 }
 

@@ -13,8 +13,9 @@ import { AVATARS } from './Setup';
 import { QuestionBank } from './QuestionBank';
 import { IReadyPrep } from './IReadyPrep';
 import type { MockSubject } from '../engine/mock';
+import { GrowthReview } from './growth/Discovery';
 
-type Tab = 'overview' | 'iready' | 'focus' | 'checkups' | 'skills' | 'bank' | 'settings';
+type Tab = 'growth' | 'overview' | 'iready' | 'focus' | 'checkups' | 'skills' | 'bank' | 'settings';
 
 interface Props {
   state: AppState;
@@ -529,6 +530,7 @@ export function Parent({ state, setState, onClose, onStartCheckup, onStartPlacem
   const [tab, setTab] = useState<Tab>('overview');
   const tabs: { id: Tab; label: string }[] = [
     { id: 'overview', label: 'Overview' },
+    { id: 'growth', label: 'Growth' },
     { id: 'iready', label: 'i-Ready prep' },
     { id: 'focus', label: 'Focus areas' },
     { id: 'checkups', label: 'Check-ups' },
@@ -556,6 +558,7 @@ export function Parent({ state, setState, onClose, onStartCheckup, onStartPlacem
       </header>
       <main className="mx-auto max-w-6xl px-4 py-5">
         {tab === 'overview' && <Overview state={state} />}
+        {tab === 'growth' && <GrowthReview growth={state.growth} update={(fn) => setState({ ...state, growth: fn(state.growth) })} />}
         {tab === 'iready' && <IReadyPrep state={state} setState={setState} onStartMock={onStartMock} />}
         {tab === 'focus' && <Focus state={state} />}
         {tab === 'checkups' && <Checkups state={state} onStart={onStartCheckup} onPlacement={onStartPlacement} />}

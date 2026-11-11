@@ -263,7 +263,7 @@ describe('loading saved progress', () => {
 
   it('never silently discards progress it cannot read', () => {
     withStorage(() => {
-      const future = JSON.stringify({ ...saved(), version: 4 });
+      const future = JSON.stringify({ ...saved(), version: 5 });
       store.set('learning-quest:v1', future);
       expect(loadState().attempts).toHaveLength(0);
       expect(store.get(UNREADABLE_KEY)).toBe(future); // kept aside for recovery
@@ -276,7 +276,7 @@ describe('loading saved progress', () => {
   it('rejects files that are not progress, and explains newer backups', () => {
     expect(upgradeState({ hello: 1 })).toEqual({ ok: false, reason: 'not-progress' });
     expect(upgradeState(null)).toEqual({ ok: false, reason: 'not-progress' });
-    expect(upgradeState({ ...saved(), version: 4 })).toEqual({ ok: false, reason: 'newer-version' });
+    expect(upgradeState({ ...saved(), version: 5 })).toEqual({ ok: false, reason: 'newer-version' });
     const ok = upgradeState(JSON.parse(JSON.stringify(saved())));
     expect(ok.ok && ok.state.attempts).toHaveLength(1);
   });
@@ -286,7 +286,7 @@ describe('loading saved progress', () => {
       const previous = JSON.stringify({ ...saved(), version: 3, growth: { discoveries: ['kept'] }, engagement: { stickers: ['plane'] } });
       store.set('learning-quest:v1', previous);
       const loaded = loadState();
-      expect(loaded.version).toBe(1);
+      expect(loaded.version).toBe(4);
       expect(loaded.attempts).toHaveLength(1);
       expect(loaded.profile).toBeUndefined();
       expect(store.get('learning-quest:v1:before-rollback')).toBe(previous);

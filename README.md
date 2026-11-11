@@ -1,31 +1,9 @@
 # Learning Quest
 
-A private, audio-first learning app for a kindergartner's screen time. Interactive
-puzzles and a design lab complement academic foundations from Kindergarten
-through Grade 2.
+A private, audio-first learning app for a kindergartner who is ahead of grade level. It teaches, practises and assesses the skills, and grows with him from Kindergarten through Grade 2.
 
-**Airport Designer:** build and test a virtual airport across five challenges.
-Connect gates, extend runways, route around ponds and revise designs. Layouts,
-optional explanations, clues and test history save on the device. This replaces
-the earlier offline mission cards. See [the screen-time lab guide](docs/GROWTH.md).
 
 > New here? Read **[`docs/OVERVIEW.md`](docs/OVERVIEW.md)**. It explains everything the app does in plain English, for parents.
-
-**New Brain Games:** Word Detective, Target Number, Connections Junior, Balance
-Lab and Robot Delivery join Mystery Word, Number Path and Sentence Builder.
-Four-round sets support hints, three difficulty levels and saved unfinished play.
-See [Brain Games](docs/BRAIN-GAMES.md).
-
-**Daily habit:** the home screen shows a 7-day strip with a gentle streak (one
-rest day a week is forgiven), a *Today's path* (learning → a game → free play) and
-a sticker book that spends earned stars on cosmetic stickers; days-in-a-row
-stickers are free. Grown-ups → Settings → *Daily routine* sets the daily goal
-(1–3 sessions) and an optional soft
-screen-time reminder. The parent area reminds you to back up every 14 days.
-
-**Mock questions are separate from practice:** held-out selection and new reading
-contexts test the same skills with different tasks. See [question pools](docs/MOCK-QUESTION-POOLS.md)
-for exposure tracking and the repeat fallback when unseen items run out.
 
 ## What's inside
 
@@ -38,11 +16,10 @@ for exposure tracking and the repeat fallback when unseen items run out.
   - **Find his level** placement
   - 3-question **skip-ahead** tests
   - a **mock i-Ready** for math (4 domains) and reading (6 domains), with level estimates from Early K to Late Grade 2
-- **Eight Brain Games:** Mystery Word, Number Path, Sentence Builder, Word Detective, Target Number, Connections Junior, Balance Lab, Robot Delivery.
+- **Brain Games:** Mystery Word (hangman), Number Path (LinkedIn Zip style), Sentence Builder.
 - **Two curricula:** USA · Georgia + i-Ready, and India · CBSE/NCERT, which switches to Indian English and ₹ and adds India topics and the Hindi and Kannada tracks.
 - **Grown-up dashboard** (🔒 Grown-ups), with these tabs:
-  - Screen-time progress and saved airport designs
-  - Academic overview
+  - Overview
   - i-Ready prep
   - Focus areas
   - Check-ups

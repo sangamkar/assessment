@@ -8,7 +8,6 @@ import { createRng } from '../src/engine/rng';
 import { canStep, isSolved, makePuzzle } from '../src/games/numberPath';
 import { MYSTERY_WORDS, letterTiles } from '../src/games/words';
 import { SENTENCES, sentenceTiles } from '../src/games/sentences';
-import { MOCK_ONLY_ITEMS } from '../src/content/mockOnly';
 
 const errors: string[] = [];
 const warnings: string[] = [];
@@ -120,8 +119,6 @@ for (const subject of SUBJECTS) {
   }
 }
 
-for (const item of MOCK_ONLY_ITEMS) { if (!getSkill(item.skill)) err(item.id, 'unknown skill'); checkItem(item, item.id); }
-
 // Games: every generated Number Path must be solvable by its own rules; every word spellable from its tiles.
 for (const level of [1, 2, 3] as const) {
   for (let seed = 1; seed <= 200; seed++) {
@@ -149,8 +146,6 @@ for (const level of [1, 2, 3] as const) {
     if (sentenceTiles(b, level, (l) => [...l]).length !== b.words.length + (level === 3 ? 1 : 0)) err(where, 'tile count mismatch');
   }
 }
-
-console.log(`Mock-only questions validated: ${MOCK_ONLY_ITEMS.length}`);
 
 warnings.forEach((w) => console.log(`warn  ${w}`));
 if (errors.length) {

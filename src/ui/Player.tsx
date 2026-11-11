@@ -1,6 +1,5 @@
-import { useAutoAdvance } from "../utils/useAutoAdvance";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { Choice, Item } from '../content/types';
+import type { Choice } from '../content/types';
 import type { QuestStep } from '../engine/planner';
 import type { Mode } from '../engine/progress';
 import { soundEngine } from '../utils/audio';
@@ -9,15 +8,13 @@ import { Intro } from './Intro';
 import { SpeakButton } from './SpeakButton';
 import { Visual } from './Visual';
 
-const PRAISE = ['That answer fits. Let’s keep exploring.', 'You found it. Ready for another?', 'That’s right. Keep trying your ideas.'];
+const PRAISE = ['You got it!', 'Great thinking!', 'Awesome!', 'Super smart!', 'Way to go!', 'Yes! Nice work!'];
 const NEUTRAL = ['Thank you!', 'Okay, next one!', 'Here comes another!'];
 
 export interface AnswerEvent {
   step: QuestStep;
   correct: boolean;
   why?: string;
-  selectedChoiceId: string;
-  question: Item;
 }
 
 interface Props {
@@ -84,8 +81,6 @@ export function Player({ locale, mode, title, color, total, first, getNext, intr
     setPhase(practice && !introSeen(next.skill.id) ? 'intro' : 'ask');
   }, [getNext, introSeen, onFinish, practice, breakEvery, n]);
 
-  const auto = useAutoAdvance(practice && phase === "right" && !confirmExit, String(n), advance);
-
   if (!step || !item) return null;
 
   const choose = (c: Choice) => {
@@ -104,7 +99,7 @@ export function Player({ locale, mode, title, color, total, first, getNext, intr
     if (firstTry) {
       score.current.total++;
       if (correct) score.current.correct++;
-      onAnswer({ step, correct, why: choice.why, selectedChoiceId: choice.id, question: item });
+      onAnswer({ step, correct, why: choice.why });
     }
 
     if (!practice) {
@@ -122,7 +117,7 @@ export function Player({ locale, mode, title, color, total, first, getNext, intr
       setMessage(msg);
       setPhase('right');
       soundEngine.speak(msg);
-
+      setTimeout(advance, 1500);
     } else if (firstTry) {
       soundEngine.playGentleBuzzer();
       const msg = L(item.hint ?? 'Not quite. Look again and try one more time!');
@@ -280,10 +275,9 @@ export function Player({ locale, mode, title, color, total, first, getNext, intr
                 {message}
               </div>
             )}
-            {phase === 'explain' || phase === 'right' ? (
-              <div className="flex flex-wrap justify-center gap-3">
-                <span onClick={() => auto.setPaused(true)}><SpeakButton text={L(item.explain)} label="Hear why this answer works" /></span>
-                {phase === "right" && <button className="growth-secondary" onClick={() => auto.setPaused(!auto.paused)}>{auto.paused ? "Resume auto-next" : "Pause auto-next"}</button>}
+            {phase === 'explain' ? (
+              <div className="flex gap-3">
+                <SpeakButton text={L(item.explain)} />
                 <button onClick={advance} className="rounded-full px-10 py-4 font-kid text-2xl font-bold text-white shadow-lg active:scale-95" style={{ background: color }}>
                   Next ▶
                 </button>

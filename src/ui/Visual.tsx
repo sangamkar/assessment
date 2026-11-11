@@ -323,6 +323,8 @@ function VisualBody({ v, size = 'lg' }: { v: V; size?: VSize }) {
           ))}
         </div>
       );
+    case 'numberLine':
+      return <div className="relative flex items-start justify-center gap-0 pt-4" role="img" aria-label="Number line with one missing number">{Array.from({ length: 5 }, (_, i) => <div key={i} className="relative w-14 border-t-4 border-slate-600 pt-2 text-center font-kid text-xl font-bold"><span className="absolute left-1/2 top-[-8px] h-4 border-l-2 border-slate-700" />{i === v.blank ? '?' : v.start + i}</div>)}</div>;
     case 'text':
       return (
         <span className="font-reader font-bold tracking-wide text-slate-900" style={{ fontSize: (v.size === 'xl' ? 72 : v.size === 'lg' ? 44 : 30) * (size === 'lg' ? 1 : 0.6) }}>

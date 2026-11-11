@@ -69,6 +69,7 @@ export type Visual =
   | { kind: 'tenFrame'; filled: number; frames?: 1 | 2; color?: string }
   | { kind: 'number'; value: string | number }
   | { kind: 'sequence'; items: string[]; blank: number }
+  | { kind: 'numberLine'; start: number; blank: number }
   | { kind: 'text'; text: string; size?: 'md' | 'lg' | 'xl' }
   | ({ kind: 'shape' } & ShapeSpec)
   | { kind: 'shapeRow'; shapes: ShapeSpec[]; blank?: number }

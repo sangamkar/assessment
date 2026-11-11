@@ -17,7 +17,7 @@ describe('kindergarten visual questions', () => {
       const item = getSkill('m.venn-count')!.generate!(createRng(seed), 2);
       const v = item.visual;
       if (!v || v.kind !== 'venn') throw Error('expected Venn diagram');
-      const answer = item.say.includes(`${v.colorName ?? 'red'} shapes`) ? v.redOnly + v.both : v.circleOnly + v.both;
+      const answer = item.show?.includes(`${v.colorName ?? 'red'} shapes`) ? v.redOnly + v.both : v.circleOnly + v.both;
       expect(item.choices.find(c => c.correct)?.text).toBe(String(answer));
     }
   });

@@ -216,7 +216,7 @@ function Checkups({ state, onStart, onPlacement }: { state: AppState; onStart: (
       {[...state.checkups].reverse().map((c) => {
         const subject = getSubject(c.subject as SubjectId);
         return (
-          <Card key={c.id} title={`${subject.icon} ${tr(state, subject.title)} · ${new Date(c.ts).toLocaleDateString()}`} right={<span className="text-sm font-semibold text-slate-600">{c.correct}/{c.total} correct</span>}>
+          <Card key={c.id} title={`${subject.icon} ${tr(state, subject.title)} · ${new Date(c.ts).toLocaleDateString()}`} right={<span className="text-sm font-semibold text-slate-600">{c.correct}/{c.total} correct (all questions)</span>}>
             <div className="flex flex-wrap gap-2">
               {c.strands.map((s) => (
                 <span key={s.strand} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">

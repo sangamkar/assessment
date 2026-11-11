@@ -2,7 +2,7 @@ import React from 'react';
 import { getSkill } from '../content';
 import { describeMisconception } from '../content/misconceptions';
 import type { MockResult, MockSubject } from '../engine/mock';
-import { LADDER_MAX, MOCK_DOMAINS, expectedLevel, levelLabel, mockTotal } from '../engine/mock';
+import { mockTotal } from '../engine/mock';
 import { isVisible } from '../engine/planner';
 import type { AppState } from '../engine/progress';
 
@@ -24,27 +24,10 @@ function Card({ title, children, right }: { title: string; children: React.React
   );
 }
 
-function Bar({ value, expected }: { value: number; expected: number }) {
-  return (
-    <div className="relative h-3 rounded-full bg-slate-100">
-      <div className="h-full rounded-full bg-indigo-500" style={{ width: `${(Math.max(value, 0.2) / LADDER_MAX) * 100}%` }} />
-      <div className="absolute -top-1 h-5 w-0.5 bg-rose-500" style={{ left: `${(expected / LADDER_MAX) * 100}%` }} title="Expected for Kindergarten at test time" />
-    </div>
-  );
-}
-
-function verdict(est: number, expected: number) {
-  const gap = est - expected;
-  if (gap >= 1.5) return { text: 'Above grade level', cls: 'bg-emerald-100 text-emerald-800' };
-  if (gap >= -0.75) return { text: 'On grade level', cls: 'bg-sky-100 text-sky-800' };
-  return { text: 'Needs practice', cls: 'bg-rose-100 text-rose-800' };
-}
-
 export function IReadyPrep({ state, setState, onStartMock }: { state: AppState; setState: (s: AppState) => void; onStartMock: (s: MockSubject) => void }) {
   const set = (patch: Partial<AppState['settings']>) => setState({ ...state, settings: { ...state.settings, ...patch } });
   const testDate = state.settings.iReadyDate ? new Date(`${state.settings.iReadyDate}T09:00:00`) : null;
   const daysLeft = testDate ? Math.ceil((testDate.getTime() - Date.now()) / DAY) : null;
-  const expected = expectedLevel('K', testDate ?? new Date());
   const pinned = state.settings.focus ?? [];
   const run = state.mockRun;
   const mocks = state.mocks ?? [];
@@ -87,7 +70,7 @@ export function IReadyPrep({ state, setState, onStartMock }: { state: AppState; 
 
       <Card title="📝 Mock i-Ready test">
         <p className="mb-3 text-sm text-slate-600">
-          Works like the real diagnostic: read aloud, no hints or feedback, and adaptive within each i-Ready area (harder after right answers, easier after misses). About {mockTotal('math')} Math or {mockTotal('reading')} Reading questions, with a stretch break every 12. He can stop at a break and continue another day. The result is an estimated level from this app’s questions, not an official i-Ready score.
+          This app's practice check reads questions aloud without hints or feedback and adjusts difficulty within each area. About {mockTotal('math')} Math or {mockTotal('reading')} Reading questions, with a stretch break every 12. He can stop at a break and continue another day. Results describe this small sample of app questions; they do not predict an i-Ready score or readiness.
         </p>
         <div className="flex flex-wrap gap-2">
           {(['math', 'reading'] as const).map((subject) => {
@@ -133,89 +116,19 @@ export function IReadyPrep({ state, setState, onStartMock }: { state: AppState; 
         const list = mocks.filter((m) => m.subject === subject);
         if (!list.length) return null;
         const latest = list[list.length - 1];
-        return <MockReport key={subject} latest={latest} history={list} expected={expected} pinned={pinned} onPin={(id) => set({ focus: [...new Set([...pinned, id])] })} />;
+        return <MockReport key={subject} latest={latest} history={list} pinned={pinned} onPin={(id) => set({ focus: [...new Set([...pinned, id])] })} />;
       })}
     </div>
   );
 }
 
-function MockReport({ latest, history, expected, pinned, onPin }: { latest: MockResult; history: MockResult[]; expected: number; pinned: string[]; onPin: (id: string) => void }) {
-  const v = verdict(latest.overall, expected);
-  return (
-    <Card
-      title={`${latest.subject === 'math' ? '🔢 Math' : '📚 Reading'} mock · ${new Date(latest.ts).toLocaleDateString()}`}
-      right={
-        <span className="text-sm font-semibold text-slate-700">
-          Overall: {latest.overallLabel} <span className={`ml-1 rounded-full px-2 py-0.5 text-xs ${v.cls}`}>{v.text}</span>
-        </span>
-      }
-    >
-      <div className="flex flex-col gap-3">
-        {latest.domains.map((d) => {
-          const dv = verdict(d.estimate, expected);
-          return (
-            <div key={d.strand} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 text-sm sm:grid-cols-[16rem_minmax(0,1fr)_12rem]">
-              <span className="font-medium text-slate-800">{d.title}</span>
-              <div className="order-3 col-span-2 sm:order-none sm:col-span-1">
-                <Bar value={d.estimate} expected={expected} />
-              </div>
-              <span className="text-right text-xs text-slate-600">
-                {d.label}
-                {d.ceiling ? '+' : ''} · <span className={`rounded-full px-1.5 ${dv.cls}`}>{dv.text}</span>
-              </span>
-            </div>
-          );
-        })}
-      </div>
-      <p className="mt-2 text-xs text-slate-500">
-        Red line = where a Kindergartner is expected to be at test time ({levelLabel(expected)}). “+” means he answered the hardest questions the app has for that area, so his real level may be higher.
-      </p>
-      {latest.misconceptions.length > 0 && (
-        <div className="mt-3 text-sm text-slate-700">
-          <span className="font-semibold">Mistake patterns: </span>
-          {latest.misconceptions.slice(0, 4).map((m) => describeMisconception(m.tag).title).join(' · ')}
-        </div>
-      )}
-      {latest.practice.length > 0 && (
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-700">
-          <span className="font-semibold">Practise next:</span>
-          {latest.practice.map((id) => (
-            <button key={id} onClick={() => onPin(id)} disabled={pinned.includes(id)} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 disabled:bg-amber-50 disabled:text-amber-800">
-              {pinned.includes(id) ? '📌' : '+ 📌'} {getSkill(id)?.title}
-            </button>
-          ))}
-        </div>
-      )}
-      {history.length > 1 && (
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[520px] text-left text-xs">
-            <thead className="text-slate-400">
-              <tr>
-                <th className="py-1 pr-2">Date</th>
-                {MOCK_DOMAINS[latest.subject].map((d) => (
-                  <th key={d.strand} className="pr-2">
-                    {d.title.replace('Comprehension: ', '').replace(' and ', ' & ')}
-                  </th>
-                ))}
-                <th>Overall</th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.map((m) => (
-                <tr key={m.id} className="border-t border-slate-100">
-                  <td className="py-1 pr-2">{new Date(m.ts).toLocaleDateString()}</td>
-                  {m.domains.map((d) => (
-                    <td key={d.strand} className="pr-2">
-                      {d.label}
-                    </td>
-                  ))}
-                  <td className="font-semibold">{m.overallLabel}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </Card>
-  );
+function MockReport({ latest, history, pinned, onPin }: { latest: MockResult; history: MockResult[]; pinned: string[]; onPin: (id: string) => void }) {
+  return <Card title={`${latest.subject === 'math' ? '🔢 Math' : '📚 Reading'} mock · ${new Date(latest.ts).toLocaleDateString()}`}>
+    <p className="mb-3 text-sm text-slate-600">These results describe questions in this app, not an i-Ready score or a readiness prediction.</p>
+    <div className="flex flex-col gap-2">{latest.domains.map(d => <div key={d.strand} className="rounded-xl bg-slate-50 p-3 text-sm"><strong>{d.title}</strong><div>{d.freshTotal === undefined ? 'Question familiarity was not tracked for this result.' : `${d.freshCorrect}/${d.freshTotal} correct on fresh questions · ${d.repeated ?? 0} familiar or uncertain · ${d.untracked ?? 0} untracked`}</div></div>)}</div>
+    <p className="mt-2 text-xs text-slate-500">Familiar and untracked questions are not counted as fresh independent evidence.</p>
+    {latest.misconceptions.length > 0 && <p className="mt-3 text-sm text-slate-700"><strong>Mistake patterns: </strong>{latest.misconceptions.slice(0, 4).map(m => describeMisconception(m.tag).title).join(' · ')}</p>}
+    {latest.practice.length > 0 && <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-700"><span className="font-semibold">Practise next:</span>{latest.practice.map(id => <button key={id} onClick={() => onPin(id)} disabled={pinned.includes(id)} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 disabled:bg-amber-50 disabled:text-amber-800">{pinned.includes(id) ? '📌' : '+ 📌'} {getSkill(id)?.title}</button>)}</div>}
+    {history.length > 1 && <div className="mt-4 space-y-2 text-xs text-slate-600"><strong>Previous checks</strong>{history.slice(0, -1).map(m => <div key={m.id}><p>{new Date(m.ts).toLocaleDateString()} · {m.repeated === undefined ? 'familiarity not tracked' : `${m.repeated} familiar or uncertain, ${m.untracked ?? 0} untracked`}</p><p>{m.domains.map(d => `${d.title}: ${d.correct}/${d.total} correct (all questions)`).join(' · ')}</p></div>)}</div>}
+  </Card>;
 }

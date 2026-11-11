@@ -9,12 +9,14 @@ import type { SkillStatus } from '../engine/planner';
 import type { AppState, Band } from '../engine/progress';
 import { MASTERY, accuracy, attemptsFor, dayKey, emptyState, gameState, markKnown, skillState, unmarkKnown, upgradeState } from '../engine/progress';
 import { GAMES } from './games/Games';
+import { isFreshEvidence, LEGACY_AMBIGUOUS_ITEMS } from '../engine/exposures';
 import { AVATARS } from './Setup';
 import { QuestionBank } from './QuestionBank';
 import { IReadyPrep } from './IReadyPrep';
 import type { MockSubject } from '../engine/mock';
+import { GrowthReview } from './growth/Discovery';
 
-type Tab = 'overview' | 'iready' | 'focus' | 'checkups' | 'skills' | 'bank' | 'settings';
+type Tab = 'growth' | 'overview' | 'iready' | 'focus' | 'checkups' | 'skills' | 'bank' | 'settings';
 
 interface Props {
   state: AppState;
@@ -54,13 +56,15 @@ function Card({ title, children, right }: { title: string; children: React.React
 
 function Overview({ state }: { state: AppState }) {
   const week = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  const recent = state.attempts.filter((a) => a.ts >= week && a.mode !== 'checkup');
+  const recent = state.attempts.filter((a) => a && a.ts >= week && a.mode !== 'checkup');
+  const fresh = recent.filter(isFreshEvidence);
+  const familiar = state.attempts.filter(a => a && !isFreshEvidence(a)).slice(-10).reverse();
   const daysThisWeek = new Set(recent.map((a) => dayKey(a.ts))).size;
   const mastered = ALL_SKILLS.filter((s) => isVisible(state, s) && skillState(state, s.id).mastered).length;
   const stats = [
     { label: 'Days practised (7d)', value: `${daysThisWeek}/7` },
     { label: 'Questions (7d)', value: recent.length },
-    { label: 'First-try accuracy (7d)', value: recent.length ? pct(accuracy(recent)) : '—' },
+    { label: 'Fresh first-try accuracy (7d)', value: fresh.length ? pct(accuracy(fresh)) : '—' },
     { label: 'Skills mastered', value: `${mastered}/${ALL_SKILLS.filter((s) => isVisible(state, s)).length}` },
   ];
   return (
@@ -73,6 +77,9 @@ function Overview({ state }: { state: AppState }) {
           </div>
         ))}
       </div>
+      <p className="text-xs text-slate-500">{recent.length - fresh.length} familiar or untracked questions in the last seven days are excluded from fresh accuracy.</p>
+      {state.attempts.some(a => a && LEGACY_AMBIGUOUS_ITEMS.has(a.itemId)) && <p className="rounded-xl bg-amber-50 p-3 text-xs text-amber-900">Earlier square-grid questions did not specify small squares. Those answers remain saved but are excluded from fresh evidence.</p>}
+      {familiar.length > 0 && <details className="rounded-2xl bg-white p-4 text-sm text-slate-700 shadow-sm"><summary className="cursor-pointer font-semibold">Recent familiar or untracked questions</summary><ul className="mt-2 space-y-2">{familiar.map((a, i) => <li key={`${a.itemId}-${a.ts}-${i}`}><strong>{a.repeated ? 'Familiar or uncertain' : 'Untracked'}:</strong> {a.question?.say ?? 'Earlier question details were not recorded.'} <span className="text-slate-500">· {getSkill(a.skill)?.title ?? a.skill}</span></li>)}</ul></details>}
       {SUBJECTS.map((subject) => {
         const sum = subjectSummary(state, subject.id);
         if (!sum.total) return null;
@@ -81,7 +88,7 @@ function Overview({ state }: { state: AppState }) {
             <div className="flex flex-col gap-2">
               {subject.strands.map((st) => {
                 const skills = ALL_SKILLS.filter((s) => s.subject === subject.id && s.strand === st.id && isVisible(state, s));
-                const list = skills.flatMap((s) => attemptsFor(state, s.id)).filter((a) => a.mode !== 'checkup').slice(-30);
+                const list = skills.flatMap((s) => attemptsFor(state, s.id)).filter((a) => a.mode !== 'checkup' && isFreshEvidence(a)).slice(-30);
                 const done = skills.filter((s) => skillState(state, s.id).mastered).length;
                 return (
                   <div key={st.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 text-sm sm:grid-cols-[14rem_minmax(0,1fr)_7rem]">
@@ -209,14 +216,15 @@ function Checkups({ state, onStart, onPlacement }: { state: AppState; onStart: (
       {[...state.checkups].reverse().map((c) => {
         const subject = getSubject(c.subject as SubjectId);
         return (
-          <Card key={c.id} title={`${subject.icon} ${tr(state, subject.title)} · ${new Date(c.ts).toLocaleDateString()}`} right={<span className="text-sm font-semibold text-slate-600">{c.correct}/{c.total} correct</span>}>
+          <Card key={c.id} title={`${subject.icon} ${tr(state, subject.title)} · ${new Date(c.ts).toLocaleDateString()}`} right={<span className="text-sm font-semibold text-slate-600">{c.correct}/{c.total} correct (all questions)</span>}>
             <div className="flex flex-wrap gap-2">
               {c.strands.map((s) => (
-                <span key={s.strand} className={`rounded-full px-3 py-1 text-xs font-bold ${BAND_STYLE[s.band]}`}>
-                  {s.title}: {s.band}
+                <span key={s.strand} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
+                  {s.title}: {s.freshTotal === undefined ? 'freshness not tracked' : `${s.freshCorrect}/${s.freshTotal} fresh`}
                 </span>
               ))}
             </div>
+            <p className="mt-2 text-xs text-slate-500">{c.repeated === undefined ? 'Question familiarity was not tracked for this check-up.' : `${c.repeated} familiar or uncertain; ${c.untracked ?? 0} untracked. Familiar and untracked answers are not fresh evidence.`}</p>
             {c.misconceptions.length > 0 && (
               <div className="mt-3 text-sm text-slate-600">
                 <span className="font-semibold">Patterns: </span>
@@ -294,7 +302,7 @@ function SkillMap({ state, setState, onPlacement }: { state: AppState; setState:
                   <th className="pr-2">Status</th>
                   <th className="pr-2">Level</th>
                   <th className="pr-2">Tries</th>
-                  <th className="pr-2">Accuracy</th>
+                  <th className="pr-2">Fresh accuracy</th>
                   <th className="pr-2">Knows it</th>
                   <th>Focus</th>
                 </tr>
@@ -302,6 +310,7 @@ function SkillMap({ state, setState, onPlacement }: { state: AppState; setState:
               <tbody>
                 {ALL_SKILLS.filter((s) => s.subject === subject.id && (!s.regions || s.regions.some((r) => state.settings.curricula.includes(r)))).map((s) => {
                   const list = attemptsFor(state, s.id).filter((a) => a.mode !== 'checkup');
+                  const freshList = list.filter(isFreshEvidence);
                   const st = skillState(state, s.id);
                   return (
                     <tr key={s.id} className="border-t border-slate-100">
@@ -320,7 +329,7 @@ function SkillMap({ state, setState, onPlacement }: { state: AppState; setState:
                       </td>
                       <td className="pr-2">{st.level}</td>
                       <td className="pr-2">{list.length}</td>
-                      <td className="pr-2">{list.length ? pct(accuracy(list.slice(-10))) : '—'}</td>
+                      <td className="pr-2">{freshList.length ? pct(accuracy(freshList.slice(-10))) : '—'}</td>
                       <td>
                         <input
                           type="checkbox"
@@ -529,6 +538,7 @@ export function Parent({ state, setState, onClose, onStartCheckup, onStartPlacem
   const [tab, setTab] = useState<Tab>('overview');
   const tabs: { id: Tab; label: string }[] = [
     { id: 'overview', label: 'Overview' },
+    { id: 'growth', label: 'Growth' },
     { id: 'iready', label: 'i-Ready prep' },
     { id: 'focus', label: 'Focus areas' },
     { id: 'checkups', label: 'Check-ups' },
@@ -556,6 +566,7 @@ export function Parent({ state, setState, onClose, onStartCheckup, onStartPlacem
       </header>
       <main className="mx-auto max-w-6xl px-4 py-5">
         {tab === 'overview' && <Overview state={state} />}
+        {tab === 'growth' && <GrowthReview growth={state.growth} update={(fn) => setState({ ...state, growth: fn(state.growth) })} />}
         {tab === 'iready' && <IReadyPrep state={state} setState={setState} onStartMock={onStartMock} />}
         {tab === 'focus' && <Focus state={state} />}
         {tab === 'checkups' && <Checkups state={state} onStart={onStartCheckup} onPlacement={onStartPlacement} />}

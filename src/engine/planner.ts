@@ -2,12 +2,15 @@ import { ALL_SKILLS, SUBJECTS, getSkill, getSubject } from '../content';
 import type { Difficulty, Item, Skill, SubjectId } from '../content/types';
 import { NOISE_TAGS } from '../content/misconceptions';
 import { createRng } from './rng';
+import { isAssessed, poolItems } from './itemPools';
+import { isFreshEvidence, itemFingerprint, wasExposed } from './exposures';
 import type { AppState, Attempt, Band, CheckupResult, StrandResult } from './progress';
 import { accuracy, attemptsFor, skillState } from './progress';
 
 export type SkillStatus = 'locked' | 'ready' | 'learning' | 'mastered' | 'review';
 
 const rng = createRng();
+let presentationSerial = 0;
 
 /** A prerequisite is satisfied once it is mastered, credited, or solidly being practised. */
 function prereqMet(state: AppState, id: string): boolean {
@@ -51,24 +54,29 @@ export function present(item: Item): Item {
 }
 
 export function pickItem(state: AppState, skill: Skill, level: Difficulty, avoid: Set<string> = new Set()): Item {
-  const recent = new Set(state.attempts.slice(-30).map((a) => a.itemId));
-  const allowed = (skill.items ?? []).filter((i) => inRegion(state, i));
-  const written = allowed.filter((i) => !avoid.has(i.id));
-  const useGenerator = skill.generate && (written.length === 0 || rng.next() < 0.6);
-  if (useGenerator && skill.generate) {
-    for (let tries = 0; tries < 8; tries++) {
-      const item = skill.generate(rng, level);
-      if (!avoid.has(item.id) && !recent.has(item.id)) return present(item);
+  if (!isAssessed(skill)) {
+    const recent = new Set(state.attempts.slice(-30).filter(Boolean).map(a => a.itemId));
+    const allowed = (skill.items ?? []).filter(i => inRegion(state, i));
+    const written = allowed.filter(i => !avoid.has(i.id));
+    if (skill.generate && (written.length === 0 || rng.next() < 0.6)) {
+      for (let tries = 0; tries < 8; tries++) { const item = skill.generate(rng, level); if (!avoid.has(item.id) && !recent.has(item.id)) return present(item); }
+      return present(skill.generate(rng, level));
     }
-    return present(skill.generate(rng, level));
+    const pool = written.length ? written : allowed;
+    return present([...pool].sort((a, b) => Math.abs(a.difficulty-level)+(recent.has(a.id)?2:0)-Math.abs(b.difficulty-level)-(recent.has(b.id)?2:0) || rng.next()-0.5)[0]);
   }
-  const pool = written.length ? written : allowed;
-  const byDistance = [...pool].sort((a, b) => {
-    const da = Math.abs(a.difficulty - level) + (recent.has(a.id) ? 2 : 0);
-    const db = Math.abs(b.difficulty - level) + (recent.has(b.id) ? 2 : 0);
-    return da - db || rng.next() - 0.5;
-  });
-  return present(byDistance[0]);
+  const allowed = poolItems(skill, 'practice').filter((i) => inRegion(state, i));
+  if (!allowed.length) throw new Error(`No practice questions for ${skill.id}`);
+  const hasFingerprints = [...avoid].some(value => value.startsWith('fp2:'));
+  const unused = allowed.filter((i) => !avoid.has(itemFingerprint(i)) && (hasFingerprints || !avoid.has(i.id)));
+  const candidates = unused.length ? unused : allowed;
+  const fresh = candidates.filter((i) => !wasExposed(state.exposures, i));
+  const pool = fresh.length ? fresh : candidates;
+  const distance = Math.min(...pool.map(i => Math.abs(i.difficulty - level)));
+  const chosen = rng.pick(pool.filter(i => Math.abs(i.difficulty - level) === distance));
+  // Some legacy generators reuse an ID for different pictures; keep speech keyed to the new task.
+  const item = avoid.has(chosen.id) || avoid.has(itemFingerprint(chosen)) ? { ...chosen, id: `${chosen.id}:presentation-${++presentationSerial}` } : chosen;
+  return present(item);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -79,6 +87,7 @@ export interface QuestStep {
   skill: Skill;
   item: Item;
   role: 'focus' | 'review' | 'stretch';
+  repeated?: boolean;
 }
 
 export const QUEST_LENGTH = 8;
@@ -113,6 +122,7 @@ export function buildQuest(state: AppState, now = Date.now()): QuestStep[] {
     const st = skillState(state, skill.id);
     const item = pickItem(state, skill, level ?? (st.credited && st.level === 1 ? 2 : st.level), used);
     used.add(item.id);
+    used.add(itemFingerprint(item));
     steps.push({ skill, item, role });
   };
 
@@ -156,14 +166,16 @@ export function buildQuest(state: AppState, now = Date.now()): QuestStep[] {
 }
 
 /** Up to `length` different items; a small pool gives a shorter session, never a repeat. */
-function distinctSteps(state: AppState, skill: Skill, level: Difficulty, length: number): QuestStep[] {
+function distinctSteps(state: AppState, skill: Skill, level: Difficulty, length: number, repeat = false): QuestStep[] {
   const used = new Set<string>();
   const steps: QuestStep[] = [];
   while (steps.length < length) {
     const item = pickItem(state, skill, level, used);
-    if (used.has(item.id)) break;
+    const duplicate = used.has(item.id) || used.has(itemFingerprint(item));
+    if (duplicate && !repeat) break;
     used.add(item.id);
-    steps.push({ skill, item, role: 'focus' });
+    used.add(itemFingerprint(item));
+    steps.push({ skill, item: duplicate ? { ...item, id: `${item.id}:repeat-${steps.length}` } : item, role: 'focus', repeated: duplicate || wasExposed(state.exposures, item) });
   }
   return steps;
 }
@@ -206,6 +218,7 @@ export function planCheckup(state: AppState, subject: SubjectId): CheckupPlan {
 export interface CheckupAnswer {
   skill: string;
   itemId: string;
+  fingerprint?: string;
   d: Difficulty;
   correct: boolean;
   strand: string;
@@ -216,7 +229,7 @@ export interface CheckupAnswer {
  * Correct → difficulty 3, then on to the next skill. Wrong → one step easier.
  */
 export function nextCheckupItem(state: AppState, plan: CheckupPlan, answered: CheckupAnswer[]): (QuestStep & { strand: string }) | null {
-  const seen = new Set(answered.map((a) => a.itemId));
+  const seen = new Set(answered.flatMap((a) => [a.itemId, ...(a.fingerprint ? [a.fingerprint] : [])]));
   for (const st of plan.strands) {
     const mine = answered.filter((a) => a.strand === st.strand);
     if (mine.length >= plan.perStrand) continue;
@@ -230,7 +243,11 @@ export function nextCheckupItem(state: AppState, plan: CheckupPlan, answered: Ch
         d = 2;
       } else if (!a.correct) d = Math.max(1, a.d - 1) as Difficulty;
     }
-    const skill = st.skills[index];
+    let skill = st.skills[index];
+    if (isAssessed(skill)) {
+      const hasUnused = (candidate: Skill) => poolItems(candidate, 'practice').some(item => inRegion(state, item) && !seen.has(itemFingerprint(item)) && (!seen.has(item.id) || [...seen].some(x => x.startsWith('fp2:'))));
+      if (!hasUnused(skill)) skill = st.skills.find(candidate => isAssessed(candidate) && hasUnused(candidate)) ?? skill;
+    }
     return { skill, item: pickItem(state, skill, d, seen), role: 'focus', strand: st.strand };
   }
   return null;
@@ -241,15 +258,16 @@ const bandFor = (ratio: number): Band => (ratio >= 0.8 ? 'Strong' : ratio >= 0.6
 export function scoreCheckup(plan: CheckupPlan, attempts: (Attempt & { strand: string })[]): CheckupResult {
   const strands: StrandResult[] = plan.strands.map((st) => {
     const mine = attempts.filter((a) => a.strand === st.strand);
-    const points = mine.reduce((n, a) => n + (a.correct ? a.d : 0), 0);
-    const max = mine.reduce((n, a) => n + Math.max(a.d, 2), 0) || 1;
-    return { strand: st.strand, title: st.title, points, max, band: bandFor(points / max) };
+    const fresh = mine.filter(isFreshEvidence);
+    const points = fresh.reduce((n, a) => n + (a.correct ? a.d : 0), 0);
+    const max = fresh.reduce((n, a) => n + Math.max(a.d, 2), 0) || 1;
+    return { strand: st.strand, title: st.title, points, max, band: bandFor(points / max), freshCorrect: fresh.filter(a => a.correct).length, freshTotal: fresh.length, repeated: mine.filter(a => a.repeated === true).length, untracked: mine.filter(a => a.repeated === undefined || (a.repeated === false && !isFreshEvidence(a))).length };
   });
   const tags = new Map<string, number>();
   attempts.forEach((a) => {
-    if (!a.correct && a.why && !NOISE_TAGS.has(a.why)) tags.set(a.why, (tags.get(a.why) ?? 0) + 1);
+    if (isFreshEvidence(a) && !a.correct && a.why && !NOISE_TAGS.has(a.why)) tags.set(a.why, (tags.get(a.why) ?? 0) + 1);
   });
-  const missed = [...new Set(attempts.filter((a) => !a.correct).map((a) => a.skill))];
+  const missed = [...new Set(attempts.filter((a) => isFreshEvidence(a) && !a.correct).map((a) => a.skill))];
   return {
     id: `${plan.subject}-${Date.now()}`,
     subject: plan.subject,
@@ -259,6 +277,8 @@ export function scoreCheckup(plan: CheckupPlan, attempts: (Attempt & { strand: s
     total: attempts.length,
     misconceptions: [...tags.entries()].map(([tag, count]) => ({ tag, count })).sort((a, b) => b.count - a.count),
     recommend: missed,
+    repeated: attempts.filter(a => a.repeated === true).length,
+    untracked: attempts.filter(a => a.repeated === undefined || (a.repeated === false && !isFreshEvidence(a))).length,
   };
 }
 
@@ -266,7 +286,7 @@ export function scoreCheckup(plan: CheckupPlan, attempts: (Attempt & { strand: s
 export function creditFromCheckup(state: AppState, attempts: Attempt[]): AppState {
   const skills = { ...state.skills };
   for (const a of attempts) {
-    if (a.correct && a.d === 3) {
+    if (a.correct && a.d === 3 && (!['math', 'reading'].includes(getSkill(a.skill)?.subject ?? '') || isFreshEvidence(a))) {
       const s = skillState(state, a.skill);
       skills[a.skill] = { ...s, credited: true, level: Math.max(s.level, 2) as Difficulty };
     }
@@ -282,7 +302,7 @@ export function topMisconceptions(state: AppState, sinceDays = 30, limit = 6) {
   const since = Date.now() - sinceDays * 24 * 60 * 60 * 1000;
   const tags = new Map<string, { count: number; skills: Set<string> }>();
   for (const a of state.attempts) {
-    if (a.ts < since || a.correct || !a.why || NOISE_TAGS.has(a.why)) continue;
+    if (!a || a.ts < since || a.correct || !isFreshEvidence(a) || !a.why || NOISE_TAGS.has(a.why)) continue;
     const t = tags.get(a.why) ?? { count: 0, skills: new Set<string>() };
     t.count++;
     t.skills.add(a.skill);
@@ -296,7 +316,7 @@ export function topMisconceptions(state: AppState, sinceDays = 30, limit = 6) {
 }
 
 export function weakestSkills(state: AppState, limit = 5) {
-  return ALL_SKILLS.map((s) => ({ skill: s, list: attemptsFor(state, s.id) }))
+  return ALL_SKILLS.map((s) => ({ skill: s, list: attemptsFor(state, s.id).filter(isFreshEvidence) }))
     .filter((x) => x.list.length >= 3 && isVisible(state, x.skill) && !skillState(state, x.skill.id).mastered)
     .map((x) => ({ skill: x.skill, accuracy: accuracy(x.list.slice(-10)), attempts: x.list.length }))
     .sort((a, b) => a.accuracy - b.accuracy)
@@ -355,6 +375,7 @@ export function placementNext(state: AppState, run: PlacementRun): (QuestStep & 
   const skill = st.skills[run.idx];
   const item = pickItem(state, skill, 3, run.seen);
   run.seen.add(item.id);
+  run.seen.add(itemFingerprint(item));
   run.current = { skill, item, role: 'focus', strand: st.strand };
   return run.current;
 }
@@ -394,5 +415,5 @@ export function placementAnswer(run: PlacementRun, correct: boolean) {
 
 /** Skip-ahead challenge: 3 hard questions on one skill; all right → skip it. */
 export function buildSkipChallenge(state: AppState, skill: Skill): QuestStep[] {
-  return distinctSteps(state, skill, 3, 3);
+  return distinctSteps(state, skill, 3, 3, true);
 }

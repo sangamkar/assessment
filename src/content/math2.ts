@@ -461,12 +461,12 @@ const shapes2: Skill = {
     },
     {
       difficulty: 3,
-      say: 'This rectangle is split into rows and columns of equal squares. How many squares are there?',
-      show: 'How many squares?',
+      say: 'Count only the small squares in this grid, one space at a time. How many small squares are there? Do not count larger squares made by joining spaces.',
+      show: 'How many small squares in the grid?',
       visual: { kind: 'map', rows: 2, cols: 3, cells: [] },
       choices: [num(3, 'counted_one_row'), num(5, 'count_skipped_one'), num(6), num(2, 'counted_one_column')],
       keepOrder: true,
-      explain: '2 rows of 3 squares: 3 plus 3 is 6 squares.',
+      explain: 'Count each small space once. Two rows of three small squares make six. Do not count larger squares made by joining spaces.',
     },
     {
       difficulty: 3,
@@ -503,11 +503,11 @@ const shapes2: Skill = {
     },
     {
       difficulty: 2,
-      say: 'This rectangle is split into rows and columns of equal squares. How many squares are there?',
-      show: 'How many squares?',
+      say: 'Count only the small squares in this grid, one space at a time. How many small squares are there? Do not count larger squares made by joining spaces.',
+      show: 'How many small squares in the grid?',
       visual: { kind: 'map', rows: 3, cols: 3, cells: [] },
       choices: [num(3, 'counted_one_row'), num(8, 'count_skipped_one'), num(9), num(10, 'count_double_tap')],
-      explain: '3 rows with 3 squares in each row: 3 plus 3 plus 3 is 9 squares.',
+      explain: 'Count each small space once. Three rows of three small squares make nine. Do not count larger squares made by joining spaces.',
     },
     {
       difficulty: 2,
@@ -525,7 +525,9 @@ const shapes2: Skill = {
       hint: 'A cube has 4 corners on the top and 4 corners on the bottom.',
       explain: 'A cube has 4 corners on top and 4 corners on the bottom. 4 plus 4 is 8 vertices. In the picture, one corner is hidden at the back.',
     },
-  ]),
+  ]).map((item) => ['m2.shapes.4', 'm2.shapes.8'].includes(item.id)
+    ? { ...item, id: `${item.id}-small-squares` }
+    : item),
 };
 
 export const MATH2_SKILLS: Skill[] = [shapes2, placeValue, compare1000, skipCount, oddEven, add2d, sub2d, groups, wordProblems, time5, usMoney];

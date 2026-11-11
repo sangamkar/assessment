@@ -9,11 +9,12 @@ interface Props {
   state: AppState;
   onQuest: () => void;
   onGames: () => void;
+  onDiscovery: () => void;
   onIsland: (id: SubjectId) => void;
   onGrownUps: () => void;
 }
 
-export function Home({ state, onQuest, onGames, onIsland, onGrownUps }: Props) {
+export function Home({ state, onQuest, onGames, onDiscovery, onIsland, onGrownUps }: Props) {
   const name = state.profile?.name?.trim() || 'Explorer';
   const streak = dayStreak(state);
   return (
@@ -50,6 +51,8 @@ export function Home({ state, onQuest, onGames, onIsland, onGrownUps }: Props) {
           <div className="mt-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-white text-3xl shadow-lg">🎮</div>
         </button>
       </div>
+
+      <button onClick={onDiscovery} className="rounded-2xl bg-teal-100 px-5 py-4 text-left font-kid text-xl font-bold text-teal-800 shadow">🎨 Discover &amp; create</button>
 
       <div className={`grid grid-cols-2 gap-4 sm:grid-cols-3 ${SUBJECTS.filter((x) => subjectSummary(state, x.id).total).length > 5 ? 'lg:grid-cols-6' : 'lg:grid-cols-5'}`}>
         {SUBJECTS.map((s) => {

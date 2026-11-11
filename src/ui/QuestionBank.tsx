@@ -4,6 +4,7 @@ import { localizeDeep } from '../content/curricula';
 import type { Difficulty, Item, SubjectId } from '../content/types';
 import { describeMisconception } from '../content/misconceptions';
 import { createRng } from '../engine/rng';
+import { isAssessed, isMockItem } from '../engine/itemPools';
 import { SpeakButton } from './SpeakButton';
 import { Visual } from './Visual';
 
@@ -16,13 +17,13 @@ export function QuestionBank({ locale = 'en-US' }: { locale?: 'en-US' | 'en-IN' 
   const skill = ALL_SKILLS.find((s) => s.id === skillId) ?? skills[0];
 
   const list = useMemo(() => {
-    const out: { item: Item; generated: boolean }[] = (skill.items ?? []).map((item) => ({ item, generated: false }));
+    const out: { item: Item; generated: boolean }[] = (skill.items ?? []).filter(item => !isAssessed(skill) || !isMockItem(item)).map((item) => ({ item, generated: false }));
     if (skill.generate) {
       const rng = createRng(seed);
       ([1, 2, 3] as Difficulty[]).forEach((d) => {
         for (let tries = 0, added = 0; added < 2 && tries < 10; tries++) {
           const item = skill.generate!(rng, d);
-          if (out.some((x) => x.item.id === item.id)) continue;
+          if ((isAssessed(skill) && isMockItem(item)) || out.some((x) => x.item.id === item.id)) continue;
           out.push({ item, generated: true });
           added++;
         }
@@ -70,7 +71,7 @@ export function QuestionBank({ locale = 'en-US' }: { locale?: 'en-US' | 'en-IN' 
           </button>
         )}
         <div className="ml-auto text-xs text-slate-500">
-          {skill.standards.join(', ')} · {skill.items?.length ?? 0} written{skill.generate ? ' + unlimited generated' : ''}
+          {skill.standards.join(', ')} · {skill.items?.length ?? 0} written{skill.generate ? ' + generated variants' : ''}
         </div>
       </div>
 

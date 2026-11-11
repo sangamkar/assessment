@@ -8,6 +8,7 @@ import type { MockRun, MockSubject } from './engine/mock';
 import { MOCK_BREAK_EVERY, mockTitle, mockTotal, newMockRun, nextMockStep, scoreMock } from './engine/mock';
 import type { AppState, Attempt, GameId, Mode } from './engine/progress';
 import { gameState, loadState, markIntroSeen, markKnown, recordAttempt, recordGame, saveState, skillState } from './engine/progress';
+import { itemFingerprint, wasExposed } from './engine/exposures';
 import { Games } from './ui/games/Games';
 import { MysteryWord } from './ui/games/MysteryWord';
 import { NumberPath } from './ui/games/NumberPath';
@@ -22,12 +23,14 @@ import type { AnswerEvent } from './ui/Player';
 import { Player } from './ui/Player';
 import { Results } from './ui/Results';
 import { Setup } from './ui/Setup';
+import { Discovery } from './ui/growth/Discovery';
 
 type View =
   | { name: 'home' }
   | { name: 'island'; subject: SubjectId }
   | { name: 'play'; mode: Mode; title: string; color: string; total: number; first: QuestStep | null; again?: () => void; startAt?: number }
   | { name: 'results'; mode: Mode; correct: number; total: number; note?: string; again?: () => void }
+  | { name: 'discovery' }
   | { name: 'games' }
   | { name: 'game'; id: GameId; level: 1 | 2 | 3; run: number }
   | { name: 'gate' }
@@ -52,12 +55,13 @@ export default function App() {
   });
   const [state, setStateRaw] = useState<AppState>(loadState);
   const [view, setView] = useState<View>({ name: 'home' });
+  const [storageError, setStorageError] = useState(false);
   const session = useRef<Session>({ queue: [], index: 0, answers: [] });
   const stateRef = useRef(state);
   stateRef.current = state;
 
   const update = useCallback((fn: (s: AppState) => AppState) => setStateRaw((s) => fn(s)), []);
-  useEffect(() => saveState(state), [state]);
+  useEffect(() => { setStorageError(!saveState(state)); }, [state]);
   useEffect(() => soundEngine.setMuted(state.settings.muted), [state.settings.muted]);
   const locale = CURRICULA[state.settings.primary].locale;
   useEffect(() => soundEngine.setLocale(locale), [locale]);
@@ -154,19 +158,20 @@ export default function App() {
   };
 
   const onAnswer = (e: AnswerEvent, mode: Mode) => {
-    const attempt: Attempt = { itemId: e.step.item.id, skill: e.step.skill.id, d: e.step.item.difficulty, correct: e.correct, why: e.why, ts: Date.now(), mode };
-    if (mode === 'placement' && session.current.placement) placementAnswer(session.current.placement, e.correct);
+    const fingerprint = itemFingerprint(e.step.item);
+    const repeated = !!e.step.repeated || (mode !== 'mock' && wasExposed(stateRef.current.exposures, e.step.item)) || session.current.answers.some(a => a.fingerprint ? a.fingerprint === fingerprint : a.itemId === e.step.item.id);
+    const attempt: Attempt = { itemId: e.step.item.id, fingerprint, repeated, question: { say: e.step.item.say, show: e.step.item.show }, skill: e.step.skill.id, d: e.step.item.difficulty, correct: e.correct, why: e.why, ts: Date.now(), mode };
+    const assessedSubject = e.step.skill.subject === 'math' || e.step.skill.subject === 'reading';
+    if (mode === 'placement' && session.current.placement) placementAnswer(session.current.placement, e.correct && (!assessedSubject || !repeated));
     if (mode === 'mock' && session.current.mock) {
       const run = session.current.mock;
       const step = e.step as QuestStep & { strand: string; level: number; target: number };
-      run.answers.push({ strand: step.strand, skill: step.skill.id, itemId: step.item.id, level: step.level, target: step.target, correct: e.correct, why: e.why, ts: attempt.ts });
+      run.answers.push({ strand: step.strand, skill: step.skill.id, itemId: step.item.id, fingerprint, repeated, level: step.level, target: step.target, correct: e.correct, why: e.why, ts: attempt.ts });
       const snapshot = { ...run, answers: [...run.answers] };
-      update((s) => ({ ...s, mockRun: snapshot })); // saved after every answer, so a paused test resumes
+      update((s) => ({ ...s, mockRun: snapshot }));
     }
-    if (mode === 'checkup') {
-      const strand = (e.step as QuestStep & { strand?: string }).strand ?? e.step.skill.strand;
-      session.current.answers.push({ ...attempt, strand, skill: attempt.skill, itemId: attempt.itemId });
-    }
+    const strand = (e.step as QuestStep & { strand?: string }).strand ?? e.step.skill.strand;
+    session.current.answers.push({ ...attempt, strand });
     update((s) => recordAttempt(s, attempt));
   };
 
@@ -189,7 +194,8 @@ export default function App() {
       return;
     } else if (mode === 'skip') {
       const skill = session.current.queue[0]?.skill;
-      const passed = summary.correct === summary.total;
+      const assessedSubject = skill?.subject === 'math' || skill?.subject === 'reading';
+      const passed = summary.correct === summary.total && (!assessedSubject || session.current.answers.every(a => a.repeated === false));
       if (passed && skill) update((s) => markKnown(s, [skill.id], 'tested'));
       setView({
         name: 'results',
@@ -206,7 +212,9 @@ export default function App() {
 
   switch (view.name) {
     case 'home':
-      return <Home state={state} onQuest={startQuest} onGames={() => setView({ name: 'games' })} onIsland={(subject) => setView({ name: 'island', subject })} onGrownUps={() => setView({ name: 'gate' })} />;
+      return <Home state={state} onQuest={startQuest} onGames={() => setView({ name: 'games' })} onDiscovery={() => setView({ name: 'discovery' })} onIsland={(subject) => setView({ name: 'island', subject })} onGrownUps={() => setView({ name: 'gate' })} />;
+    case 'discovery':
+      return <Discovery storageError={storageError} growth={state.growth} update={(fn) => update((s) => ({ ...s, growth: fn(s.growth) }))} onBack={() => setView({ name: 'home' })} />;
     case 'games':
       return <Games state={state} onBack={() => setView({ name: 'home' })} onPlay={(id) => setView({ name: 'game', id, level: gameState(stateRef.current, id).level, run: Date.now() })} />;
     case 'game': {

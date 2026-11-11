@@ -22,7 +22,7 @@ describe('skipping what he already knows', () => {
   it('a skipped skill comes back once as review; failing it returns it to practice', () => {
     let s = markKnown(emptyState(), ['m.add'], 'parent', T0);
     expect(skillStatus(s, getSkill('m.add')!, T0 + 15 * DAY)).toBe('review');
-    s = recordAttempt(s, { itemId: 'x', skill: 'm.add', d: 2, correct: false, ts: T0 + 15 * DAY, mode: 'quest' });
+    s = recordAttempt(s, { itemId: 'x', fingerprint: 'fp2:test-review', repeated: false, skill: 'm.add', d: 2, correct: false, ts: T0 + 15 * DAY, mode: 'quest' });
     expect(skillState(s, 'm.add').mastered).toBe(false);
     expect(skillState(s, 'm.add').known).toBeUndefined();
   });

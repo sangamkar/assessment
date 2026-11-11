@@ -1,10 +1,18 @@
 import type { CurriculumId, Difficulty, LanguageCode } from '../content/types';
+import { getSkill } from '../content';
 import type { MockResult, MockRun } from './mock';
+import { emptyGrowth, mergeGrowth } from './growth';
+import type { GrowthState } from './growth';
+import { emptyExposures, isFreshEvidence, migrateExposures, trackExposure } from './exposures';
+import type { ExposureLog } from './exposures';
 
 export type Mode = 'quest' | 'skill' | 'checkup' | 'placement' | 'skip' | 'mock';
 
 export interface Attempt {
   itemId: string;
+  fingerprint?: string;
+  repeated?: boolean;
+  question?: { say: string; show?: string };
   skill: string;
   d: Difficulty;
   /** Correct on the first try — the only thing that counts toward mastery. */
@@ -34,6 +42,10 @@ export interface StrandResult {
   points: number;
   max: number;
   band: Band;
+  freshCorrect?: number;
+  freshTotal?: number;
+  repeated?: number;
+  untracked?: number;
 }
 export type Band = 'Strong' | 'On track' | 'Growing' | 'Needs practice';
 
@@ -46,6 +58,8 @@ export interface CheckupResult {
   total: number;
   misconceptions: { tag: string; count: number }[];
   recommend: string[];
+  repeated?: number;
+  untracked?: number;
 }
 
 export interface Settings {
@@ -73,7 +87,9 @@ export interface GameState {
 }
 
 export interface AppState {
-  version: 1;
+  version: 5;
+  exposures: ExposureLog;
+  growth: GrowthState;
   profile?: { name: string; avatar: string; createdAt: number };
   settings: Settings;
   skills: Record<string, SkillState>;
@@ -90,37 +106,40 @@ export interface AppState {
 
 const KEY = 'learning-quest:v1';
 const PRE_ROLLBACK_KEY = `${KEY}:before-rollback`;
-const MAX_ATTEMPTS = 6000;
 export const REVIEW_DAYS = [1, 3, 7, 14, 30];
 const DAY = 24 * 60 * 60 * 1000;
 
 export const MASTERY = { window: 8, minAttempts: 6, accuracy: 0.85, minHardAttempts: 3, minDays: 3, dayWindow: 21 };
 
 export function emptyState(): AppState {
-  return { version: 1, settings: { muted: false, unlockAll: false, showStretch: true, curricula: ['us-ga'], primary: 'us-ga', languages: ['hi'] }, skills: {}, attempts: [], stars: 0, days: [], checkups: [], games: {} };
+  return { version: 5, exposures: emptyExposures(), growth: emptyGrowth(), settings: { muted: false, unlockAll: false, showStretch: true, curricula: ['us-ga'], primary: 'us-ga', languages: ['hi'] }, skills: {}, attempts: [], stars: 0, days: [], checkups: [], games: {} };
 }
 
-export const STATE_VERSION = 1;
+export const STATE_VERSION = 5;
 
 /**
  * Upgrades saved progress from version n to n + 1. When the saved shape changes,
  * bump STATE_VERSION and add a step here; never drop old progress.
  */
-const MIGRATIONS: Record<number, (s: Record<string, unknown>) => Record<string, unknown>> = {};
+const MIGRATIONS: Record<number, (s: Record<string, unknown>) => Record<string, unknown>> = {
+  1: (s) => s, 2: (s) => s, 3: (s) => s, 4: (s) => s,
+};
 
 export type UpgradeResult = { ok: true; state: AppState } | { ok: false; reason: 'not-progress' | 'newer-version' | 'no-migration' };
 
 /** Reads saved progress or a backup file, upgrading older versions. */
-export function upgradeState(data: unknown): UpgradeResult {
+export function upgradeState(data: unknown, backup?: unknown): UpgradeResult {
   if (!data || typeof data !== 'object') return { ok: false, reason: 'not-progress' };
   let s = data as Record<string, unknown>;
   const version = typeof s.version === 'number' ? s.version : NaN;
   if (!Number.isInteger(version) || version < 1 || !Array.isArray(s.attempts) || !s.skills || typeof s.skills !== 'object') return { ok: false, reason: 'not-progress' };
-  if (version > STATE_VERSION) {
-    if (version !== 2 && version !== 3) return { ok: false, reason: 'newer-version' };
-    // The former app kept the original academic fields; retain them on downgrade.
-    s = { ...s, version: STATE_VERSION };
-  }
+  if (version > STATE_VERSION) return { ok: false, reason: 'newer-version' };
+  const old = backup && typeof backup === 'object' ? backup as Record<string, unknown> : undefined;
+  const profile = s.profile as { createdAt?: unknown } | undefined;
+  const oldProfile = old?.profile as { createdAt?: unknown } | undefined;
+  const sameProfile = !profile?.createdAt || !oldProfile?.createdAt || profile.createdAt === oldProfile.createdAt;
+  const validBackup = old && [1, 2, 3].includes(Number(old.version)) && Array.isArray(old.attempts) && old.skills && typeof old.skills === 'object' && sameProfile;
+  const growth = mergeGrowth(s.growth, version < 4 && validBackup ? old.growth : undefined);
   for (let v = version; v < STATE_VERSION; v++) {
     const step = MIGRATIONS[v];
     if (!step) return { ok: false, reason: 'no-migration' };
@@ -128,7 +147,7 @@ export function upgradeState(data: unknown): UpgradeResult {
   }
   const parsed = s as unknown as AppState;
   const base = emptyState();
-  return { ok: true, state: { ...base, ...parsed, settings: { ...base.settings, ...parsed.settings } } };
+  return { ok: true, state: { ...base, ...parsed, growth, exposures: migrateExposures(parsed.attempts, parsed.exposures, parsed.mocks), settings: { ...base.settings, ...parsed.settings } } };
 }
 
 /** Saved progress that could not be read is copied aside instead of being overwritten. */
@@ -140,7 +159,9 @@ export function loadState(): AppState {
     raw = localStorage.getItem(KEY);
     if (!raw) return emptyState();
     const saved = JSON.parse(raw);
-    const result = upgradeState(saved);
+    let backup: unknown;
+    try { const archived = localStorage.getItem(PRE_ROLLBACK_KEY); if (archived) backup = JSON.parse(archived); } catch { /* Preserve active state if the archive is unreadable. */ }
+    const result = upgradeState(saved, backup);
     if (result.ok) {
       if (saved.version === 2 || saved.version === 3) {
         try {
@@ -165,8 +186,10 @@ export function loadState(): AppState {
 export function saveState(state: AppState) {
   try {
     localStorage.setItem(KEY, JSON.stringify(state));
+    return true;
   } catch {
     // Storage full or blocked: progress for this session still lives in memory.
+    return false;
   }
 }
 
@@ -177,7 +200,7 @@ export function skillState(state: AppState, id: string): SkillState {
 }
 
 export function attemptsFor(state: AppState, skill: string): Attempt[] {
-  return state.attempts.filter((a) => a.skill === skill);
+  return state.attempts.filter((a) => a && a.skill === skill);
 }
 
 export function accuracy(list: Attempt[]): number {
@@ -204,7 +227,10 @@ export function meetsMastery(list: Attempt[]): boolean {
 export function recordAttempt(state: AppState, attempt: Attempt): AppState {
   const prev = skillState(state, attempt.skill);
   const next: SkillState = { ...prev };
-  if (attempt.mode === 'quest' || attempt.mode === 'skill') {
+  const subject = getSkill(attempt.skill)?.subject;
+  const scoped = subject === 'math' || subject === 'reading';
+  const eligible = !scoped || isFreshEvidence(attempt);
+  if (eligible && (attempt.mode === 'quest' || attempt.mode === 'skill')) {
     if (attempt.correct) {
       next.streak = prev.streak + 1;
       if (next.streak >= 2 && prev.level < 3) {
@@ -216,11 +242,11 @@ export function recordAttempt(state: AppState, attempt: Attempt): AppState {
       if (prev.level > 1) next.level = (prev.level - 1) as Difficulty;
     }
   }
-  const attempts = [...state.attempts, attempt].slice(-MAX_ATTEMPTS);
+  const attempts = [...state.attempts, attempt];
   const practice = attempt.mode === 'quest' || attempt.mode === 'skill';
-  const list = attempts.filter((a) => a.skill === attempt.skill);
+  const list = attempts.filter((a) => a && a.skill === attempt.skill && (!scoped || isFreshEvidence(a)));
 
-  if (prev.mastered && prev.nextReview && attempt.ts >= prev.nextReview && practice) {
+  if (eligible && prev.mastered && prev.nextReview && attempt.ts >= prev.nextReview && practice) {
     // A spaced review: success moves the next review further out, a miss brings it back.
     next.reviewStep = attempt.correct ? Math.min(prev.reviewStep + 1, REVIEW_DAYS.length - 1) : 0;
     next.nextReview = attempt.ts + REVIEW_DAYS[next.reviewStep] * DAY;
@@ -229,7 +255,7 @@ export function recordAttempt(state: AppState, attempt: Attempt): AppState {
       next.known = undefined; // a skipped skill he could not do goes back into practice
       next.level = 2;
     }
-  } else if (!prev.mastered && meetsMastery(list)) {
+  } else if (eligible && !prev.mastered && meetsMastery(list)) {
     next.mastered = true;
     next.masteredAt = attempt.ts;
     next.reviewStep = 0;
@@ -240,6 +266,7 @@ export function recordAttempt(state: AppState, attempt: Attempt): AppState {
   return {
     ...state,
     attempts,
+    exposures: trackExposure(state.exposures, attempt),
     skills: { ...state.skills, [attempt.skill]: next },
     stars: state.stars + (attempt.correct && practice ? 1 : 0),
     days: state.days.includes(day) ? state.days : [...state.days, day],

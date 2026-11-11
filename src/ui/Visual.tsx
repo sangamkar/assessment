@@ -323,6 +323,23 @@ function VisualBody({ v, size = 'lg' }: { v: V; size?: VSize }) {
           ))}
         </div>
       );
+    case 'ribbon':
+      return <svg width={size === 'lg' ? 150 : 100} height={size === 'lg' ? 150 : 100} viewBox="0 0 100 100" role="img" aria-label="Ribbon"><rect x={(100-v.width)/2} y="8" width={v.width} height="84" fill={v.color} stroke="#1f2937" strokeWidth="2" /></svg>;
+    case 'capacityBox': {
+      const cols = v.columns ?? 1;
+      const rows = Math.ceil(v.cubes / cols);
+      const left = 30 - cols * 6;
+      return <svg width={size === 'lg' ? 100 : 80} height={size === 'lg' ? 165 : 120} viewBox="0 0 60 100" role="img" aria-label={`Box with room for ${v.cubes} equal cubes`}><rect x={left-1} y={92-rows*12} width={cols*12+2} height={rows*12+2} fill="white" stroke="#334155" strokeWidth="2" />{Array.from({ length: v.cubes }, (_, i) => <rect key={i} x={left+(i%cols)*12} y={92-(Math.floor(i/cols)+1)*12} width="12" height="12" fill="#60a5fa" stroke="#1e40af" strokeWidth="1" />)}</svg>;
+    }
+    case 'venn': {
+      const color = v.color ?? '#ef4444', other = v.otherColor ?? '#2563eb';
+      const target = v.targetShape ?? 'circle', otherShape = v.otherShape ?? 'square';
+      const shape = (kind: 'circle' | 'square' | 'triangle', fill: string, x: number, y: number, key: string) => kind === 'circle' ? <circle key={key} cx={x} cy={y} r="9" fill={fill} stroke="#334155" /> : kind === 'square' ? <rect key={key} x={x-9} y={y-9} width="18" height="18" fill={fill} stroke="#334155" /> : <polygon key={key} points={`${x},${y-10} ${x-10},${y+8} ${x+10},${y+8}`} fill={fill} stroke="#334155" />;
+      const symbols = (kind: 'circle' | 'square' | 'triangle', fill: string, n: number, x: number, y: number, columns = 2) => Array.from({ length: n }, (_, i) => shape(kind, fill, x+(i%columns)*23, y+Math.floor(i/columns)*25, `${kind}-${fill}-${i}`));
+      return <svg width={size === 'lg' ? 320 : 220} viewBox="0 0 320 180" role="img" aria-label={`Venn diagram: ${v.colorName ?? 'red'} shapes and ${target}s`}><rect x="1" y="1" width="318" height="178" rx="10" fill="white" stroke="#cbd5e1"/><circle cx="118" cy="90" r="65" fill="#f1f5f9" fillOpacity=".6" stroke="#64748b" strokeWidth="2"/><circle cx="202" cy="90" r="65" fill="#f1f5f9" fillOpacity=".6" stroke="#64748b" strokeWidth="2"/><text x="62" y="20" fontSize="14" fontWeight="bold">{v.colorName ?? 'Red'} shapes</text><text x="207" y="20" fontSize="14" fontWeight="bold">{target}s</text>{symbols(otherShape,color,v.redOnly,88,70)}{symbols(target,color,v.both,160,70,1)}{symbols(target,other,v.circleOnly,215,70)}{symbols(otherShape,other,v.neither,20,145)}</svg>;
+    }
+    case 'numberLine':
+      return <div className="relative flex items-start justify-center gap-0 pt-4" role="img" aria-label="Number line with one missing number">{Array.from({ length: 5 }, (_, i) => <div key={i} className="relative w-14 border-t-4 border-slate-600 pt-2 text-center font-kid text-xl font-bold"><span className="absolute left-1/2 top-[-8px] h-4 border-l-2 border-slate-700" />{i === v.blank ? '?' : v.start + i}</div>)}</div>;
     case 'text':
       return (
         <span className="font-reader font-bold tracking-wide text-slate-900" style={{ fontSize: (v.size === 'xl' ? 72 : v.size === 'lg' ? 44 : 30) * (size === 'lg' ? 1 : 0.6) }}>

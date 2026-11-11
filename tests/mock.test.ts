@@ -3,8 +3,9 @@ import { getSkill } from '../src/content';
 import { emptyState } from '../src/engine/progress';
 import type { AppState } from '../src/engine/progress';
 import { buildQuest } from '../src/engine/planner';
-import { LADDER_MAX, MOCK_DOMAINS, MOCK_PER_DOMAIN, expectedLevel, levelLabel, mockTotal, newMockRun, nextMockStep, scoreMock } from '../src/engine/mock';
+import { LADDER_MAX, MOCK_DOMAINS, MOCK_PER_DOMAIN, domainLevel, expectedLevel, levelLabel, mockTotal, newMockRun, nextMockStep, scoreMock } from '../src/engine/mock';
 import type { MockSubject } from '../src/engine/mock';
+import { itemFingerprint } from '../src/engine/exposures';
 
 const T0 = Date.UTC(2026, 9, 20, 15);
 const DAY = 24 * 60 * 60 * 1000;
@@ -14,7 +15,7 @@ function simulate(subject: MockSubject, trueLevel: number, state: AppState = emp
   const run = newMockRun(subject, 2, T0);
   let guard = 0;
   for (let step = nextMockStep(state, run); step && guard < 100; step = nextMockStep(state, run), guard++) {
-    run.answers.push({ strand: step.strand, skill: step.skill.id, itemId: step.item.id, level: step.level, target: step.target, correct: step.level <= trueLevel, ts: T0 + guard });
+    run.answers.push({ strand: step.strand, skill: step.skill.id, itemId: step.item.id, fingerprint: itemFingerprint(step.item), repeated: step.repeated, level: step.level, target: step.target, correct: step.level <= trueLevel, ts: T0 + guard });
   }
   return { run, result: scoreMock(run) };
 }
@@ -29,25 +30,19 @@ describe('mock i-Ready', () => {
     });
   }
 
-  it('estimates a simulated child’s true level within about one step (math)', () => {
-    for (const trueLevel of [1, 3, 5, 7]) {
-      const { result } = simulate('math', trueLevel);
-      for (const d of result.domains) {
-        if (d.ceiling) continue; // capped by the hardest questions available in this domain
-        expect(Math.abs(d.estimate - trueLevel), `${d.strand} @ ${trueLevel}`).toBeLessThanOrEqual(1.5);
-      }
-    }
+  it('adjusts the internal selection ladder without presenting it as a calibrated score', () => {
+    const run = newMockRun('math', 2, T0);
+    expect(domainLevel(run, 'number')).toBe(2);
+    run.answers.push({ strand:'number', skill:'m.count10', itemId:'a', level:2, correct:true, ts:T0 });
+    expect(domainLevel(run, 'number')).toBe(4);
+    run.answers.push({ strand:'number', skill:'m.count10', itemId:'b', level:4, correct:false, ts:T0+1 });
+    expect(domainLevel(run, 'number')).toBe(2);
   });
 
-  it('a strong child is rated above a weak child in every domain', () => {
-    const weak = simulate('reading', 1).result;
-    const strong = simulate('reading', 6).result;
-    weak.domains.forEach((d, i) => expect(strong.domains[i].estimate).toBeGreaterThan(d.estimate));
-  });
-
-  it('flags the content ceiling instead of under-reporting a very strong child', () => {
-    const { result } = simulate('reading', LADDER_MAX);
-    expect(result.domains.some((d) => d.ceiling)).toBe(true);
+  it('reports a sample of app questions without assigning a school grade level', () => {
+    const { result } = simulate('math', 4);
+    expect(result.overallLabel).toBe('Performance on this app’s questions');
+    expect(result.domains.every(d => d.freshTotal !== undefined)).toBe(true);
   });
 
   it('never uses India-only or language-track questions', () => {
@@ -62,7 +57,7 @@ describe('mock i-Ready', () => {
     const run = newMockRun('math', 2, T0);
     for (let i = 0; i < 10; i++) {
       const step = nextMockStep(state, run)!;
-      run.answers.push({ strand: step.strand, skill: step.skill.id, itemId: step.item.id, level: step.level, correct: i % 2 === 0, ts: T0 + i });
+      run.answers.push({ strand: step.strand, skill: step.skill.id, itemId: step.item.id, fingerprint: itemFingerprint(step.item), repeated: step.repeated, level: step.level, correct: i % 2 === 0, ts: T0 + i });
     }
     const saved = JSON.parse(JSON.stringify(run));
     const next = nextMockStep(state, saved)!;

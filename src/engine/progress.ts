@@ -1,12 +1,18 @@
 import type { CurriculumId, Difficulty, LanguageCode } from '../content/types';
+import { getSkill } from '../content';
 import type { MockResult, MockRun } from './mock';
 import { emptyGrowth, mergeGrowth } from './growth';
 import type { GrowthState } from './growth';
+import { emptyExposures, isFreshEvidence, migrateExposures, trackExposure } from './exposures';
+import type { ExposureLog } from './exposures';
 
 export type Mode = 'quest' | 'skill' | 'checkup' | 'placement' | 'skip' | 'mock';
 
 export interface Attempt {
   itemId: string;
+  fingerprint?: string;
+  repeated?: boolean;
+  question?: { say: string; show?: string };
   skill: string;
   d: Difficulty;
   /** Correct on the first try — the only thing that counts toward mastery. */
@@ -36,6 +42,10 @@ export interface StrandResult {
   points: number;
   max: number;
   band: Band;
+  freshCorrect?: number;
+  freshTotal?: number;
+  repeated?: number;
+  untracked?: number;
 }
 export type Band = 'Strong' | 'On track' | 'Growing' | 'Needs practice';
 
@@ -48,6 +58,8 @@ export interface CheckupResult {
   total: number;
   misconceptions: { tag: string; count: number }[];
   recommend: string[];
+  repeated?: number;
+  untracked?: number;
 }
 
 export interface Settings {
@@ -75,7 +87,8 @@ export interface GameState {
 }
 
 export interface AppState {
-  version: 4;
+  version: 5;
+  exposures: ExposureLog;
   growth: GrowthState;
   profile?: { name: string; avatar: string; createdAt: number };
   settings: Settings;
@@ -93,24 +106,23 @@ export interface AppState {
 
 const KEY = 'learning-quest:v1';
 const PRE_ROLLBACK_KEY = `${KEY}:before-rollback`;
-const MAX_ATTEMPTS = 6000;
 export const REVIEW_DAYS = [1, 3, 7, 14, 30];
 const DAY = 24 * 60 * 60 * 1000;
 
 export const MASTERY = { window: 8, minAttempts: 6, accuracy: 0.85, minHardAttempts: 3, minDays: 3, dayWindow: 21 };
 
 export function emptyState(): AppState {
-  return { version: 4, growth: emptyGrowth(), settings: { muted: false, unlockAll: false, showStretch: true, curricula: ['us-ga'], primary: 'us-ga', languages: ['hi'] }, skills: {}, attempts: [], stars: 0, days: [], checkups: [], games: {} };
+  return { version: 5, exposures: emptyExposures(), growth: emptyGrowth(), settings: { muted: false, unlockAll: false, showStretch: true, curricula: ['us-ga'], primary: 'us-ga', languages: ['hi'] }, skills: {}, attempts: [], stars: 0, days: [], checkups: [], games: {} };
 }
 
-export const STATE_VERSION = 4;
+export const STATE_VERSION = 5;
 
 /**
  * Upgrades saved progress from version n to n + 1. When the saved shape changes,
  * bump STATE_VERSION and add a step here; never drop old progress.
  */
 const MIGRATIONS: Record<number, (s: Record<string, unknown>) => Record<string, unknown>> = {
-  1: (s) => s, 2: (s) => s, 3: (s) => s,
+  1: (s) => s, 2: (s) => s, 3: (s) => s, 4: (s) => s,
 };
 
 export type UpgradeResult = { ok: true; state: AppState } | { ok: false; reason: 'not-progress' | 'newer-version' | 'no-migration' };
@@ -135,7 +147,7 @@ export function upgradeState(data: unknown, backup?: unknown): UpgradeResult {
   }
   const parsed = s as unknown as AppState;
   const base = emptyState();
-  return { ok: true, state: { ...base, ...parsed, growth, settings: { ...base.settings, ...parsed.settings } } };
+  return { ok: true, state: { ...base, ...parsed, growth, exposures: migrateExposures(parsed.attempts, parsed.exposures, parsed.mocks), settings: { ...base.settings, ...parsed.settings } } };
 }
 
 /** Saved progress that could not be read is copied aside instead of being overwritten. */
@@ -188,7 +200,7 @@ export function skillState(state: AppState, id: string): SkillState {
 }
 
 export function attemptsFor(state: AppState, skill: string): Attempt[] {
-  return state.attempts.filter((a) => a.skill === skill);
+  return state.attempts.filter((a) => a && a.skill === skill);
 }
 
 export function accuracy(list: Attempt[]): number {
@@ -215,7 +227,10 @@ export function meetsMastery(list: Attempt[]): boolean {
 export function recordAttempt(state: AppState, attempt: Attempt): AppState {
   const prev = skillState(state, attempt.skill);
   const next: SkillState = { ...prev };
-  if (attempt.mode === 'quest' || attempt.mode === 'skill') {
+  const subject = getSkill(attempt.skill)?.subject;
+  const scoped = subject === 'math' || subject === 'reading';
+  const eligible = !scoped || isFreshEvidence(attempt);
+  if (eligible && (attempt.mode === 'quest' || attempt.mode === 'skill')) {
     if (attempt.correct) {
       next.streak = prev.streak + 1;
       if (next.streak >= 2 && prev.level < 3) {
@@ -227,11 +242,11 @@ export function recordAttempt(state: AppState, attempt: Attempt): AppState {
       if (prev.level > 1) next.level = (prev.level - 1) as Difficulty;
     }
   }
-  const attempts = [...state.attempts, attempt].slice(-MAX_ATTEMPTS);
+  const attempts = [...state.attempts, attempt];
   const practice = attempt.mode === 'quest' || attempt.mode === 'skill';
-  const list = attempts.filter((a) => a.skill === attempt.skill);
+  const list = attempts.filter((a) => a && a.skill === attempt.skill && (!scoped || isFreshEvidence(a)));
 
-  if (prev.mastered && prev.nextReview && attempt.ts >= prev.nextReview && practice) {
+  if (eligible && prev.mastered && prev.nextReview && attempt.ts >= prev.nextReview && practice) {
     // A spaced review: success moves the next review further out, a miss brings it back.
     next.reviewStep = attempt.correct ? Math.min(prev.reviewStep + 1, REVIEW_DAYS.length - 1) : 0;
     next.nextReview = attempt.ts + REVIEW_DAYS[next.reviewStep] * DAY;
@@ -240,7 +255,7 @@ export function recordAttempt(state: AppState, attempt: Attempt): AppState {
       next.known = undefined; // a skipped skill he could not do goes back into practice
       next.level = 2;
     }
-  } else if (!prev.mastered && meetsMastery(list)) {
+  } else if (eligible && !prev.mastered && meetsMastery(list)) {
     next.mastered = true;
     next.masteredAt = attempt.ts;
     next.reviewStep = 0;
@@ -251,6 +266,7 @@ export function recordAttempt(state: AppState, attempt: Attempt): AppState {
   return {
     ...state,
     attempts,
+    exposures: trackExposure(state.exposures, attempt),
     skills: { ...state.skills, [attempt.skill]: next },
     stars: state.stars + (attempt.correct && practice ? 1 : 0),
     days: state.days.includes(day) ? state.days : [...state.days, day],

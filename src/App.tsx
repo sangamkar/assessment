@@ -8,6 +8,7 @@ import type { MockRun, MockSubject } from './engine/mock';
 import { MOCK_BREAK_EVERY, mockTitle, mockTotal, newMockRun, nextMockStep, scoreMock } from './engine/mock';
 import type { AppState, Attempt, GameId, Mode } from './engine/progress';
 import { gameState, loadState, markIntroSeen, markKnown, recordAttempt, recordGame, saveState, skillState } from './engine/progress';
+import { itemFingerprint, wasExposed } from './engine/exposures';
 import { Games } from './ui/games/Games';
 import { MysteryWord } from './ui/games/MysteryWord';
 import { NumberPath } from './ui/games/NumberPath';
@@ -157,19 +158,20 @@ export default function App() {
   };
 
   const onAnswer = (e: AnswerEvent, mode: Mode) => {
-    const attempt: Attempt = { itemId: e.step.item.id, skill: e.step.skill.id, d: e.step.item.difficulty, correct: e.correct, why: e.why, ts: Date.now(), mode };
-    if (mode === 'placement' && session.current.placement) placementAnswer(session.current.placement, e.correct);
+    const fingerprint = itemFingerprint(e.step.item);
+    const repeated = !!e.step.repeated || (mode !== 'mock' && wasExposed(stateRef.current.exposures, e.step.item)) || session.current.answers.some(a => a.fingerprint ? a.fingerprint === fingerprint : a.itemId === e.step.item.id);
+    const attempt: Attempt = { itemId: e.step.item.id, fingerprint, repeated, question: { say: e.step.item.say, show: e.step.item.show }, skill: e.step.skill.id, d: e.step.item.difficulty, correct: e.correct, why: e.why, ts: Date.now(), mode };
+    const assessedSubject = e.step.skill.subject === 'math' || e.step.skill.subject === 'reading';
+    if (mode === 'placement' && session.current.placement) placementAnswer(session.current.placement, e.correct && (!assessedSubject || !repeated));
     if (mode === 'mock' && session.current.mock) {
       const run = session.current.mock;
       const step = e.step as QuestStep & { strand: string; level: number; target: number };
-      run.answers.push({ strand: step.strand, skill: step.skill.id, itemId: step.item.id, level: step.level, target: step.target, correct: e.correct, why: e.why, ts: attempt.ts });
+      run.answers.push({ strand: step.strand, skill: step.skill.id, itemId: step.item.id, fingerprint, repeated, level: step.level, target: step.target, correct: e.correct, why: e.why, ts: attempt.ts });
       const snapshot = { ...run, answers: [...run.answers] };
-      update((s) => ({ ...s, mockRun: snapshot })); // saved after every answer, so a paused test resumes
+      update((s) => ({ ...s, mockRun: snapshot }));
     }
-    if (mode === 'checkup') {
-      const strand = (e.step as QuestStep & { strand?: string }).strand ?? e.step.skill.strand;
-      session.current.answers.push({ ...attempt, strand, skill: attempt.skill, itemId: attempt.itemId });
-    }
+    const strand = (e.step as QuestStep & { strand?: string }).strand ?? e.step.skill.strand;
+    session.current.answers.push({ ...attempt, strand });
     update((s) => recordAttempt(s, attempt));
   };
 
@@ -192,7 +194,8 @@ export default function App() {
       return;
     } else if (mode === 'skip') {
       const skill = session.current.queue[0]?.skill;
-      const passed = summary.correct === summary.total;
+      const assessedSubject = skill?.subject === 'math' || skill?.subject === 'reading';
+      const passed = summary.correct === summary.total && (!assessedSubject || session.current.answers.every(a => a.repeated === false));
       if (passed && skill) update((s) => markKnown(s, [skill.id], 'tested'));
       setView({
         name: 'results',

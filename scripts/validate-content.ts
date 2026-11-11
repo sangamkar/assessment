@@ -3,6 +3,7 @@
  * Run: npm run validate
  */
 import { ALL_SKILLS, SUBJECTS, getSkill } from '../src/content';
+import { MOCK_ONLY_ITEMS } from '../src/content/mockOnly';
 import type { Difficulty, Item, Skill } from '../src/content/types';
 import { createRng } from '../src/engine/rng';
 import { canStep, isSolved, makePuzzle } from '../src/games/numberPath';
@@ -99,6 +100,13 @@ for (const s of ALL_SKILLS) {
   checkSkill(s);
 }
 checkCycles();
+const mockIds = new Set<string>();
+for (const item of MOCK_ONLY_ITEMS) {
+  if (mockIds.has(item.id)) err(item.id, 'duplicate mock-only item id');
+  mockIds.add(item.id);
+  if (!getSkill(item.skill)) err(item.id, `unknown mock-only skill ${item.skill}`);
+  checkItem(item, item.id);
+}
 
 for (const subject of SUBJECTS) {
   const skills = ALL_SKILLS.filter((s) => s.subject === subject.id);
@@ -153,4 +161,4 @@ if (errors.length) {
   console.error(`\n${errors.length} error(s).`);
   process.exit(1);
 }
-console.log(`\nAll content valid: ${ALL_SKILLS.length} skills.`);
+console.log(`\nAll content valid: ${ALL_SKILLS.length} skills and ${MOCK_ONLY_ITEMS.length} mock-only items.`);

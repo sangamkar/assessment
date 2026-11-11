@@ -5,11 +5,12 @@ import type { AppState, Attempt } from '../src/engine/progress';
 import { STATE_VERSION, UNREADABLE_KEY, dayKey, dayStreak, emptyState, gameState, loadState, markIntroSeen, meetsMastery, recordAttempt, recordGame, skillState, upgradeState } from '../src/engine/progress';
 import { buildQuest, buildSkillSession, buildSkipChallenge, creditFromCheckup, isVisible, nextCheckupItem, planCheckup, present, QUEST_LENGTH, scoreCheckup, skillStatus } from '../src/engine/planner';
 import type { CheckupAnswer } from '../src/engine/planner';
+import { itemFingerprint } from '../src/engine/exposures';
 
 const DAY = 24 * 60 * 60 * 1000;
 const T0 = Date.UTC(2026, 9, 1, 15);
 
-const attempt = (skill: string, correct: boolean, ts: number, d: Difficulty = 2, mode: Attempt['mode'] = 'quest'): Attempt => ({ itemId: `${skill}#x${ts}`, skill, d, correct, ts, mode });
+const attempt = (skill: string, correct: boolean, ts: number, d: Difficulty = 2, mode: Attempt['mode'] = 'quest'): Attempt => ({ itemId: `${skill}#x${ts}`, fingerprint: `fp2:synthetic-${skill}-${ts}`, repeated: false, skill, d, correct, ts, mode });
 const play = (s: AppState, list: Attempt[]) => list.reduce(recordAttempt, s);
 
 describe('mastery', () => {
@@ -189,7 +190,7 @@ describe('Check-up', () => {
         if (!step) break;
         const correct = i % 3 !== 2;
         const wrong = step.item.choices.find((c) => !c.correct);
-        answers.push({ itemId: step.item.id, skill: step.skill.id, d: step.item.difficulty, correct, why: correct ? undefined : wrong?.why, ts: T0 + i, mode: 'checkup', strand: step.strand });
+        answers.push({ itemId: step.item.id, fingerprint: itemFingerprint(step.item), repeated: false, skill: step.skill.id, d: step.item.difficulty, correct, why: correct ? undefined : wrong?.why, ts: T0 + i, mode: 'checkup', strand: step.strand });
       }
       expect(answers.length).toBe(plan.strands.length * plan.perStrand);
       const result = scoreCheckup(plan, answers);
@@ -263,7 +264,7 @@ describe('loading saved progress', () => {
 
   it('never silently discards progress it cannot read', () => {
     withStorage(() => {
-      const future = JSON.stringify({ ...saved(), version: 5 });
+      const future = JSON.stringify({ ...saved(), version: 6 });
       store.set('learning-quest:v1', future);
       expect(loadState().attempts).toHaveLength(0);
       expect(store.get(UNREADABLE_KEY)).toBe(future); // kept aside for recovery
@@ -276,7 +277,7 @@ describe('loading saved progress', () => {
   it('rejects files that are not progress, and explains newer backups', () => {
     expect(upgradeState({ hello: 1 })).toEqual({ ok: false, reason: 'not-progress' });
     expect(upgradeState(null)).toEqual({ ok: false, reason: 'not-progress' });
-    expect(upgradeState({ ...saved(), version: 5 })).toEqual({ ok: false, reason: 'newer-version' });
+    expect(upgradeState({ ...saved(), version: 6 })).toEqual({ ok: false, reason: 'newer-version' });
     const ok = upgradeState(JSON.parse(JSON.stringify(saved())));
     expect(ok.ok && ok.state.attempts).toHaveLength(1);
   });
@@ -286,7 +287,7 @@ describe('loading saved progress', () => {
       const previous = JSON.stringify({ ...saved(), version: 3, growth: { discoveries: ['kept'] }, engagement: { stickers: ['plane'] } });
       store.set('learning-quest:v1', previous);
       const loaded = loadState();
-      expect(loaded.version).toBe(4);
+      expect(loaded.version).toBe(5);
       expect(loaded.attempts).toHaveLength(1);
       expect(loaded.profile).toBeUndefined();
       expect(store.get('learning-quest:v1:before-rollback')).toBe(previous);

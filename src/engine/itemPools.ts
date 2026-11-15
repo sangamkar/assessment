@@ -10,9 +10,11 @@ const fallbackIds = new Set(MOCK_ONLY_ITEMS.filter(i => i.id.includes('.reserved
 export const isExclusiveMock = (item: Item) => exclusive.has(itemFingerprint(item));
 export const isNewReserve = (item: Item) => fallbackIds.has(item.id);
 export const isAssessed = (s: Skill) => (s.subject === 'math' || s.subject === 'reading') && s.strand !== 'writing' && !s.language && (!s.regions || s.regions.includes('us-ga'));
+const readingPracticeOnly = new Set(['r.vowelsounds', 'r1.rcontrolled', 'r1.prefixes', 'r1.suffixes', 'r.inference-k', 'r1.inference']);
 export function isMockItem(item: Item): boolean {
   const fingerprint = itemFingerprint(item);
   if (exclusive.has(fingerprint)) return true;
+  if (readingPracticeOnly.has(item.skill)) return false;
   let hash = 2166136261;
   for (let i = 0; i < fingerprint.length; i++) hash = Math.imul(hash ^ fingerprint.charCodeAt(i), 16777619);
   return (hash >>> 0) % 3 === 0;

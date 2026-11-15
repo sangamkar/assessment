@@ -22,5 +22,5 @@ export function solve(level:GearLevel, placed:Record<string,string>, belts:reado
       else if(motion[edge.to].direction!==direction || Math.abs(motion[edge.to].rpm-rpm)>1e-6){jammed.add(from);jammed.add(edge.to);}
     }
   }
-  return {motion,jammed:[...jammed],complete:jammed.size===0&&level.goals.every(g=>!!motion[g.pegId])};
+  return {motion,jammed:[...jammed],complete:jammed.size===0&&level.goals.every(g=>!!motion[g.pegId]&&(g.direction===undefined||motion[g.pegId].direction===g.direction))};
 }

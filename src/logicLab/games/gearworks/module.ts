@@ -9,14 +9,16 @@ function validLevel(input:unknown): input is GearLevel {
   const ids=l.pegs.map(p=>p.id), gear=(g:unknown)=>{const x=g as {pegId?:string;teeth?:number};return !!x&&ids.includes(x.pegId??'')&&[8,12,16].includes(x.teeth??0);};
   if(new Set(ids).size!==ids.length||!gear(l.motor)||!l.goals.every(gear)) return false;
   const fixed=[l.motor.pegId,...l.goals.map(g=>g.pegId)];
+  if(l.goals.some(g=>g.direction!==undefined&&g.direction!==1&&g.direction!==-1))return false;
   if(new Set(fixed).size!==fixed.length||!l.inventory.every(p=>p&&typeof p.id==='string'&&p.id&&[8,12,16].includes(p.teeth))||new Set(l.inventory.map(p=>p.id)).size!==l.inventory.length) return false;
-  if(!l.belts.every(b=>b&&typeof b.id==='string'&&b.id&&ids.includes(b.a)&&ids.includes(b.b)&&b.a!==b.b)||new Set(l.belts.map(b=>b.id)).size!==l.belts.length) return false;
+  if(!l.belts.every(b=>b&&typeof b.id==='string'&&b.id&&ids.includes(b.a)&&ids.includes(b.b)&&b.a!==b.b&&(b.maxSpan===undefined||(Number.isFinite(b.maxSpan)&&b.maxSpan>0)))||new Set(l.belts.map(b=>b.id)).size!==l.belts.length) return false;
   if(!l.solution.every(s=>s&&l.inventory.some(p=>p.id===s.pieceId)&&ids.includes(s.pegId)&&!fixed.includes(s.pegId))||new Set(l.solution.map(s=>s.pieceId)).size!==l.solution.length||new Set(l.solution.map(s=>s.pegId)).size!==l.solution.length) return false;
   const placedGears=[l.motor,...l.goals,...l.solution.map(s=>({pegId:s.pegId,teeth:l.inventory.find(p=>p.id===s.pieceId)!.teeth}))];
   for(let i=0;i<placedGears.length;i++) for(let j=i+1;j<placedGears.length;j++) {
     const a=l.pegs.find(p=>p.id===placedGears[i].pegId)!,b=l.pegs.find(p=>p.id===placedGears[j].pegId)!;
     if(Math.hypot(a.x-b.x,a.y-b.y)<radius(placedGears[i].teeth)+radius(placedGears[j].teeth)-1)return false;
   }
+  if(l.belts.some(b=>{const a=l.pegs.find(p=>p.id===b.a)!,c=l.pegs.find(p=>p.id===b.b)!;return Math.hypot(a.x-c.x,a.y-c.y)>(b.maxSpan??Infinity);}))return false;
   return solve(l,Object.fromEntries(l.solution.map(s=>[s.pieceId,s.pegId])),l.belts).complete;
 }
 export class GearWorks implements MiniGameModule<GearState> {
@@ -42,9 +44,26 @@ export class GearWorks implements MiniGameModule<GearState> {
     const belt=this.level.belts.find(x=>x.id===beltId);
     const occupied=new Set([this.level.motor.pegId,...this.level.goals.map(g=>g.pegId),...Object.values(this.placed)]);
     if(!belt||this.belts.some(x=>x.id===beltId)||!occupied.has(a)||!occupied.has(b)||a===b)return false;
+    const pa=this.level.pegs.find(p=>p.id===a)!,pb=this.level.pegs.find(p=>p.id===b)!;
+    if(Math.hypot(pa.x-pb.x,pa.y-pb.y)>(belt.maxSpan??Infinity))return false;
     this.checkpoint();this.belts=[...this.belts,{id:beltId,a,b}];this.changed();return true;
   }
+  remove(id:string):void {if(!this.placed[id]&&!this.belts.some(b=>b.id===id))return;this.checkpoint();const peg=this.placed[id];delete this.placed[id];this.belts=this.belts.filter(b=>b.id!==id&&b.a!==peg&&b.b!==peg);this.changed();}
   undo():void {const previous=this.history.pop();if(previous){this.placed=previous.placed;this.belts=previous.belts;this.changed();}}
-  getHint(tier:1|2):Hint|null {const next=this.level.solution.find(x=>this.placed[x.pieceId]!==x.pegId);if(next){this.hints++;return {pieceId:next.pieceId,...(tier===2?{pegId:next.pegId}:{})};}const belt=this.level.belts.find(b=>!this.belts.some(x=>x.id===b.id));if(belt){this.hints++;return {pieceId:belt.id,...(tier===2?{pegId:belt.a,targetPegId:belt.b}:{})};}return null;}
+  getHint(tier:1|2):Hint|null {
+    if(this.getState().complete)return null;
+    const next=this.level.solution.find(x=>this.placed[x.pieceId]!==x.pegId);
+    if(next){
+      const blocker=Object.entries(this.placed).find(([id,peg])=>id!==next.pieceId&&peg===next.pegId);
+      this.hints++;
+      if(blocker)return {pieceId:blocker[0],action:'remove',...(tier===2?{pegId:blocker[1]}:{})};
+      return {pieceId:next.pieceId,...(tier===2?{pegId:next.pegId}:{})};
+    }
+    const extra=Object.keys(this.placed).find(id=>!this.level.solution.some(s=>s.pieceId===id));
+    if(extra){this.hints++;return {pieceId:extra,action:'remove',...(tier===2?{pegId:this.placed[extra]}:{})};}
+    const belt=this.level.belts.find(b=>!this.belts.some(x=>x.id===b.id&&((x.a===b.a&&x.b===b.b)||(x.a===b.b&&x.b===b.a))));
+    if(belt){this.hints++;if(this.belts.some(b=>b.id===belt.id))return {pieceId:belt.id,action:'remove'};return {pieceId:belt.id,...(tier===2?{pegId:belt.a,targetPegId:belt.b}:{})};}
+    return null;
+  }
 }
 export const isTeeth=(n:number):n is Teeth=>[8,12,16].includes(n);

@@ -50,3 +50,39 @@ describe('independent progress',()=>{
    expect(store.save('gearworks','x',0,{stars:3})).toBe(false);expect(store.get('gearworks','x').completed).toBe(true);
  });
 });
+
+describe('GearWorks campaign progression',()=>{
+ it('has ten levels in each tier, stable original IDs and no pre-solved boards',()=>{
+  expect(raw).toHaveLength(30);
+  for(const tier of ['Starter','Explorer','Master'])expect(raw.filter(l=>l.tier===tier)).toHaveLength(10);
+  expect(raw.slice(0,5).map(l=>l.id)).toEqual(['first-link','different-sizes','gear-train','two-goals','belt-bridge']);
+  expect(new Set(raw.map(l=>l.id)).size).toBe(30);
+  for(const level of raw){const game=new GearWorks();game.loadLevel(level);expect(game.getState().complete,level.id).toBe(false);}
+ });
+ it('rejects powered goals turning in the wrong direction',()=>{
+  const level=structuredClone(raw.find(l=>l.id==='follow-the-arrows')!) as GearLevel;
+  const placed=Object.fromEntries(level.solution.map(s=>[s.pieceId,s.pegId]));
+  expect(solve(level,placed).complete).toBe(true);
+  level.goals[0].direction=-1;expect(solve(level,placed).complete).toBe(false);
+ });
+ it('enforces belt reach and allows removal with undo',()=>{
+  const game=new GearWorks(),level=raw.find(l=>l.id==='island-hop')!;game.loadLevel(level);
+  expect(game.connect('bridge','motor','goal')).toBe(false);
+  for(const move of level.solution)game.place(move.pieceId,move.pegId);
+  expect(game.connect('bridge','near','far')).toBe(true);expect(game.getState().complete).toBe(true);
+  game.remove('bridge');expect(game.getState().complete).toBe(false);game.undo();expect(game.getState().complete).toBe(true);
+  game.remove('near-gear');expect(game.getState().belts).toEqual([]);game.undo();expect(game.getState().complete).toBe(true);
+ });
+ it('helps recover from a wrong-sized piece blocking the intended peg',()=>{
+  const game=new GearWorks();game.loadLevel(raw.find(l=>l.id==='choose-the-size'));
+  expect(game.place('extra0','p1')).toBe(true);
+  expect(game.getHint(2)).toEqual({pieceId:'extra0',action:'remove',pegId:'p1'});
+  game.remove('extra0');expect(game.getHint(2)).toEqual({pieceId:'g1',pegId:'p1'});
+ });
+ it('requires each gear in the authored no-belt solutions',()=>{
+  for(const level of raw.filter(l=>!l.belts.length))for(const omitted of level.solution){
+   const placed=Object.fromEntries(level.solution.filter(s=>s!==omitted).map(s=>[s.pieceId,s.pegId]));
+   expect(solve(level as GearLevel,placed).complete,`${level.id}: ${omitted.pieceId}`).toBe(false);
+  }
+ });
+});

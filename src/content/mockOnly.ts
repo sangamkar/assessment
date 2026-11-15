@@ -522,7 +522,25 @@ const facts = [
   ['Butterflies have wings.', 'What do butterflies have?', 'wings', 'helmets', 'tires'],
 ] as const;
 const museumFacts = items('r.info.museum', facts.map(([fact, question, yes, no1, no2]) => ({ difficulty: 1 as const, say: `On our fact card, ${fact} ${question}`, choices: [txt(yes), txt(no1, 'detail_not_in_text'), txt(no2, 'detail_not_in_text')], explain: `The card says ${yes}.` }))).map(i => ({ ...i, skill: 'r.info' }));
+// New held-out contexts for explicitly sampled calendar, clock and shape skills.
+const week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const calendarCoverage = items('m.timepatterns.reserved-calendar', week.flatMap((day, i) => [
+  { difficulty: 2 as const, say: `On the calendar, what day comes after ${day}?`, choices: [txt(week[(i+1)%7]), txt(week[(i+6)%7], 'before_after_confusion'), txt(week[(i+2)%7], 'days_order_unknown')], explain: `${week[(i+1)%7]} comes right after ${day}.` },
+  { difficulty: 2 as const, say: `On the calendar, what day comes before ${day}?`, choices: [txt(week[(i+6)%7]), txt(week[(i+1)%7], 'before_after_confusion'), txt(week[(i+5)%7], 'days_order_unknown')], explain: `${week[(i+6)%7]} comes right before ${day}.` },
+])).map(i => ({ ...i, skill: 'm.timepatterns' }));
+const clockCoverage = items('m1.time.reserved-clock', Array.from({length:24}, (_, i) => {
+  const hour = i%12+1, minute = i<12 ? 0 : 30;
+  const label = (h:number, m:number) => `${h}:${m === 0 ? '00' : '30'}`;
+  const spoken = (h:number, m:number) => m === 0 ? `${h} o'clock` : `${h} thirty`;
+  const next = hour%12+1;
+  return { difficulty: (minute === 0 ? 2 : 3) as 2|3, say: 'Look at this clock. What time does it show?', show: 'What time is it?', visual: { kind:'clock' as const, hour, minute }, choices: [txt(label(hour,minute), undefined, spoken(hour,minute)), txt(label(next,minute), 'clock_hour_confusion', spoken(next,minute)), txt(label(hour,minute === 0 ? 30 : 0), 'clock_minute_confusion', spoken(hour,minute === 0 ? 30 : 0))], explain: minute === 0 ? `The long hand points to twelve and the short hand points to ${hour}. It is ${spoken(hour,minute)}.` : `The long hand points to six. The short hand is between ${hour} and ${next}. It is ${spoken(hour,minute)}.` };
+})).map(i => ({ ...i, skill: 'm1.time' }));
+const shapeRows = [
+  ['triangle',3,4,5], ['square',4,3,5], ['rectangle',4,3,6], ['pentagon',5,4,6], ['hexagon',6,5,4],
+] as const;
+const shapeCoverage = items('m.shapeattr.reserved-attributes', shapeRows.flatMap(([shape, count, no1, no2]) => (['sides','corners'] as const).map(attribute => ({ difficulty: 2 as const, say: `Look at this ${shape}. How many ${attribute} does it have?`, show: `How many ${attribute}?`, visual: {kind:'shape' as const, shape, color:'#2563eb'}, choices: [num(count), num(no1, 'shape_attribute_confusion'), num(no2, 'shape_attribute_confusion')], explain: `A ${shape} has ${count} ${attribute}.` })))).map(i => ({ ...i, skill: 'm.shapeattr' }));
 export const MOCK_ONLY_ITEMS: Item[] = [
+  ...calendarCoverage, ...clockCoverage, ...shapeCoverage,
   ...reserve, ...museumNumbers, ...museumAdd, ...museumMeasure, ...museumShapes, ...museumRhymes, ...museumSounds, ...museumWords, ...museumWordsMeaning, ...museumStories, ...museumFacts,
   ...geometry,
   ...vocab,

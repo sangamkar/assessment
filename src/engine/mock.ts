@@ -175,7 +175,18 @@ export function nextMockStep(state: AppState, run: MockRun): (QuestStep & { stra
   const rotated = [...skills.slice(offset), ...skills.slice(0, offset)];
   rotated.sort((a, b) => Math.abs(GRADES.indexOf(a.grade)-GRADES.indexOf(grade)) - Math.abs(GRADES.indexOf(b.grade)-GRADES.indexOf(grade)) || (usedSkills.get(a.id) ?? 0) - (usedSkills.get(b.id) ?? 0));
   const candidates = rotated.flatMap(skill => poolItems(skill, 'mock').filter(item => !item.regions || item.regions.includes('us-ga')).sort((a,b) => Math.abs(a.difficulty-d)-Math.abs(b.difficulty-d)).map(item => ({ skill, item })));
-  const chosen = chooseMockCandidate(state, run.answers, candidates);
+  // Reserve early slots for the requested concepts, without repeating while
+  // any eligible task in the domain remains unused.
+  const inDomain = run.answers.filter(a => a.strand === domain.strand).length;
+  const prefix = run.subject === 'math' && domain.strand === 'measure' && inDomain === 0 ? 'm.timepatterns.reserved-calendar.'
+    : run.subject === 'math' && domain.strand === 'measure' && inDomain === 1 ? 'm1.time.reserved-clock.'
+    : run.subject === 'math' && domain.strand === 'geometry' && inDomain === 0 ? 'm.shapeattr.reserved-attributes.' : undefined;
+  const askedIds = new Set(run.answers.map(a => a.itemId));
+  const askedPrints = new Set(run.answers.map(a => a.fingerprint).filter(Boolean));
+  const targeted = prefix ? candidates.filter(c => c.item.id.startsWith(prefix) && !askedIds.has(c.item.id) && !askedPrints.has(itemFingerprint(c.item))) : [];
+  const rotation = targeted.length ? Math.abs(run.startedAt + run.answers.length) % targeted.length : 0;
+  const preferred = [...targeted.slice(rotation), ...targeted.slice(0, rotation)];
+  const chosen = (preferred.length ? chooseMockCandidate(state, run.answers, preferred) : undefined) ?? chooseMockCandidate(state, run.answers, candidates);
   if (!chosen) throw new Error(`No reserved mock questions available for ${domain.strand}`);
   const { skill, item } = chosen.candidate;
   // Keep the existing speech lifecycle: a repeated item gets a unique presentation ID.

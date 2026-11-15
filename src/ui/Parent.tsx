@@ -23,6 +23,7 @@ interface Props {
   setState: (s: AppState) => void;
   onClose: () => void;
   onStartCheckup: (subject: SubjectId) => void;
+  onStartWordCheckup: () => void;
   onStartPlacement: (subject: SubjectId) => void;
   onStartMock: (subject: MockSubject) => void;
 }
@@ -196,7 +197,7 @@ function Focus({ state }: { state: AppState }) {
   );
 }
 
-function Checkups({ state, onStart, onPlacement }: { state: AppState; onStart: (s: SubjectId) => void; onPlacement: (s: SubjectId) => void }) {
+function Checkups({ state, onStart, onWordCheckup, onPlacement }: { state: AppState; onStart: (s: SubjectId) => void; onWordCheckup: () => void; onPlacement: (s: SubjectId) => void }) {
   return (
     <div className="flex flex-col gap-4">
       <PlacementCard state={state} onPlacement={onPlacement} />
@@ -211,6 +212,10 @@ function Checkups({ state, onStart, onPlacement }: { state: AppState; onStart: (
             </button>
           ))}
         </div>
+      </Card>
+      <Card title="Sight words & vocabulary check">
+        <p className="mb-3 text-sm text-slate-600">A 12-question check: hear six words and find them in print, then answer six word-meaning questions. Results describe these questions, not a grade-level or i-Ready score.</p>
+        <button onClick={onWordCheckup} className="rounded-xl bg-green-700 px-4 py-2 text-sm font-bold text-white">Start word check</button>
       </Card>
       {state.checkups.length === 0 && <p className="text-sm text-slate-500">No check-ups yet.</p>}
       {[...state.checkups].reverse().map((c) => {
@@ -534,7 +539,7 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
   );
 }
 
-export function Parent({ state, setState, onClose, onStartCheckup, onStartPlacement, onStartMock }: Props) {
+export function Parent({ state, setState, onClose, onStartCheckup, onStartWordCheckup, onStartPlacement, onStartMock }: Props) {
   const [tab, setTab] = useState<Tab>('overview');
   const tabs: { id: Tab; label: string }[] = [
     { id: 'overview', label: 'Overview' },
@@ -569,7 +574,7 @@ export function Parent({ state, setState, onClose, onStartCheckup, onStartPlacem
         {tab === 'growth' && <GrowthReview growth={state.growth} update={(fn) => setState({ ...state, growth: fn(state.growth) })} />}
         {tab === 'iready' && <IReadyPrep state={state} setState={setState} onStartMock={onStartMock} />}
         {tab === 'focus' && <Focus state={state} />}
-        {tab === 'checkups' && <Checkups state={state} onStart={onStartCheckup} onPlacement={onStartPlacement} />}
+        {tab === 'checkups' && <Checkups state={state} onStart={onStartCheckup} onWordCheckup={onStartWordCheckup} onPlacement={onStartPlacement} />}
         {tab === 'skills' && <SkillMap state={state} setState={setState} onPlacement={onStartPlacement} />}
         {tab === 'bank' && <QuestionBank locale={CURRICULA[state.settings.primary].locale} />}
         {tab === 'settings' && <Settings state={state} setState={setState} />}

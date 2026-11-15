@@ -193,6 +193,8 @@ export interface CheckupPlan {
   /** Skills per strand, easiest first. */
   strands: { strand: string; title: string; skills: Skill[] }[];
   perStrand: number;
+  /** Focused word test uses held-out questions. */
+  pool?: 'word-test';
 }
 
 function depth(skill: Skill, memo = new Map<string, number>()): number {
@@ -215,6 +217,14 @@ export function planCheckup(state: AppState, subject: SubjectId): CheckupPlan {
   return { subject, strands, perStrand };
 }
 
+/** A short focused assessment; both question families are held out from practice. */
+export function planWordCheckup(): CheckupPlan {
+  return { subject: 'reading', pool: 'word-test', perStrand: 6, strands: [
+    { strand: 'hfw', title: 'High-frequency words', skills: [getSkill('r.high-frequency')!] },
+    { strand: 'vocab', title: 'Vocabulary', skills: [getSkill('r.word-meanings')!] },
+  ] };
+}
+
 export interface CheckupAnswer {
   skill: string;
   itemId: string;
@@ -233,6 +243,20 @@ export function nextCheckupItem(state: AppState, plan: CheckupPlan, answered: Ch
   for (const st of plan.strands) {
     const mine = answered.filter((a) => a.strand === st.strand);
     if (mine.length >= plan.perStrand) continue;
+    if (plan.pool === 'word-test') {
+      const skill = st.skills[0];
+      const eligible = poolItems(skill, 'mock').filter(i => i.id.includes('.reserved-words.'));
+      if (!eligible.length) throw new Error(`No held-out questions for ${skill.id}`);
+      const unused = eligible.filter(i => !seen.has(itemFingerprint(i)) && !seen.has(i.id));
+      const available = unused.length ? unused : eligible;
+      const fresh = available.filter(i => !wasExposed(state.exposures, i));
+      const pool = fresh.length ? fresh : available;
+      const item = pool[mine.length % pool.length];
+      const seenInRun = seen.has(itemFingerprint(item)) || seen.has(item.id);
+      const shown = seenInRun ? { ...item, id: `${item.id}:presentation-${++presentationSerial}` } : item;
+      return { skill, item: present(shown), role: 'focus', strand: st.strand,
+        repeated: seenInRun || wasExposed(state.exposures, item) };
+    }
     let index = 0;
     let d: Difficulty = 2;
     for (const a of mine) {

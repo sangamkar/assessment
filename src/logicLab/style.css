@@ -7,4 +7,11 @@
 .logic-lab .hero h1,.logic-lab .section-title h2,.logic-lab .top h1,.logic-lab .tier h3 { font-weight: 800; }
 .logic-lab .section-title h2 { font-size: 1.5rem; }
 
-.logic-lab .gear-viewport{overflow-x:auto;border-radius:20px}.logic-lab .gear-board{min-width:600px}
+.logic-lab .gear-viewport{overflow-x:auto;border-radius:20px}.logic-lab .gear-board{max-width:420px;margin:auto}
+
+.logic-lab .drag-piece{touch-action:none;display:inline-flex;align-items:center;gap:6px;flex-direction:column;user-select:none}
+.logic-lab .piece-under-finger{position:fixed;transform:translate(-50%,-70%);z-index:100;pointer-events:none;opacity:.85;font-size:40px;background:#fff9;border-radius:20px;padding:8px;display:flex;align-items:center;gap:8px}
+.logic-lab .piece-under-finger svg{width:56px;height:56px}
+.logic-lab .gear-task{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:16px;font-weight:700}
+.logic-lab .propeller{font-size:48px;color:#d97706;display:inline-block}.logic-lab .spinning-propeller{animation:logic-lab-spin 2s linear infinite}
+.logic-lab .gear-piece-icon{line-height:1.2}

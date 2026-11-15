@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CURRICULA, getSkill, getSubject } from './content';
 import type { SubjectId } from './content/types';
 import type { CheckupAnswer, CheckupPlan, QuestStep } from './engine/planner';
-import { PLACEMENT_CAP, buildQuest, buildSkillSession, buildSkipChallenge, creditFromCheckup, nextCheckupItem, placementAnswer, placementNext, planCheckup, scoreCheckup, startPlacement } from './engine/planner';
+import { PLACEMENT_CAP, buildQuest, buildSkillSession, buildSkipChallenge, creditFromCheckup, nextCheckupItem, placementAnswer, placementNext, planCheckup, planWordCheckup, scoreCheckup, startPlacement } from './engine/planner';
 import type { PlacementRun } from './engine/planner';
 import type { MockRun, MockSubject } from './engine/mock';
 import { MOCK_BREAK_EVERY, mockTitle, mockTotal, newMockRun, nextMockStep, scoreMock } from './engine/mock';
@@ -107,6 +107,15 @@ export default function App() {
     const subject = getSubject(subjectId);
     const total = plan.strands.length * plan.perStrand;
     setView({ name: 'play', mode: 'checkup', title: `Check-up · ${subject.kidTitle}`, color: subject.color, total, first });
+  };
+
+  const startWordCheckup = () => {
+    const plan = planWordCheckup();
+    session.current = { queue: [], index: 0, plan, answers: [] };
+    const first = nextCheckupItem(stateRef.current, plan, []);
+    if (!first) return;
+    session.current.queue.push(first);
+    setView({ name: 'play', mode: 'checkup', title: 'Sight words & vocabulary check', color: '#16a34a', total: plan.strands.length * plan.perStrand, first });
   };
 
   const startPlacementRun = (subjectId: SubjectId) => {
@@ -251,7 +260,7 @@ export default function App() {
     case 'gate':
       return <Gate onPass={() => setView({ name: 'parent' })} onCancel={() => setView({ name: 'home' })} />;
     case 'parent':
-      return <Parent state={state} setState={(s) => update(() => s)} onClose={() => setView({ name: 'home' })} onStartCheckup={startCheckup} onStartPlacement={startPlacementRun} onStartMock={startMock} />;
+      return <Parent state={state} setState={(s) => update(() => s)} onClose={() => setView({ name: 'home' })} onStartCheckup={startCheckup} onStartWordCheckup={startWordCheckup} onStartPlacement={startPlacementRun} onStartMock={startMock} />;
   }
 }
 

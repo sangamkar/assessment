@@ -1,5 +1,6 @@
 import type { Item } from '../content/types';
 import { getSkill } from '../content';
+import { WORD_SKILLS } from '../content/wordSkills';
 import { KINDERGARTEN_NUMBER_SKILLS } from '../content/kindergartenNumbers';
 import { KINDERGARTEN_VISUAL_SKILLS } from '../content/kindergartenVisual';
 import { EXPANDED_READING_SKILLS } from '../content/readingExpanded';
@@ -60,7 +61,7 @@ export function itemFingerprint(item: Item): string {
   fingerprints.set(item, fingerprint);
   return fingerprint;
 }
-const newlyAuthored = new Set([...KINDERGARTEN_NUMBER_SKILLS, ...KINDERGARTEN_VISUAL_SKILLS, ...EXPANDED_READING_SKILLS, ...COMPREHENSION_SKILLS, ...INDEPENDENT_READING_SKILLS].map(s => s.id));
+const newlyAuthored = new Set([...WORD_SKILLS, ...KINDERGARTEN_NUMBER_SKILLS, ...KINDERGARTEN_VISUAL_SKILLS, ...EXPANDED_READING_SKILLS, ...COMPREHENSION_SKILLS, ...INDEPENDENT_READING_SKILLS].map(s => s.id));
 export function wasExposed(log: ExposureLog, item: Item): boolean {
   const fp = itemFingerprint(item);
   const subject = getSkill(item.skill)?.subject;

@@ -25,6 +25,9 @@ import { Results } from './ui/Results';
 import { Setup } from './ui/Setup';
 import { Discovery } from './ui/growth/Discovery';
 
+const LogicLab = React.lazy(() => import('./logicLab/App').then(({ App }) => ({ default: App })));
+const playLogicJam = () => soundEngine.playGentleBuzzer();
+
 type View =
   | { name: 'home' }
   | { name: 'island'; subject: SubjectId }
@@ -32,6 +35,7 @@ type View =
   | { name: 'results'; mode: Mode; correct: number; total: number; note?: string; again?: () => void }
   | { name: 'discovery' }
   | { name: 'games' }
+  | { name: 'logic-lab' }
   | { name: 'game'; id: GameId; level: 1 | 2 | 3; run: number }
   | { name: 'gate' }
   | { name: 'parent' };
@@ -225,7 +229,9 @@ export default function App() {
     case 'discovery':
       return <Discovery storageError={storageError} growth={state.growth} update={(fn) => update((s) => ({ ...s, growth: fn(s.growth) }))} onBack={() => setView({ name: 'home' })} />;
     case 'games':
-      return <Games state={state} onBack={() => setView({ name: 'home' })} onPlay={(id) => setView({ name: 'game', id, level: gameState(stateRef.current, id).level, run: Date.now() })} />;
+      return <Games state={state} onBack={() => setView({ name: 'home' })} onLogicLab={() => setView({ name: 'logic-lab' })} onPlay={(id) => setView({ name: 'game', id, level: gameState(stateRef.current, id).level, run: Date.now() })} />;
+    case 'logic-lab':
+      return <React.Suspense fallback={<div className="p-6">Loading Logic Lab…</div>}><div className="logic-lab"><LogicLab onExit={() => setView({ name: 'games' })} muted={state.settings.muted} onMutedChange={(muted) => update((s) => ({ ...s, settings: { ...s.settings, muted } }))} playJam={playLogicJam} /></div></React.Suspense>;
     case 'game': {
       // Level is fixed for a session; the next session starts at the updated level.
       const props = { level: view.level, onRound: (r: 'win' | 'assisted' | 'loss') => update((s) => recordGame(s, view.id, r)), onExit: () => setView({ name: 'games' }) };

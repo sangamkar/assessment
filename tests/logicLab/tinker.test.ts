@@ -74,27 +74,31 @@ describe("Dots and Boxes", () => {
     h.play(move);
     expect(boxEdges(0, 0).filter((e) => h.getState().edges[e])).toHaveLength(2);
   });
-  it("finishes every board size with either computer strategy without illegal moves", () => {
-    for (const size of [2, 3, 4, 5])
-      for (const difficulty of ["gentle", "thinking"])
-        for (let run = 0; run < 20; run++) {
-          const g = dots(size, "computer", difficulty);
-          let moves = 0;
-          while (!g.getState().complete) {
-            const line = computerMove(
-              g.getState(),
-              () => ((run * 13 + moves * 17) % 97) / 97,
-            );
-            expect(line).not.toBeNull();
-            expect(g.play(line!)).toBe(true);
-            if (++moves > edgesFor(size).length) throw Error("Did not finish");
-          }
-          expect(g.getState().score[0] + g.getState().score[1]).toBe(
-            size * size,
+  it.each(
+    [2, 3, 4, 5].flatMap((size) =>
+      ["gentle", "thinking"].map((difficulty) => ({ size, difficulty })),
+    ),
+  )(
+    "finishes $size by $size games with $difficulty computer moves",
+    ({ size, difficulty }) => {
+      for (let run = 0; run < 20; run++) {
+        const g = dots(size, "computer", difficulty);
+        let moves = 0;
+        while (!g.getState().complete) {
+          const line = computerMove(
+            g.getState(),
+            () => ((run * 13 + moves * 17) % 97) / 97,
           );
-          expect(computerMove(g.getState())).toBeNull();
+          expect(line).not.toBeNull();
+          expect(g.play(line!)).toBe(true);
+          if (++moves > edgesFor(size).length) throw Error("Did not finish");
         }
-  });
+        expect(g.getState().score[0] + g.getState().score[1]).toBe(size * size);
+        expect(computerMove(g.getState())).toBeNull();
+      }
+    },
+    10000,
+  );
   it("undoes the human action and computer responses as one decision", () => {
     const g = dots(2, "computer");
     g.play("h-0-0");

@@ -23,7 +23,7 @@ Puzzle completion/stars use the existing `logic-lab:progress:v1` namespace witho
 
 ## Validation
 
-- Typecheck, content validation (156 skills / 336 mock-only items), 213 unit tests and production build.
+- Typecheck, content validation (156 skills / 336 mock-only items), 220 unit tests and production build.
 - Rules: two-box scoring, extra turns, duplicate/invalid line rejection, both computer strategies through all board sizes, undo, adjacent-dot drawing, all 24 water levels, 600 generated pipe routes and all 18 mosaics.
 - Persistence: legal replay for each game, hint preservation, corrupt/blocked storage, prior gear stars and untouched academic/rollback keys.
 - UI: portal entry points, scoped styles, shared mute and magnetic snapping. Headless Chromium with synthetic touch covers gear drag, puzzle completion, line drawing, computer response, saved-game resume and phone sizing. These are browser interaction checks, not a child usability study or physical phone audio validation.

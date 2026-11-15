@@ -160,6 +160,8 @@ it('can serve every new kindergarten topic through the mock selector', async () 
     for (let offset = 0; offset < count; offset++) {
       const run = newMockRun('math', 2, offset);
       for (const other of MOCK_DOMAINS.math.filter(d => d.strand !== domain.strand)) for (let i = 0; i < MOCK_PER_DOMAIN.math; i++) run.answers.push({ strand: other.strand, skill: 'placeholder', itemId: `${other.strand}-${i}`, fingerprint: `fp2:${other.strand}-${i}`, repeated: false, level: 2, correct: true, ts: i });
+      const targeted = domain.strand === 'measure' ? 2 : domain.strand === 'geometry' ? 1 : 0;
+      for (let i = 0; i < targeted; i++) run.answers.push({ strand: domain.strand, skill:'placeholder', itemId:`target-${i}`, fingerprint:`fp2:target-${i}`, repeated:false, level:1, correct:false, ts:i });
       const step = nextMockStep(emptyState(), run);
       if (step) seen.add(step.skill.id);
     }

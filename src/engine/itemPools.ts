@@ -6,7 +6,7 @@ import { itemFingerprint, LEGACY_AMBIGUOUS_ITEMS } from './exposures';
 /** A deterministic finite catalogue makes exhaustion observable, including generated items. */
 const cache = new Map<string, Item[]>();
 const exclusive = new Set(MOCK_ONLY_ITEMS.map(itemFingerprint));
-const fallbackIds = new Set(MOCK_ONLY_ITEMS.filter(i => i.id.includes('.reserved.') || i.id.includes('.museum.')).map(i => i.id));
+const fallbackIds = new Set(MOCK_ONLY_ITEMS.filter(i => i.id.includes('.reserved.') || i.id.includes('.reserved-') || i.id.includes('.museum.')).map(i => i.id));
 export const isExclusiveMock = (item: Item) => exclusive.has(itemFingerprint(item));
 export const isNewReserve = (item: Item) => fallbackIds.has(item.id);
 export const isAssessed = (s: Skill) => (s.subject === 'math' || s.subject === 'reading') && s.strand !== 'writing' && !s.language && (!s.regions || s.regions.includes('us-ga'));

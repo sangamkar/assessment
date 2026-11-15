@@ -5,7 +5,7 @@
 - GearWorks retains its 30 validated levels and headless gear solver. Its board rotates upright when useful, centers/crops unused space, and fits a phone without horizontal scrolling. Children can drag an inventory gear with a visible finger-following preview and magnetic drop, or select a gear and tap a peg. Early instructions use small/medium/large labels, a gesture demonstration and replayable spoken help. Completion starts a propeller animation.
 - Water Rescue selectively restores the pipe generator/tracer from PR #16, with a new isolated MiniGameModule and renderer. There are 24 reproducible puzzles: eight each on 3×3, 4×4 and 5×5 boards. Water updates after every turn; hints identify a pipe, then show its desired orientation. Any valid route is accepted.
 - Shape Builder selectively restores mosaics, with 18 challenges. Starter uses guides, Explorer uses a reference picture, and Master uses mirrored pictures. The first puzzle needs only four pieces. Drag or tap to place, turn triangles, erase, undo and reset.
-- Dots and Boxes supports two people sharing one device or a computer opponent. Draw between neighboring dots, tap two neighboring dots, or tap a line. Choose 2×2, 3×3 or 4×4 boxes. Closing one or two boxes retains the turn; a completed board reports scores without a failure screen. Gentle computer chooses legal moves; Thinking takes boxes and avoids third sides when possible. It is not a minimax opponent. Undo returns to the preceding human decision in computer mode. Pending computer moves stop on exit/reset.
+- Dots and Boxes supports two people sharing one device or a computer opponent. Draw between neighboring dots, tap two neighboring dots, or tap a line. Choose 2×2, 3×3, 4×4 or 5×5 boxes. The 5×5 board scrolls horizontally on small screens to keep its dot and line targets separate and at least 48 pixels across. Closing one or two boxes retains the turn; a completed board reports scores without a failure screen. Gentle computer chooses legal moves; Thinking takes boxes and avoids third sides when possible. It is not a minimax opponent. Undo returns to the preceding human decision in computer mode. Pending computer moves stop on exit/reset.
 
 New screens use the existing React/TypeScript application and scoped Logic Lab styles. Three entry cards are added inside Brain Games; global navigation and academic question interaction are unchanged. No daily lock, sticker economy, airport or offline-activity dependency is restored.
 
@@ -23,7 +23,7 @@ Puzzle completion/stars use the existing `logic-lab:progress:v1` namespace witho
 
 ## Validation
 
-- Typecheck, content validation (156 skills / 336 mock-only items), 211 unit tests and production build.
+- Typecheck, content validation (156 skills / 336 mock-only items), 213 unit tests and production build.
 - Rules: two-box scoring, extra turns, duplicate/invalid line rejection, both computer strategies through all board sizes, undo, adjacent-dot drawing, all 24 water levels, 600 generated pipe routes and all 18 mosaics.
 - Persistence: legal replay for each game, hint preservation, corrupt/blocked storage, prior gear stars and untouched academic/rollback keys.
 - UI: portal entry points, scoped styles, shared mute and magnetic snapping. Headless Chromium with synthetic touch covers gear drag, puzzle completion, line drawing, computer response, saved-game resume and phone sizing. These are browser interaction checks, not a child usability study or physical phone audio validation.

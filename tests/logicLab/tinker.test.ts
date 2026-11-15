@@ -75,7 +75,7 @@ describe("Dots and Boxes", () => {
     expect(boxEdges(0, 0).filter((e) => h.getState().edges[e])).toHaveLength(2);
   });
   it("finishes every board size with either computer strategy without illegal moves", () => {
-    for (const size of [2, 3, 4])
+    for (const size of [2, 3, 4, 5])
       for (const difficulty of ["gentle", "thinking"])
         for (let run = 0; run < 20; run++) {
           const g = dots(size, "computer", difficulty);
@@ -87,7 +87,7 @@ describe("Dots and Boxes", () => {
             );
             expect(line).not.toBeNull();
             expect(g.play(line!)).toBe(true);
-            if (++moves > 40) throw Error("Did not finish");
+            if (++moves > edgesFor(size).length) throw Error("Did not finish");
           }
           expect(g.getState().score[0] + g.getState().score[1]).toBe(
             size * size,
@@ -103,6 +103,37 @@ describe("Dots and Boxes", () => {
     g.undoTurn();
     expect(g.moves).toEqual([]);
     expect(g.getState().turn).toBe(1);
+  });
+});
+describe("5 by 5 matches", () => {
+  it("offers 36 dots, 60 lines and 25 boxes with normal extra turns", () => {
+    const g = dots(5);
+    expect(edgesFor(5)).toHaveLength(60);
+    expect(edgeBetween(5, 34, 35)).toBe("h-5-4");
+    let completed = 0;
+    g.onComplete(() => completed++);
+    for (const edge of edgesFor(5)) g.play(edge.id);
+    expect(g.getState().complete).toBe(true);
+    expect(Object.keys(g.getState().boxes)).toHaveLength(25);
+    expect(g.getState().score[0] + g.getState().score[1]).toBe(25);
+    expect(completed).toBe(1);
+  });
+  it("restores an unfinished 5x5 match in either opponent mode", () => {
+    const data = new Map<string, string>(),
+      storage = {
+        getItem: (key: string) => data.get(key) ?? null,
+        setItem: (key: string, value: string) => {
+          data.set(key, value);
+        },
+      };
+    for (const mode of ["friend", "computer"]) {
+      const g = dots(5, mode);
+      g.play("h-0-0");
+      g.play("v-0-5");
+      expect(saveRun("dots-boxes", g, storage)).toBe(true);
+      const restored = loadRun("dots-boxes", storage).game;
+      expect(restored?.getState()).toEqual(g.getState());
+    }
   });
 });
 describe("Restored puzzles", () => {

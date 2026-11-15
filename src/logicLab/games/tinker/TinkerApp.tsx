@@ -113,7 +113,7 @@ export function TinkerApp({
   const [warning, setWarning] = useState(saved.warning),
     [hint, setHint] = useState<Hint | null>(null),
     [tool, setTool] = useState(5);
-  const [size, setSize] = useState<2 | 3 | 4>(2),
+  const [size, setSize] = useState<2 | 3 | 4 | 5>(2),
     [mode, setMode] = useState<DotsLevel["mode"]>("computer"),
     [difficulty, setDifficulty] = useState<DotsLevel["difficulty"]>("gentle");
   const refresh = () => render((n) => n + 1);
@@ -257,7 +257,7 @@ export function TinkerApp({
                 </button>
               </div>
               <div className="actions" role="group" aria-label="Board size">
-                {([2, 3, 4] as const).map((n) => (
+                {([2, 3, 4, 5] as const).map((n) => (
                   <button
                     key={n}
                     aria-pressed={size === n}

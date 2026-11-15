@@ -151,3 +151,12 @@
   box-shadow: none;
   touch-action: none;
 }
+
+/* A 5x5 board keeps neighboring 48px dot/line targets separate on phones. */
+.logic-lab .dots-viewport {
+  overflow-x: auto;
+}
+.logic-lab .dots-board-large {
+  width: 576px;
+  max-width: none;
+}

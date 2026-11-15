@@ -1,7 +1,7 @@
 import { PuzzleModule } from "./base";
 export type Player = 1 | 2;
 export interface DotsLevel {
-  size: 2 | 3 | 4;
+  size: 2 | 3 | 4 | 5;
   mode: "friend" | "computer";
   difficulty: "gentle" | "thinking";
 }
@@ -111,7 +111,7 @@ export class DotsAndBoxes extends PuzzleModule<DotsState> {
     const d = data as DotsLevel;
     if (
       !d ||
-      ![2, 3, 4].includes(d.size) ||
+      ![2, 3, 4, 5].includes(d.size) ||
       !["friend", "computer"].includes(d.mode) ||
       !["gentle", "thinking"].includes(d.difficulty)
     )

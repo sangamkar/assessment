@@ -265,7 +265,7 @@ await c("Emulation.setDeviceMetricsOverride", {
   mobile: true,
 });
 await click("Two players");
-await click("4 × 4");
+await click("5 × 5");
 await touch(await rect(button("▶ Play")));
 const fit = await ev(
   "({width:innerWidth,page:document.documentElement.scrollWidth,min:Math.min(...[...document.querySelectorAll('.line-target,.dot-target')].map(e=>Math.min(e.getBoundingClientRect().width,e.getBoundingClientRect().height)))})",
@@ -273,7 +273,28 @@ const fit = await ev(
 if (fit.page > fit.width || fit.min < 48)
   throw Error("Small phone fit " + JSON.stringify(fit));
 await shot("dots-320");
+await touch(await rect(aria("Horizontal line row 6 column 5")));
+await until(
+  "JSON.parse(localStorage.getItem('learning-quest:tinker:v1:dots-boxes')).moves.includes('h-5-4')",
+);
+if ((await ev("document.querySelectorAll('.dot-target').length")) !== 36)
+  throw Error("Expected 36 dots");
+if ((await ev("document.querySelectorAll('.line-target').length")) !== 60)
+  throw Error("Expected 60 lines");
+await click("Choose");
+await click("Computer");
+await touch(await rect(button("▶ Play")));
+await touch(await rect(aria("Horizontal line row 1 column 1")));
+await until(
+  "JSON.parse(localStorage.getItem('learning-quest:tinker:v1:dots-boxes')).moves.length===2",
+);
+await c("Page.reload");
+await until("(document.body?.innerText??'').includes('Hi, Test!')");
+await click("Brain Games");
+await click("Dots and Boxes");
+await click("Continue saved game");
+await until("document.querySelectorAll('.line-target').length===60");
 console.log(
-  "PASS: touch gear drag, phone fit, shared mute, all three games, computer turn, completed saves, reload resume and academic/rollback preservation",
+  "PASS: 5x5 on 320px phone, far edge touch, both modes, computer turn, 36 dots/60 lines and reload resume.",
 );
 ws.close();

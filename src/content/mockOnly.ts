@@ -1,4 +1,6 @@
 import type { Item } from "./types";
+import { READING_PLAN_MOCK } from "./readingPlan";
+import { READING_INFERENCE_MOCK } from "./readingInference";
 import { items, txt, num, vis } from "./helpers";
 /** Fresh contexts for the two reading domains with only one authored skill each. */
 const vocab = items("r.vocab.mock", [
@@ -540,7 +542,7 @@ const shapeRows = [
 ] as const;
 const shapeCoverage = items('m.shapeattr.reserved-attributes', shapeRows.flatMap(([shape, count, no1, no2]) => (['sides','corners'] as const).map(attribute => ({ difficulty: 2 as const, say: `Look at this ${shape}. How many ${attribute} does it have?`, show: `How many ${attribute}?`, visual: {kind:'shape' as const, shape, color:'#2563eb'}, choices: [num(count), num(no1, 'shape_attribute_confusion'), num(no2, 'shape_attribute_confusion')], explain: `A ${shape} has ${count} ${attribute}.` })))).map(i => ({ ...i, skill: 'm.shapeattr' }));
 export const MOCK_ONLY_ITEMS: Item[] = [
-  ...calendarCoverage, ...clockCoverage, ...shapeCoverage,
+  ...calendarCoverage, ...clockCoverage, ...shapeCoverage, ...READING_PLAN_MOCK, ...READING_INFERENCE_MOCK,
   ...reserve, ...museumNumbers, ...museumAdd, ...museumMeasure, ...museumShapes, ...museumRhymes, ...museumSounds, ...museumWords, ...museumWordsMeaning, ...museumStories, ...museumFacts,
   ...geometry,
   ...vocab,

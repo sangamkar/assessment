@@ -1,5 +1,8 @@
 import type { Item, Skill } from '../content/types';
 import { MOCK_ONLY_ITEMS } from '../content/mockOnly';
+import { EXPANDED_READING_SKILLS } from '../content/readingExpanded';
+import { COMPREHENSION_SKILLS } from '../content/readingComprehension';
+import { INDEPENDENT_READING_SKILLS } from '../content/readingIndependent';
 import { createRng } from './rng';
 import { itemFingerprint, LEGACY_AMBIGUOUS_ITEMS } from './exposures';
 
@@ -10,7 +13,7 @@ const fallbackIds = new Set(MOCK_ONLY_ITEMS.filter(i => i.id.includes('.reserved
 export const isExclusiveMock = (item: Item) => exclusive.has(itemFingerprint(item));
 export const isNewReserve = (item: Item) => fallbackIds.has(item.id);
 export const isAssessed = (s: Skill) => (s.subject === 'math' || s.subject === 'reading') && s.strand !== 'writing' && !s.language && (!s.regions || s.regions.includes('us-ga'));
-const readingPracticeOnly = new Set(['r.vowelsounds', 'r1.rcontrolled', 'r1.prefixes', 'r1.suffixes', 'r.inference-k', 'r1.inference']);
+const readingPracticeOnly = new Set(['r.vowelsounds', 'r1.rcontrolled', 'r1.prefixes', 'r1.suffixes', 'r.inference-k', 'r1.inference', ...EXPANDED_READING_SKILLS.map(s => s.id), ...COMPREHENSION_SKILLS.map(s => s.id), ...INDEPENDENT_READING_SKILLS.map(s => s.id)]);
 export function isMockItem(item: Item): boolean {
   const fingerprint = itemFingerprint(item);
   if (exclusive.has(fingerprint)) return true;

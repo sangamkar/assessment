@@ -32,7 +32,7 @@ export const GAMES: { id: GameId; title: string; emoji: string; kid: string; bui
   },
 ];
 
-export function Games({ state, onPlay, onBack, onLogicLab }: { state: AppState; onPlay: (id: GameId) => void; onBack: () => void; onLogicLab: () => void }) {
+export function Games({ state, onPlay, onBack, onLogicLab, onTinker }: { state: AppState; onPlay: (id: GameId) => void; onBack: () => void; onLogicLab: () => void; onTinker: (id: 'dots-boxes' | 'water-pipes' | 'shape-builder') => void }) {
   return (
     <div className="mx-auto min-h-screen max-w-4xl px-4 py-6">
       <header className="mb-6 flex items-center gap-4">
@@ -59,6 +59,11 @@ export function Games({ state, onPlay, onBack, onLogicLab }: { state: AppState; 
             </button>
           );
         })}
+        {([
+          ['dots-boxes','🔵','Dots and Boxes','Play with a friend or the computer. Draw lines and collect boxes!'],
+          ['water-pipes','💧','Water Rescue','Turn the pipes and bring water to a thirsty friend.'],
+          ['shape-builder','🔺','Shape Builder','Drag, turn and fit shapes to make a picture.'],
+        ] as const).map(([id,emoji,title,description])=><button key={id} onClick={()=>onTinker(id)} className="flex flex-col items-center gap-3 rounded-[2.5rem] bg-blue-100 p-6 text-center shadow-lg transition active:scale-95"><span className="text-8xl">{emoji}</span><span className="font-kid text-3xl font-bold text-blue-700">{title}</span><span className="font-kid text-lg text-slate-600">{description}</span><span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-2xl text-white">▶</span></button>)}
         <button onClick={onLogicLab} className="flex flex-col items-center gap-3 rounded-[2.5rem] bg-blue-100 p-6 text-center shadow-lg transition active:scale-95">
           <span className="text-8xl">⚙️</span>
           <span className="font-kid text-3xl font-bold text-blue-700">Logic Lab</span>

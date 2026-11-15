@@ -15,7 +15,7 @@ import { GRAVITY_BUILDER } from './games/gravitybuilder';
 import { GravityBuilder } from './games/gravitybuilder/module';
 import { GravityScreen } from './games/gravitybuilder/GravityScreen';
 
-export function App({onExit, muted: portalMuted, onMutedChange}:{onExit?:()=>void;muted?:boolean;onMutedChange?:(muted:boolean)=>void;playJam?:()=>void}={}){
+export function App({onExit, muted: portalMuted, onMutedChange}:{onExit?:()=>void;muted?:boolean;onMutedChange?:(muted:boolean)=>void}={}){
   const store=useMemo(()=>new ProgressStore(browserStorage()),[]);
   const session=useRef(new GameSession([GEAR_WORKS, GRAVITY_BUILDER],store));
   const [gravityGame,setGravityGame]=useState<GravityBuilder|null>(null);

@@ -142,13 +142,21 @@ describe("Restored puzzles", () => {
       expect(g.getState().complete).toBe(false);
       expect(g.place(-1, 5)).toBe(false);
       expect(g.place(0, 9)).toBe(false);
-      const cell = Math.max(0,g.puzzle.cells.findIndex((c) => c === 0));
-      g.place(cell,g.puzzle.cells[cell]===0?5:0);
-      g.puzzle.cells.forEach((code, i) => { if (code && i!==cell) g.place(i, code); });
+      const cell = Math.max(
+        0,
+        g.puzzle.cells.findIndex((c) => c === 0),
+      );
+      g.place(cell, g.puzzle.cells[cell] === 0 ? 5 : 0);
+      g.puzzle.cells.forEach((code, i) => {
+        if (code && i !== cell) g.place(i, code);
+      });
       expect(g.getState().complete).toBe(false);
       const hint = g.getHint(2);
-      expect(hint).toEqual({ pieceId: String(g.puzzle.cells[cell]), pegId: String(cell) });
-      g.place(cell,g.puzzle.cells[cell]);
+      expect(hint).toEqual({
+        pieceId: String(g.puzzle.cells[cell]),
+        pegId: String(cell),
+      });
+      g.place(cell, g.puzzle.cells[cell]);
       expect(g.getState().complete).toBe(true);
       g.undo();
       expect(g.getState().complete).toBe(false);

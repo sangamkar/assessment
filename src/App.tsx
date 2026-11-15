@@ -25,8 +25,8 @@ import { Results } from './ui/Results';
 import { Setup } from './ui/Setup';
 import { Discovery } from './ui/growth/Discovery';
 
+const TinkerApp = React.lazy(() => import('./logicLab/games/tinker/TinkerApp').then(({TinkerApp}) => ({default:TinkerApp})));
 const LogicLab = React.lazy(() => import('./logicLab/App').then(({ App }) => ({ default: App })));
-const playLogicJam = () => soundEngine.playGentleBuzzer();
 
 type View =
   | { name: 'home' }
@@ -36,6 +36,7 @@ type View =
   | { name: 'discovery' }
   | { name: 'games' }
   | { name: 'logic-lab' }
+  | { name: 'tinker'; id: 'dots-boxes' | 'water-pipes' | 'shape-builder' }
   | { name: 'game'; id: GameId; level: 1 | 2 | 3; run: number }
   | { name: 'gate' }
   | { name: 'parent' };
@@ -229,9 +230,11 @@ export default function App() {
     case 'discovery':
       return <Discovery storageError={storageError} growth={state.growth} update={(fn) => update((s) => ({ ...s, growth: fn(s.growth) }))} onBack={() => setView({ name: 'home' })} />;
     case 'games':
-      return <Games state={state} onBack={() => setView({ name: 'home' })} onLogicLab={() => setView({ name: 'logic-lab' })} onPlay={(id) => setView({ name: 'game', id, level: gameState(stateRef.current, id).level, run: Date.now() })} />;
+      return <Games state={state} onBack={() => setView({ name: 'home' })} onLogicLab={() => setView({ name: 'logic-lab' })} onTinker={(id) => setView({name:'tinker',id})} onPlay={(id) => setView({ name: 'game', id, level: gameState(stateRef.current, id).level, run: Date.now() })} />;
+    case 'tinker':
+      return <React.Suspense fallback={<div className="p-6">Loading game…</div>}><div className="logic-lab"><TinkerApp key={view.id} id={view.id} onExit={() => setView({name:'games'})} muted={state.settings.muted} onMutedChange={muted=>update(s=>({...s,settings:{...s.settings,muted}}))} /></div></React.Suspense>;
     case 'logic-lab':
-      return <React.Suspense fallback={<div className="p-6">Loading Logic Lab…</div>}><div className="logic-lab"><LogicLab onExit={() => setView({ name: 'games' })} muted={state.settings.muted} onMutedChange={(muted) => update((s) => ({ ...s, settings: { ...s.settings, muted } }))} playJam={playLogicJam} /></div></React.Suspense>;
+      return <React.Suspense fallback={<div className="p-6">Loading Logic Lab…</div>}><div className="logic-lab"><LogicLab onExit={() => setView({ name: 'games' })} muted={state.settings.muted} onMutedChange={(muted) => update((s) => ({ ...s, settings: { ...s.settings, muted } }))} /></div></React.Suspense>;
     case 'game': {
       // Level is fixed for a session; the next session starts at the updated level.
       const props = { level: view.level, onRound: (r: 'win' | 'assisted' | 'loss') => update((s) => recordGame(s, view.id, r)), onExit: () => setView({ name: 'games' }) };

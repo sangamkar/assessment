@@ -6,3 +6,5 @@
 
 .logic-lab .hero h1,.logic-lab .section-title h2,.logic-lab .top h1,.logic-lab .tier h3 { font-weight: 800; }
 .logic-lab .section-title h2 { font-size: 1.5rem; }
+
+.logic-lab .gear-viewport{overflow-x:auto;border-radius:20px}.logic-lab .gear-board{min-width:600px}

@@ -251,5 +251,2245 @@
         "pegId": "b"
       }
     ]
+  },
+  {
+    "id": "choose-the-size",
+    "title": "Choose the Size",
+    "tier": "Starter",
+    "lesson": "Choose a gear that touches both neighbors.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 52,
+        "y": 68
+      },
+      {
+        "id": "p1",
+        "x": 92,
+        "y": 68
+      },
+      {
+        "id": "p2",
+        "x": 132,
+        "y": 68
+      },
+      {
+        "id": "decoy3",
+        "x": 280,
+        "y": 68
+      },
+      {
+        "id": "decoy4",
+        "x": 280,
+        "y": 180
+      },
+      {
+        "id": "decoy5",
+        "x": 52,
+        "y": 196
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "p2",
+        "teeth": 8
+      }
+    ],
+    "inventory": [
+      {
+        "id": "g1",
+        "teeth": 12
+      },
+      {
+        "id": "extra0",
+        "teeth": 8
+      }
+    ],
+    "belts": [],
+    "solution": [
+      {
+        "pieceId": "g1",
+        "pegId": "p1"
+      }
+    ]
+  },
+  {
+    "id": "large-link",
+    "title": "Large Link",
+    "tier": "Starter",
+    "lesson": "A wider gap needs a larger gear.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 52,
+        "y": 68
+      },
+      {
+        "id": "p1",
+        "x": 100,
+        "y": 68
+      },
+      {
+        "id": "p2",
+        "x": 148,
+        "y": 68
+      },
+      {
+        "id": "decoy3",
+        "x": 280,
+        "y": 68
+      },
+      {
+        "id": "decoy4",
+        "x": 280,
+        "y": 180
+      },
+      {
+        "id": "decoy5",
+        "x": 52,
+        "y": 196
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "p2",
+        "teeth": 8
+      }
+    ],
+    "inventory": [
+      {
+        "id": "g1",
+        "teeth": 16
+      },
+      {
+        "id": "extra0",
+        "teeth": 8
+      },
+      {
+        "id": "extra1",
+        "teeth": 12
+      }
+    ],
+    "belts": [],
+    "solution": [
+      {
+        "pieceId": "g1",
+        "pegId": "p1"
+      }
+    ]
+  },
+  {
+    "id": "around-the-corner",
+    "title": "Around the Corner",
+    "tier": "Starter",
+    "lesson": "Power can turn a corner.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 52,
+        "y": 68
+      },
+      {
+        "id": "p1",
+        "x": 84,
+        "y": 68
+      },
+      {
+        "id": "p2",
+        "x": 84,
+        "y": 108
+      },
+      {
+        "id": "p3",
+        "x": 124,
+        "y": 108
+      },
+      {
+        "id": "decoy4",
+        "x": 280,
+        "y": 68
+      },
+      {
+        "id": "decoy5",
+        "x": 280,
+        "y": 180
+      },
+      {
+        "id": "decoy6",
+        "x": 52,
+        "y": 196
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "p3",
+        "teeth": 8
+      }
+    ],
+    "inventory": [
+      {
+        "id": "g1",
+        "teeth": 8
+      },
+      {
+        "id": "g2",
+        "teeth": 12
+      }
+    ],
+    "belts": [],
+    "solution": [
+      {
+        "pieceId": "g1",
+        "pegId": "p1"
+      },
+      {
+        "pieceId": "g2",
+        "pegId": "p2"
+      }
+    ]
+  },
+  {
+    "id": "follow-the-arrows",
+    "title": "Follow the Arrows",
+    "tier": "Starter",
+    "lesson": "Touching gears turn in opposite directions.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 52,
+        "y": 68
+      },
+      {
+        "id": "p1",
+        "x": 84,
+        "y": 68
+      },
+      {
+        "id": "p2",
+        "x": 116,
+        "y": 68
+      },
+      {
+        "id": "decoy3",
+        "x": 280,
+        "y": 68
+      },
+      {
+        "id": "decoy4",
+        "x": 280,
+        "y": 180
+      },
+      {
+        "id": "decoy5",
+        "x": 52,
+        "y": 196
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "p2",
+        "teeth": 8,
+        "direction": 1
+      }
+    ],
+    "inventory": [
+      {
+        "id": "g1",
+        "teeth": 8
+      }
+    ],
+    "belts": [],
+    "solution": [
+      {
+        "pieceId": "g1",
+        "pegId": "p1"
+      }
+    ]
+  },
+  {
+    "id": "three-helpers",
+    "title": "Three Helpers",
+    "tier": "Starter",
+    "lesson": "Plan the whole path before placing gears.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 52,
+        "y": 68
+      },
+      {
+        "id": "p1",
+        "x": 84,
+        "y": 68
+      },
+      {
+        "id": "p2",
+        "x": 124,
+        "y": 68
+      },
+      {
+        "id": "p3",
+        "x": 124,
+        "y": 108
+      },
+      {
+        "id": "p4",
+        "x": 156,
+        "y": 108
+      },
+      {
+        "id": "decoy5",
+        "x": 280,
+        "y": 68
+      },
+      {
+        "id": "decoy6",
+        "x": 280,
+        "y": 180
+      },
+      {
+        "id": "decoy7",
+        "x": 52,
+        "y": 196
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "p4",
+        "teeth": 8,
+        "direction": 1
+      }
+    ],
+    "inventory": [
+      {
+        "id": "g1",
+        "teeth": 8
+      },
+      {
+        "id": "g2",
+        "teeth": 12
+      },
+      {
+        "id": "g3",
+        "teeth": 8
+      },
+      {
+        "id": "extra0",
+        "teeth": 16
+      }
+    ],
+    "belts": [],
+    "solution": [
+      {
+        "pieceId": "g1",
+        "pegId": "p1"
+      },
+      {
+        "pieceId": "g2",
+        "pegId": "p2"
+      },
+      {
+        "pieceId": "g3",
+        "pegId": "p3"
+      }
+    ]
+  },
+  {
+    "id": "size-sequence",
+    "title": "Size Sequence",
+    "tier": "Explorer",
+    "lesson": "Different gaps need different gears.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 52,
+        "y": 68
+      },
+      {
+        "id": "p1",
+        "x": 92,
+        "y": 68
+      },
+      {
+        "id": "p2",
+        "x": 148,
+        "y": 68
+      },
+      {
+        "id": "p3",
+        "x": 196,
+        "y": 68
+      },
+      {
+        "id": "decoy4",
+        "x": 280,
+        "y": 68
+      },
+      {
+        "id": "decoy5",
+        "x": 280,
+        "y": 180
+      },
+      {
+        "id": "decoy6",
+        "x": 52,
+        "y": 196
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "p3",
+        "teeth": 8,
+        "direction": -1
+      }
+    ],
+    "inventory": [
+      {
+        "id": "g1",
+        "teeth": 12
+      },
+      {
+        "id": "g2",
+        "teeth": 16
+      },
+      {
+        "id": "extra0",
+        "teeth": 8
+      }
+    ],
+    "belts": [],
+    "solution": [
+      {
+        "pieceId": "g1",
+        "pegId": "p1"
+      },
+      {
+        "pieceId": "g2",
+        "pegId": "p2"
+      }
+    ]
+  },
+  {
+    "id": "down-and-across",
+    "title": "Down and Across",
+    "tier": "Explorer",
+    "lesson": "Look for a path through the corner.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 52,
+        "y": 68
+      },
+      {
+        "id": "p1",
+        "x": 52,
+        "y": 108
+      },
+      {
+        "id": "p2",
+        "x": 100,
+        "y": 108
+      },
+      {
+        "id": "p3",
+        "x": 156,
+        "y": 108
+      },
+      {
+        "id": "decoy4",
+        "x": 280,
+        "y": 68
+      },
+      {
+        "id": "decoy5",
+        "x": 280,
+        "y": 180
+      },
+      {
+        "id": "decoy6",
+        "x": 52,
+        "y": 196
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 12
+    },
+    "goals": [
+      {
+        "pegId": "p3",
+        "teeth": 12,
+        "direction": -1
+      }
+    ],
+    "inventory": [
+      {
+        "id": "g1",
+        "teeth": 8
+      },
+      {
+        "id": "g2",
+        "teeth": 16
+      },
+      {
+        "id": "extra0",
+        "teeth": 12
+      }
+    ],
+    "belts": [],
+    "solution": [
+      {
+        "pieceId": "g1",
+        "pegId": "p1"
+      },
+      {
+        "pieceId": "g2",
+        "pegId": "p2"
+      }
+    ]
+  },
+  {
+    "id": "staircase",
+    "title": "Staircase",
+    "tier": "Explorer",
+    "lesson": "Each contact changes the turning direction.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 52,
+        "y": 68
+      },
+      {
+        "id": "p1",
+        "x": 92,
+        "y": 68
+      },
+      {
+        "id": "p2",
+        "x": 92,
+        "y": 108
+      },
+      {
+        "id": "p3",
+        "x": 132,
+        "y": 108
+      },
+      {
+        "id": "p4",
+        "x": 132,
+        "y": 148
+      },
+      {
+        "id": "decoy5",
+        "x": 280,
+        "y": 68
+      },
+      {
+        "id": "decoy6",
+        "x": 280,
+        "y": 180
+      },
+      {
+        "id": "decoy7",
+        "x": 52,
+        "y": 196
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "p4",
+        "teeth": 8,
+        "direction": 1
+      }
+    ],
+    "inventory": [
+      {
+        "id": "g1",
+        "teeth": 12
+      },
+      {
+        "id": "g2",
+        "teeth": 8
+      },
+      {
+        "id": "g3",
+        "teeth": 12
+      },
+      {
+        "id": "extra0",
+        "teeth": 16
+      }
+    ],
+    "belts": [],
+    "solution": [
+      {
+        "pieceId": "g1",
+        "pegId": "p1"
+      },
+      {
+        "pieceId": "g2",
+        "pegId": "p2"
+      },
+      {
+        "pieceId": "g3",
+        "pegId": "p3"
+      }
+    ]
+  },
+  {
+    "id": "big-little-big",
+    "title": "Big Little Big",
+    "tier": "Explorer",
+    "lesson": "Small gears can link two big gears.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 52,
+        "y": 68
+      },
+      {
+        "id": "p1",
+        "x": 100,
+        "y": 68
+      },
+      {
+        "id": "p2",
+        "x": 148,
+        "y": 68
+      },
+      {
+        "id": "p3",
+        "x": 196,
+        "y": 68
+      },
+      {
+        "id": "p4",
+        "x": 244,
+        "y": 68
+      },
+      {
+        "id": "decoy5",
+        "x": 280,
+        "y": 180
+      },
+      {
+        "id": "decoy6",
+        "x": 52,
+        "y": 196
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 16
+    },
+    "goals": [
+      {
+        "pegId": "p4",
+        "teeth": 16,
+        "direction": 1
+      }
+    ],
+    "inventory": [
+      {
+        "id": "g1",
+        "teeth": 8
+      },
+      {
+        "id": "g2",
+        "teeth": 16
+      },
+      {
+        "id": "g3",
+        "teeth": 8
+      },
+      {
+        "id": "extra0",
+        "teeth": 12
+      }
+    ],
+    "belts": [],
+    "solution": [
+      {
+        "pieceId": "g1",
+        "pegId": "p1"
+      },
+      {
+        "pieceId": "g2",
+        "pegId": "p2"
+      },
+      {
+        "pieceId": "g3",
+        "pegId": "p3"
+      }
+    ]
+  },
+  {
+    "id": "u-turn",
+    "title": "U Turn",
+    "tier": "Explorer",
+    "lesson": "Trace power around a bend.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 52,
+        "y": 68
+      },
+      {
+        "id": "p1",
+        "x": 92,
+        "y": 68
+      },
+      {
+        "id": "p2",
+        "x": 132,
+        "y": 68
+      },
+      {
+        "id": "p3",
+        "x": 132,
+        "y": 108
+      },
+      {
+        "id": "p4",
+        "x": 132,
+        "y": 148
+      },
+      {
+        "id": "p5",
+        "x": 100,
+        "y": 148
+      },
+      {
+        "id": "decoy6",
+        "x": 280,
+        "y": 68
+      },
+      {
+        "id": "decoy7",
+        "x": 280,
+        "y": 180
+      },
+      {
+        "id": "decoy8",
+        "x": 52,
+        "y": 196
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "p5",
+        "teeth": 8,
+        "direction": -1
+      }
+    ],
+    "inventory": [
+      {
+        "id": "g1",
+        "teeth": 12
+      },
+      {
+        "id": "g2",
+        "teeth": 8
+      },
+      {
+        "id": "g3",
+        "teeth": 12
+      },
+      {
+        "id": "g4",
+        "teeth": 8
+      },
+      {
+        "id": "extra0",
+        "teeth": 16
+      }
+    ],
+    "belts": [],
+    "solution": [
+      {
+        "pieceId": "g1",
+        "pegId": "p1"
+      },
+      {
+        "pieceId": "g2",
+        "pegId": "p2"
+      },
+      {
+        "pieceId": "g3",
+        "pegId": "p3"
+      },
+      {
+        "pieceId": "g4",
+        "pegId": "p4"
+      }
+    ]
+  },
+  {
+    "id": "shared-hub",
+    "title": "Shared Hub",
+    "tier": "Explorer",
+    "lesson": "Share power across both branches.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 84,
+        "y": 120
+      },
+      {
+        "id": "hub",
+        "x": 132,
+        "y": 120
+      },
+      {
+        "id": "top-goal",
+        "x": 132,
+        "y": 72
+      },
+      {
+        "id": "bottom-goal",
+        "x": 132,
+        "y": 168
+      },
+      {
+        "id": "spare-peg",
+        "x": 52,
+        "y": 200
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 12
+    },
+    "goals": [
+      {
+        "pegId": "top-goal",
+        "teeth": 12,
+        "direction": 1
+      },
+      {
+        "pegId": "bottom-goal",
+        "teeth": 12,
+        "direction": 1
+      }
+    ],
+    "inventory": [
+      {
+        "id": "hub-gear",
+        "teeth": 12
+      },
+      {
+        "id": "spare0",
+        "teeth": 8
+      },
+      {
+        "id": "spare1",
+        "teeth": 16
+      }
+    ],
+    "belts": [],
+    "solution": [
+      {
+        "pieceId": "hub-gear",
+        "pegId": "hub"
+      }
+    ]
+  },
+  {
+    "id": "wide-fork",
+    "title": "Wide Fork",
+    "tier": "Explorer",
+    "lesson": "Share power across both branches.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 68,
+        "y": 120
+      },
+      {
+        "id": "hub",
+        "x": 132,
+        "y": 120
+      },
+      {
+        "id": "top-goal",
+        "x": 132,
+        "y": 56
+      },
+      {
+        "id": "bottom-goal",
+        "x": 132,
+        "y": 184
+      },
+      {
+        "id": "spare-peg",
+        "x": 52,
+        "y": 200
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 16
+    },
+    "goals": [
+      {
+        "pegId": "top-goal",
+        "teeth": 16,
+        "direction": 1
+      },
+      {
+        "pegId": "bottom-goal",
+        "teeth": 16,
+        "direction": 1
+      }
+    ],
+    "inventory": [
+      {
+        "id": "hub-gear",
+        "teeth": 16
+      },
+      {
+        "id": "spare0",
+        "teeth": 8
+      },
+      {
+        "id": "spare1",
+        "teeth": 12
+      }
+    ],
+    "belts": [],
+    "solution": [
+      {
+        "pieceId": "hub-gear",
+        "pegId": "hub"
+      }
+    ]
+  },
+  {
+    "id": "island-hop",
+    "title": "Island Hop",
+    "tier": "Explorer",
+    "lesson": "Belts keep direction. Meshed gears reverse it. A belt must reach both pegs.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 40,
+        "y": 70
+      },
+      {
+        "id": "near",
+        "x": 72,
+        "y": 70
+      },
+      {
+        "id": "far",
+        "x": 190,
+        "y": 150
+      },
+      {
+        "id": "goal",
+        "x": 222,
+        "y": 150
+      },
+      {
+        "id": "detour",
+        "x": 52,
+        "y": 196
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "goal",
+        "teeth": 8,
+        "direction": 1
+      }
+    ],
+    "inventory": [
+      {
+        "id": "near-gear",
+        "teeth": 8
+      },
+      {
+        "id": "far-gear",
+        "teeth": 8
+      },
+      {
+        "id": "spare0",
+        "teeth": 12
+      }
+    ],
+    "belts": [
+      {
+        "id": "bridge",
+        "a": "near",
+        "b": "far",
+        "maxSpan": 155
+      }
+    ],
+    "solution": [
+      {
+        "pieceId": "near-gear",
+        "pegId": "near"
+      },
+      {
+        "pieceId": "far-gear",
+        "pegId": "far"
+      }
+    ]
+  },
+  {
+    "id": "mixed-islands",
+    "title": "Mixed Islands",
+    "tier": "Explorer",
+    "lesson": "Belts keep direction. Meshed gears reverse it. A belt must reach both pegs.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 40,
+        "y": 70
+      },
+      {
+        "id": "near",
+        "x": 80,
+        "y": 70
+      },
+      {
+        "id": "far",
+        "x": 190,
+        "y": 150
+      },
+      {
+        "id": "goal",
+        "x": 238,
+        "y": 150
+      },
+      {
+        "id": "detour",
+        "x": 52,
+        "y": 196
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "goal",
+        "teeth": 8,
+        "direction": 1
+      }
+    ],
+    "inventory": [
+      {
+        "id": "near-gear",
+        "teeth": 12
+      },
+      {
+        "id": "far-gear",
+        "teeth": 16
+      },
+      {
+        "id": "spare0",
+        "teeth": 8
+      }
+    ],
+    "belts": [
+      {
+        "id": "bridge",
+        "a": "near",
+        "b": "far",
+        "maxSpan": 155
+      }
+    ],
+    "solution": [
+      {
+        "pieceId": "near-gear",
+        "pegId": "near"
+      },
+      {
+        "pieceId": "far-gear",
+        "pegId": "far"
+      }
+    ]
+  },
+  {
+    "id": "long-reach",
+    "title": "Long Reach",
+    "tier": "Explorer",
+    "lesson": "Belts keep direction. Meshed gears reverse it. A belt must reach both pegs.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 40,
+        "y": 70
+      },
+      {
+        "id": "near",
+        "x": 88,
+        "y": 70
+      },
+      {
+        "id": "far",
+        "x": 190,
+        "y": 150
+      },
+      {
+        "id": "goal",
+        "x": 230,
+        "y": 150
+      },
+      {
+        "id": "detour",
+        "x": 52,
+        "y": 196
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "goal",
+        "teeth": 8,
+        "direction": 1
+      }
+    ],
+    "inventory": [
+      {
+        "id": "near-gear",
+        "teeth": 16
+      },
+      {
+        "id": "far-gear",
+        "teeth": 12
+      },
+      {
+        "id": "spare0",
+        "teeth": 8
+      }
+    ],
+    "belts": [
+      {
+        "id": "bridge",
+        "a": "near",
+        "b": "far",
+        "maxSpan": 155
+      }
+    ],
+    "solution": [
+      {
+        "pieceId": "near-gear",
+        "pegId": "near"
+      },
+      {
+        "pieceId": "far-gear",
+        "pegId": "far"
+      }
+    ]
+  },
+  {
+    "id": "six-step-plan",
+    "title": "Six Step Plan",
+    "tier": "Master",
+    "lesson": "Plan the route and the gear sizes together.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 52,
+        "y": 68
+      },
+      {
+        "id": "p1",
+        "x": 92,
+        "y": 68
+      },
+      {
+        "id": "p2",
+        "x": 148,
+        "y": 68
+      },
+      {
+        "id": "p3",
+        "x": 148,
+        "y": 116
+      },
+      {
+        "id": "p4",
+        "x": 188,
+        "y": 116
+      },
+      {
+        "id": "p5",
+        "x": 228,
+        "y": 116
+      },
+      {
+        "id": "p6",
+        "x": 228,
+        "y": 148
+      },
+      {
+        "id": "decoy7",
+        "x": 280,
+        "y": 68
+      },
+      {
+        "id": "decoy8",
+        "x": 52,
+        "y": 196
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "p6",
+        "teeth": 8,
+        "direction": 1
+      }
+    ],
+    "inventory": [
+      {
+        "id": "g1",
+        "teeth": 12
+      },
+      {
+        "id": "g2",
+        "teeth": 16
+      },
+      {
+        "id": "g3",
+        "teeth": 8
+      },
+      {
+        "id": "g4",
+        "teeth": 12
+      },
+      {
+        "id": "g5",
+        "teeth": 8
+      },
+      {
+        "id": "extra0",
+        "teeth": 8
+      },
+      {
+        "id": "extra1",
+        "teeth": 16
+      }
+    ],
+    "belts": [],
+    "solution": [
+      {
+        "pieceId": "g1",
+        "pegId": "p1"
+      },
+      {
+        "pieceId": "g2",
+        "pegId": "p2"
+      },
+      {
+        "pieceId": "g3",
+        "pegId": "p3"
+      },
+      {
+        "pieceId": "g4",
+        "pegId": "p4"
+      },
+      {
+        "pieceId": "g5",
+        "pegId": "p5"
+      }
+    ]
+  },
+  {
+    "id": "zigzag",
+    "title": "Zigzag",
+    "tier": "Master",
+    "lesson": "Choose only the pieces that fit your path.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 52,
+        "y": 68
+      },
+      {
+        "id": "p1",
+        "x": 52,
+        "y": 100
+      },
+      {
+        "id": "p2",
+        "x": 92,
+        "y": 100
+      },
+      {
+        "id": "p3",
+        "x": 132,
+        "y": 100
+      },
+      {
+        "id": "p4",
+        "x": 132,
+        "y": 148
+      },
+      {
+        "id": "p5",
+        "x": 180,
+        "y": 148
+      },
+      {
+        "id": "decoy6",
+        "x": 280,
+        "y": 68
+      },
+      {
+        "id": "decoy7",
+        "x": 280,
+        "y": 180
+      },
+      {
+        "id": "decoy8",
+        "x": 52,
+        "y": 196
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "p5",
+        "teeth": 8,
+        "direction": -1
+      }
+    ],
+    "inventory": [
+      {
+        "id": "g1",
+        "teeth": 8
+      },
+      {
+        "id": "g2",
+        "teeth": 12
+      },
+      {
+        "id": "g3",
+        "teeth": 8
+      },
+      {
+        "id": "g4",
+        "teeth": 16
+      },
+      {
+        "id": "extra0",
+        "teeth": 12
+      },
+      {
+        "id": "extra1",
+        "teeth": 8
+      }
+    ],
+    "belts": [],
+    "solution": [
+      {
+        "pieceId": "g1",
+        "pegId": "p1"
+      },
+      {
+        "pieceId": "g2",
+        "pegId": "p2"
+      },
+      {
+        "pieceId": "g3",
+        "pegId": "p3"
+      },
+      {
+        "pieceId": "g4",
+        "pegId": "p4"
+      }
+    ]
+  },
+  {
+    "id": "spiral-route",
+    "title": "Spiral Route",
+    "tier": "Master",
+    "lesson": "Look ahead before filling the next peg.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 52,
+        "y": 68
+      },
+      {
+        "id": "p1",
+        "x": 84,
+        "y": 68
+      },
+      {
+        "id": "p2",
+        "x": 124,
+        "y": 68
+      },
+      {
+        "id": "p3",
+        "x": 124,
+        "y": 124
+      },
+      {
+        "id": "p4",
+        "x": 76,
+        "y": 124
+      },
+      {
+        "id": "p5",
+        "x": 36,
+        "y": 124
+      },
+      {
+        "id": "decoy6",
+        "x": 280,
+        "y": 68
+      },
+      {
+        "id": "decoy7",
+        "x": 280,
+        "y": 180
+      },
+      {
+        "id": "decoy8",
+        "x": 52,
+        "y": 196
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "p5",
+        "teeth": 12,
+        "direction": -1
+      }
+    ],
+    "inventory": [
+      {
+        "id": "g1",
+        "teeth": 8
+      },
+      {
+        "id": "g2",
+        "teeth": 12
+      },
+      {
+        "id": "g3",
+        "teeth": 16
+      },
+      {
+        "id": "g4",
+        "teeth": 8
+      },
+      {
+        "id": "extra0",
+        "teeth": 8
+      },
+      {
+        "id": "extra1",
+        "teeth": 16
+      }
+    ],
+    "belts": [],
+    "solution": [
+      {
+        "pieceId": "g1",
+        "pegId": "p1"
+      },
+      {
+        "pieceId": "g2",
+        "pegId": "p2"
+      },
+      {
+        "pieceId": "g3",
+        "pegId": "p3"
+      },
+      {
+        "pieceId": "g4",
+        "pegId": "p4"
+      }
+    ]
+  },
+  {
+    "id": "two-islands",
+    "title": "Two Islands",
+    "tier": "Master",
+    "lesson": "Use one belt for each branch. Belts keep the same direction.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 100,
+        "y": 120
+      },
+      {
+        "id": "hub",
+        "x": 132,
+        "y": 120
+      },
+      {
+        "id": "top-start",
+        "x": 240,
+        "y": 60
+      },
+      {
+        "id": "top-goal",
+        "x": 272,
+        "y": 60
+      },
+      {
+        "id": "bottom-start",
+        "x": 240,
+        "y": 180
+      },
+      {
+        "id": "bottom-goal",
+        "x": 272,
+        "y": 180
+      },
+      {
+        "id": "spare-peg",
+        "x": 52,
+        "y": 200
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "top-goal",
+        "teeth": 8,
+        "direction": 1
+      },
+      {
+        "pegId": "bottom-goal",
+        "teeth": 8,
+        "direction": 1
+      }
+    ],
+    "inventory": [
+      {
+        "id": "hub-gear",
+        "teeth": 8
+      },
+      {
+        "id": "top-gear",
+        "teeth": 8
+      },
+      {
+        "id": "bottom-gear",
+        "teeth": 8
+      },
+      {
+        "id": "spare0",
+        "teeth": 12
+      }
+    ],
+    "belts": [
+      {
+        "id": "top-belt",
+        "a": "hub",
+        "b": "top-start",
+        "maxSpan": 130
+      },
+      {
+        "id": "bottom-belt",
+        "a": "hub",
+        "b": "bottom-start",
+        "maxSpan": 130
+      }
+    ],
+    "solution": [
+      {
+        "pieceId": "hub-gear",
+        "pegId": "hub"
+      },
+      {
+        "pieceId": "top-gear",
+        "pegId": "top-start"
+      },
+      {
+        "pieceId": "bottom-gear",
+        "pegId": "bottom-start"
+      }
+    ]
+  },
+  {
+    "id": "heavy-branches",
+    "title": "Heavy Branches",
+    "tier": "Master",
+    "lesson": "Use one belt for each branch. Belts keep the same direction.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 84,
+        "y": 120
+      },
+      {
+        "id": "hub",
+        "x": 132,
+        "y": 120
+      },
+      {
+        "id": "top-start",
+        "x": 240,
+        "y": 60
+      },
+      {
+        "id": "top-goal",
+        "x": 288,
+        "y": 60
+      },
+      {
+        "id": "bottom-start",
+        "x": 240,
+        "y": 180
+      },
+      {
+        "id": "bottom-goal",
+        "x": 288,
+        "y": 180
+      },
+      {
+        "id": "spare-peg",
+        "x": 52,
+        "y": 200
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 12
+    },
+    "goals": [
+      {
+        "pegId": "top-goal",
+        "teeth": 12,
+        "direction": 1
+      },
+      {
+        "pegId": "bottom-goal",
+        "teeth": 12,
+        "direction": 1
+      }
+    ],
+    "inventory": [
+      {
+        "id": "hub-gear",
+        "teeth": 12
+      },
+      {
+        "id": "top-gear",
+        "teeth": 12
+      },
+      {
+        "id": "bottom-gear",
+        "teeth": 12
+      },
+      {
+        "id": "spare0",
+        "teeth": 8
+      },
+      {
+        "id": "spare1",
+        "teeth": 16
+      }
+    ],
+    "belts": [
+      {
+        "id": "top-belt",
+        "a": "hub",
+        "b": "top-start",
+        "maxSpan": 130
+      },
+      {
+        "id": "bottom-belt",
+        "a": "hub",
+        "b": "bottom-start",
+        "maxSpan": 130
+      }
+    ],
+    "solution": [
+      {
+        "pieceId": "hub-gear",
+        "pegId": "hub"
+      },
+      {
+        "pieceId": "top-gear",
+        "pegId": "top-start"
+      },
+      {
+        "pieceId": "bottom-gear",
+        "pegId": "bottom-start"
+      }
+    ]
+  },
+  {
+    "id": "large-branches",
+    "title": "Large Branches",
+    "tier": "Master",
+    "lesson": "Use one belt for each branch. Belts keep the same direction.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 68,
+        "y": 120
+      },
+      {
+        "id": "hub",
+        "x": 132,
+        "y": 120
+      },
+      {
+        "id": "top-start",
+        "x": 240,
+        "y": 60
+      },
+      {
+        "id": "top-goal",
+        "x": 304,
+        "y": 60
+      },
+      {
+        "id": "bottom-start",
+        "x": 240,
+        "y": 180
+      },
+      {
+        "id": "bottom-goal",
+        "x": 304,
+        "y": 180
+      },
+      {
+        "id": "spare-peg",
+        "x": 52,
+        "y": 200
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 16
+    },
+    "goals": [
+      {
+        "pegId": "top-goal",
+        "teeth": 16,
+        "direction": 1
+      },
+      {
+        "pegId": "bottom-goal",
+        "teeth": 16,
+        "direction": 1
+      }
+    ],
+    "inventory": [
+      {
+        "id": "hub-gear",
+        "teeth": 16
+      },
+      {
+        "id": "top-gear",
+        "teeth": 16
+      },
+      {
+        "id": "bottom-gear",
+        "teeth": 16
+      },
+      {
+        "id": "spare0",
+        "teeth": 8
+      },
+      {
+        "id": "spare1",
+        "teeth": 12
+      }
+    ],
+    "belts": [
+      {
+        "id": "top-belt",
+        "a": "hub",
+        "b": "top-start",
+        "maxSpan": 130
+      },
+      {
+        "id": "bottom-belt",
+        "a": "hub",
+        "b": "bottom-start",
+        "maxSpan": 130
+      }
+    ],
+    "solution": [
+      {
+        "pieceId": "hub-gear",
+        "pegId": "hub"
+      },
+      {
+        "pieceId": "top-gear",
+        "pegId": "top-start"
+      },
+      {
+        "pieceId": "bottom-gear",
+        "pegId": "bottom-start"
+      }
+    ]
+  },
+  {
+    "id": "three-islands",
+    "title": "Three Islands",
+    "tier": "Master",
+    "lesson": "Belts keep direction. Meshed gears reverse it. A belt must reach both pegs.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 40,
+        "y": 70
+      },
+      {
+        "id": "near",
+        "x": 72,
+        "y": 70
+      },
+      {
+        "id": "far",
+        "x": 166,
+        "y": 150
+      },
+      {
+        "id": "third",
+        "x": 280,
+        "y": 70
+      },
+      {
+        "id": "goal",
+        "x": 312,
+        "y": 70
+      },
+      {
+        "id": "detour",
+        "x": 52,
+        "y": 196
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "goal",
+        "teeth": 8,
+        "direction": 1
+      }
+    ],
+    "inventory": [
+      {
+        "id": "near-gear",
+        "teeth": 8
+      },
+      {
+        "id": "far-gear",
+        "teeth": 8
+      },
+      {
+        "id": "third-gear",
+        "teeth": 8
+      },
+      {
+        "id": "spare0",
+        "teeth": 12
+      },
+      {
+        "id": "spare1",
+        "teeth": 16
+      }
+    ],
+    "belts": [
+      {
+        "id": "bridge",
+        "a": "near",
+        "b": "far",
+        "maxSpan": 130
+      },
+      {
+        "id": "bridge-two",
+        "a": "far",
+        "b": "third",
+        "maxSpan": 145
+      }
+    ],
+    "solution": [
+      {
+        "pieceId": "near-gear",
+        "pegId": "near"
+      },
+      {
+        "pieceId": "far-gear",
+        "pegId": "far"
+      },
+      {
+        "pieceId": "third-gear",
+        "pegId": "third"
+      }
+    ]
+  },
+  {
+    "id": "three-size-islands",
+    "title": "Three Size Islands",
+    "tier": "Master",
+    "lesson": "Belts keep direction. Meshed gears reverse it. A belt must reach both pegs.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 40,
+        "y": 70
+      },
+      {
+        "id": "near",
+        "x": 80,
+        "y": 70
+      },
+      {
+        "id": "far",
+        "x": 166,
+        "y": 150
+      },
+      {
+        "id": "third",
+        "x": 280,
+        "y": 70
+      },
+      {
+        "id": "goal",
+        "x": 312,
+        "y": 70
+      },
+      {
+        "id": "detour",
+        "x": 52,
+        "y": 196
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "goal",
+        "teeth": 8,
+        "direction": 1
+      }
+    ],
+    "inventory": [
+      {
+        "id": "near-gear",
+        "teeth": 12
+      },
+      {
+        "id": "far-gear",
+        "teeth": 16
+      },
+      {
+        "id": "third-gear",
+        "teeth": 8
+      },
+      {
+        "id": "spare0",
+        "teeth": 8
+      }
+    ],
+    "belts": [
+      {
+        "id": "bridge",
+        "a": "near",
+        "b": "far",
+        "maxSpan": 130
+      },
+      {
+        "id": "bridge-two",
+        "a": "far",
+        "b": "third",
+        "maxSpan": 145
+      }
+    ],
+    "solution": [
+      {
+        "pieceId": "near-gear",
+        "pegId": "near"
+      },
+      {
+        "pieceId": "far-gear",
+        "pegId": "far"
+      },
+      {
+        "pieceId": "third-gear",
+        "pegId": "third"
+      }
+    ]
+  },
+  {
+    "id": "reverse-and-carry",
+    "title": "Reverse and Carry",
+    "tier": "Master",
+    "lesson": "Belts keep direction. Meshed gears reverse it. A belt must reach both pegs.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 40,
+        "y": 70
+      },
+      {
+        "id": "near",
+        "x": 88,
+        "y": 70
+      },
+      {
+        "id": "far",
+        "x": 166,
+        "y": 150
+      },
+      {
+        "id": "third",
+        "x": 280,
+        "y": 70
+      },
+      {
+        "id": "goal",
+        "x": 312,
+        "y": 70
+      },
+      {
+        "id": "detour",
+        "x": 52,
+        "y": 196
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "goal",
+        "teeth": 8,
+        "direction": 1
+      }
+    ],
+    "inventory": [
+      {
+        "id": "near-gear",
+        "teeth": 16
+      },
+      {
+        "id": "far-gear",
+        "teeth": 12
+      },
+      {
+        "id": "third-gear",
+        "teeth": 8
+      },
+      {
+        "id": "spare0",
+        "teeth": 8
+      },
+      {
+        "id": "spare1",
+        "teeth": 16
+      }
+    ],
+    "belts": [
+      {
+        "id": "bridge",
+        "a": "near",
+        "b": "far",
+        "maxSpan": 130
+      },
+      {
+        "id": "bridge-two",
+        "a": "far",
+        "b": "third",
+        "maxSpan": 145
+      }
+    ],
+    "solution": [
+      {
+        "pieceId": "near-gear",
+        "pegId": "near"
+      },
+      {
+        "pieceId": "far-gear",
+        "pegId": "far"
+      },
+      {
+        "pieceId": "third-gear",
+        "pegId": "third"
+      }
+    ]
+  },
+  {
+    "id": "master-machine",
+    "title": "Master Machine",
+    "tier": "Master",
+    "lesson": "Use what you learned: size, route, and direction.",
+    "pegs": [
+      {
+        "id": "motor",
+        "x": 52,
+        "y": 68
+      },
+      {
+        "id": "p1",
+        "x": 92,
+        "y": 68
+      },
+      {
+        "id": "p2",
+        "x": 132,
+        "y": 68
+      },
+      {
+        "id": "p3",
+        "x": 132,
+        "y": 116
+      },
+      {
+        "id": "p4",
+        "x": 180,
+        "y": 116
+      },
+      {
+        "id": "p5",
+        "x": 220,
+        "y": 116
+      },
+      {
+        "id": "p6",
+        "x": 220,
+        "y": 156
+      },
+      {
+        "id": "decoy7",
+        "x": 280,
+        "y": 68
+      },
+      {
+        "id": "decoy8",
+        "x": 52,
+        "y": 196
+      }
+    ],
+    "motor": {
+      "pegId": "motor",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "p6",
+        "teeth": 8,
+        "direction": 1
+      }
+    ],
+    "inventory": [
+      {
+        "id": "g1",
+        "teeth": 12
+      },
+      {
+        "id": "g2",
+        "teeth": 8
+      },
+      {
+        "id": "g3",
+        "teeth": 16
+      },
+      {
+        "id": "g4",
+        "teeth": 8
+      },
+      {
+        "id": "g5",
+        "teeth": 12
+      },
+      {
+        "id": "extra0",
+        "teeth": 8
+      },
+      {
+        "id": "extra1",
+        "teeth": 16
+      }
+    ],
+    "belts": [],
+    "solution": [
+      {
+        "pieceId": "g1",
+        "pegId": "p1"
+      },
+      {
+        "pieceId": "g2",
+        "pegId": "p2"
+      },
+      {
+        "pieceId": "g3",
+        "pegId": "p3"
+      },
+      {
+        "pieceId": "g4",
+        "pegId": "p4"
+      },
+      {
+        "pieceId": "g5",
+        "pegId": "p5"
+      }
+    ]
   }
 ]

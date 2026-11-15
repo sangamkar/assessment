@@ -1,5 +1,5 @@
 export type DifficultyTier = 'Starter' | 'Explorer' | 'Master';
-export type Hint = { pieceId: string; pegId?: string; targetPegId?: string };
+export type Hint = { pieceId: string; action?: 'remove'; pegId?: string; targetPegId?: string };
 export type Completion = { stars: 1 | 2 | 3 };
 export type Unsubscribe = () => void;
 /** Pure rule engines implement this contract without importing React or touching storage. */

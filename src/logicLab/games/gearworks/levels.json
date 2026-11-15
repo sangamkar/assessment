@@ -1,0 +1,255 @@
+[
+  {
+    "id": "first-link",
+    "title": "First Link",
+    "tier": "Starter",
+    "pegs": [
+      {
+        "id": "a",
+        "x": 60,
+        "y": 120
+      },
+      {
+        "id": "b",
+        "x": 92,
+        "y": 120
+      },
+      {
+        "id": "c",
+        "x": 124,
+        "y": 120
+      }
+    ],
+    "motor": {
+      "pegId": "a",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "c",
+        "teeth": 8
+      }
+    ],
+    "inventory": [
+      {
+        "id": "small",
+        "teeth": 8
+      }
+    ],
+    "belts": [],
+    "solution": [
+      {
+        "pieceId": "small",
+        "pegId": "b"
+      }
+    ]
+  },
+  {
+    "id": "different-sizes",
+    "title": "Different Sizes",
+    "tier": "Starter",
+    "pegs": [
+      {
+        "id": "a",
+        "x": 60,
+        "y": 120
+      },
+      {
+        "id": "b",
+        "x": 100,
+        "y": 120
+      },
+      {
+        "id": "c",
+        "x": 140,
+        "y": 120
+      }
+    ],
+    "motor": {
+      "pegId": "a",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "c",
+        "teeth": 8
+      }
+    ],
+    "inventory": [
+      {
+        "id": "small",
+        "teeth": 12
+      }
+    ],
+    "belts": [],
+    "solution": [
+      {
+        "pieceId": "small",
+        "pegId": "b"
+      }
+    ]
+  },
+  {
+    "id": "gear-train",
+    "title": "Gear Train",
+    "tier": "Starter",
+    "pegs": [
+      {
+        "id": "a",
+        "x": 50,
+        "y": 120
+      },
+      {
+        "id": "b",
+        "x": 98,
+        "y": 120
+      },
+      {
+        "id": "c",
+        "x": 146,
+        "y": 120
+      },
+      {
+        "id": "d",
+        "x": 178,
+        "y": 120
+      }
+    ],
+    "motor": {
+      "pegId": "a",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "d",
+        "teeth": 8
+      }
+    ],
+    "inventory": [
+      {
+        "id": "one",
+        "teeth": 16
+      },
+      {
+        "id": "two",
+        "teeth": 8
+      }
+    ],
+    "belts": [],
+    "solution": [
+      {
+        "pieceId": "one",
+        "pegId": "b"
+      },
+      {
+        "pieceId": "two",
+        "pegId": "c"
+      }
+    ]
+  },
+  {
+    "id": "two-goals",
+    "title": "Two Goals",
+    "tier": "Starter",
+    "pegs": [
+      {
+        "id": "a",
+        "x": 60,
+        "y": 100
+      },
+      {
+        "id": "b",
+        "x": 92,
+        "y": 100
+      },
+      {
+        "id": "c",
+        "x": 124,
+        "y": 100
+      },
+      {
+        "id": "d",
+        "x": 92,
+        "y": 132
+      }
+    ],
+    "motor": {
+      "pegId": "a",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "c",
+        "teeth": 8
+      },
+      {
+        "pegId": "d",
+        "teeth": 8
+      }
+    ],
+    "inventory": [
+      {
+        "id": "small",
+        "teeth": 8
+      }
+    ],
+    "belts": [],
+    "solution": [
+      {
+        "pieceId": "small",
+        "pegId": "b"
+      }
+    ]
+  },
+  {
+    "id": "belt-bridge",
+    "title": "Belt Bridge",
+    "tier": "Starter",
+    "pegs": [
+      {
+        "id": "a",
+        "x": 60,
+        "y": 120
+      },
+      {
+        "id": "b",
+        "x": 194,
+        "y": 120
+      },
+      {
+        "id": "c",
+        "x": 226,
+        "y": 120
+      }
+    ],
+    "motor": {
+      "pegId": "a",
+      "teeth": 8
+    },
+    "goals": [
+      {
+        "pegId": "c",
+        "teeth": 8
+      }
+    ],
+    "inventory": [
+      {
+        "id": "small",
+        "teeth": 8
+      }
+    ],
+    "belts": [
+      {
+        "id": "belt",
+        "a": "a",
+        "b": "b"
+      }
+    ],
+    "solution": [
+      {
+        "pieceId": "small",
+        "pegId": "b"
+      }
+    ]
+  }
+]

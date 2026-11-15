@@ -1,0 +1,153 @@
+.logic-lab .actions [aria-pressed="true"] {
+  outline: 3px solid #5574d4;
+  background: #dce8ff;
+}
+.logic-lab .continue-game,
+.logic-lab .big-play {
+  display: block;
+  background: #dcfce7;
+  margin: 16px auto;
+  min-width: 140px;
+}
+.logic-lab .tile-board {
+  display: grid;
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  margin: 16px auto;
+  gap: 3px;
+}
+.logic-lab .tile-board button {
+  position: relative;
+  padding: 0;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  background: #edf2fa;
+  min-width: 48px;
+  min-height: 48px;
+  box-shadow: none;
+  touch-action: manipulation;
+}
+.logic-lab .tile-board svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.logic-lab .tile-board button.wet {
+  background: #e0f2fe;
+}
+.logic-lab .water-story {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 32px;
+  max-width: 420px;
+  margin: auto;
+}
+.logic-lab .tile-badge {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 25px;
+}
+.logic-lab .ghost-pipe,
+.logic-lab .shape-guide {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.logic-lab .shape-guide {
+  opacity: 0.5;
+}
+.logic-lab .shape-icon {
+  width: 50px;
+  height: 50px;
+  display: block;
+}
+.logic-lab .shape-reference {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+.logic-lab .shape-reference p {
+  font-size: 14px;
+}
+.logic-lab .mini-mosaic {
+  display: grid;
+  width: 120px;
+  border: 2px solid #cbd5e1;
+  background: #f1f5f9;
+}
+.logic-lab .mini-mosaic svg {
+  width: 100%;
+  height: auto;
+}
+.logic-lab .scoreboard {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  font-weight: 700;
+  flex-wrap: wrap;
+}
+.logic-lab .scoreboard span {
+  padding: 10px;
+  border: 3px solid transparent;
+  border-radius: 12px;
+}
+.logic-lab .scoreboard .active-player {
+  border-color: #64748b;
+  background: #f1f5f9;
+}
+.logic-lab .dots-board {
+  position: relative;
+  max-width: 480px;
+  margin: auto;
+  min-width: 240px;
+  touch-action: manipulation;
+}
+.logic-lab .dots-board svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.logic-lab .line-target {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 10px;
+}
+.logic-lab .line-target:enabled:hover,
+.logic-lab .line-target:focus-visible {
+  background: #a5b4fc66;
+}
+@media (max-width: 400px) {
+  .logic-lab .play-card {
+    padding: 10px;
+  }
+  .logic-lab .shell {
+    padding: 10px;
+  }
+  .logic-lab .inventory {
+    gap: 5px;
+  }
+  .logic-lab .inventory button {
+    padding: 8px;
+  }
+}
+
+.logic-lab .dot-target {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  touch-action: none;
+}

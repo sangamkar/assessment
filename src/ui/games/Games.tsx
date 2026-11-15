@@ -32,7 +32,7 @@ export const GAMES: { id: GameId; title: string; emoji: string; kid: string; bui
   },
 ];
 
-export function Games({ state, onPlay, onBack }: { state: AppState; onPlay: (id: GameId) => void; onBack: () => void }) {
+export function Games({ state, onPlay, onBack, onLogicLab }: { state: AppState; onPlay: (id: GameId) => void; onBack: () => void; onLogicLab: () => void }) {
   return (
     <div className="mx-auto min-h-screen max-w-4xl px-4 py-6">
       <header className="mb-6 flex items-center gap-4">
@@ -59,6 +59,12 @@ export function Games({ state, onPlay, onBack }: { state: AppState; onPlay: (id:
             </button>
           );
         })}
+        <button onClick={onLogicLab} className="flex flex-col items-center gap-3 rounded-[2.5rem] bg-blue-100 p-6 text-center shadow-lg transition active:scale-95">
+          <span className="text-8xl">⚙️</span>
+          <span className="font-kid text-3xl font-bold text-blue-700">Logic Lab</span>
+          <span className="font-kid text-lg text-slate-600">Build with gears and moving balls!</span>
+          <span className="mt-1 inline-flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-2xl text-white shadow">▶</span>
+        </button>
       </div>
     </div>
   );

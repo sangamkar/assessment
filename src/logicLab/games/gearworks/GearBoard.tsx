@@ -5,9 +5,9 @@ import { radius } from './solver';
 import { TutorialHandOverlay } from '../../components/TutorialHandOverlay';
 function gearPoints(teeth:Teeth,r:number){const n=teeth*4;return Array.from({length:n},(_,i)=>{const a=i*Math.PI*2/n,rr=r*(i%4===1||i%4===2?1:0.84);return `${Math.cos(a)*rr},${Math.sin(a)*rr}`}).join(' ');}
 function rattle(){try {const C=window.AudioContext;if(!C)return;const ctx=new C(),osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='triangle';osc.frequency.setValueAtTime(145,ctx.currentTime);osc.frequency.exponentialRampToValueAtTime(95,ctx.currentTime+0.12);gain.gain.setValueAtTime(0.018,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.15);osc.connect(gain);gain.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+0.16);osc.onended=()=>{void ctx.close();};}catch{/* Sound is optional and never blocks play. */}}
-export function GearBoard({state,onPeg,hint,muted,tutorial}:{state:GearState;onPeg:(id:string)=>void;hint:Hint|null;muted:boolean;tutorial:boolean}) {
+export function GearBoard({state,onPeg,hint,muted,tutorial,onJam}:{state:GearState;onPeg:(id:string)=>void;hint:Hint|null;muted:boolean;tutorial:boolean;onJam?:()=>void}) {
   const previous=useRef(false);const jam=state.solution.jammed.length>0;
-  useEffect(()=>{if(jam&&!previous.current&&!muted)rattle();previous.current=jam;},[jam,muted]);
+  useEffect(()=>{if(jam&&!previous.current&&!muted)(onJam??rattle)();previous.current=jam;},[jam,muted,onJam]);
   const pegs=state.level.pegs;const fixed=[state.level.motor,...state.level.goals];
   const gears=[...fixed,...Object.entries(state.placed).map(([id,pegId])=>({pegId,teeth:state.level.inventory.find(p=>p.id===id)!.teeth}))];
   const first=state.level.solution[0],source=pegs.find(p=>p.id===first?.pegId);

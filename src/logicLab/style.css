@@ -15,3 +15,7 @@
 .logic-lab .gear-task{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:16px;font-weight:700}
 .logic-lab .propeller{font-size:48px;color:#d97706;display:inline-block}.logic-lab .spinning-propeller{animation:logic-lab-spin 2s linear infinite}
 .logic-lab .gear-piece-icon{line-height:1.2}
+/* Match the kid app: rounded Fredoka font, a big "play next" button and a top-left back button. */
+.logic-lab{font-family:'Fredoka',system-ui,sans-serif}
+.logic-lab .back-top{margin-bottom:12px}
+.logic-lab .play-next{display:block;width:100%;max-width:420px;margin:0 auto 8px;min-height:72px;font-size:1.6rem;background:#16a34a;color:#fff;border-radius:999px;box-shadow:0 6px 18px #16a34a55}

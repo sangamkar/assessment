@@ -234,6 +234,12 @@ export function scoreMock(run: MockRun): MockResult {
   };
 }
 
+/** Start the mock in the middle of the grade he works at (Mid Grade 1 for Grade 1). */
+export function mockStartLevel(state: AppState): number {
+  const grade = state.settings.workingGrade ?? 'K';
+  return GRADES.indexOf(grade) * 3 + 1;
+}
+
 export function newMockRun(subject: MockSubject, startLevel = 2, now = Date.now()): MockRun {
   return { id: `mock-${subject}-${now}`, subject, startedAt: now, startLevel, answers: [] };
 }

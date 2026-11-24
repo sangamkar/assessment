@@ -81,7 +81,7 @@ export interface Settings {
   /**
    * The grade he works at. New topics come from this grade first, and topics from
    * earlier grades never lock it (a child working at Grade 1 is not held back by
-   * Kindergarten prerequisites). Default: Kindergarten.
+   * Kindergarten prerequisites). Default: Grade 1 (Aarav works ahead of grade).
    */
   workingGrade?: Grade;
 }
@@ -120,7 +120,7 @@ const DAY = 24 * 60 * 60 * 1000;
 export const MASTERY = { window: 8, minAttempts: 6, accuracy: 0.85, minHardAttempts: 3, minDays: 3, dayWindow: 21 };
 
 export function emptyState(): AppState {
-  return { version: 5, exposures: emptyExposures(), growth: emptyGrowth(), settings: { muted: false, unlockAll: false, showStretch: true, curricula: ['us-ga'], primary: 'us-ga', languages: ['hi'] }, skills: {}, attempts: [], stars: 0, days: [], checkups: [], games: {} };
+  return { version: 5, exposures: emptyExposures(), growth: emptyGrowth(), settings: { muted: false, unlockAll: false, showStretch: true, curricula: ['us-ga'], primary: 'us-ga', languages: ['hi'], workingGrade: '1', iReadyDate: '2026-12-03' }, skills: {}, attempts: [], stars: 0, days: [], checkups: [], games: {} };
 }
 
 export const STATE_VERSION = 5;

@@ -5,7 +5,7 @@ import type { CheckupAnswer, CheckupPlan, QuestStep } from './engine/planner';
 import { PLACEMENT_CAP, buildQuest, buildSkillSession, buildSkipChallenge, creditFromCheckup, nextCheckupItem, placementAnswer, placementNext, planCheckup, planWordCheckup, scoreCheckup, startPlacement } from './engine/planner';
 import type { PlacementRun } from './engine/planner';
 import type { MockRun, MockSubject } from './engine/mock';
-import { MOCK_BREAK_EVERY, mockTitle, mockTotal, newMockRun, nextMockStep, scoreMock } from './engine/mock';
+import { MOCK_BREAK_EVERY, mockTitle, mockTotal, mockStartLevel, newMockRun, nextMockStep, scoreMock } from './engine/mock';
 import type { AppState, Attempt, GameId, Mode } from './engine/progress';
 import { gameState, isSpacedRepeat, loadState, markIntroSeen, markKnown, recordAttempt, recordGame, saveState, skillState } from './engine/progress';
 import { itemFingerprint, wasExposed } from './engine/exposures';
@@ -144,7 +144,7 @@ export default function App() {
 
   const startMock = (subject: MockSubject) => {
     const saved = stateRef.current.mockRun;
-    const run: MockRun = saved && saved.subject === subject ? { ...saved, answers: [...saved.answers] } : newMockRun(subject);
+    const run: MockRun = saved && saved.subject === subject ? { ...saved, answers: [...saved.answers] } : newMockRun(subject, mockStartLevel(stateRef.current));
     session.current = { queue: [], index: 0, mock: run, answers: [] };
     if (!saved || saved.subject !== subject) update((s) => ({ ...s, mockRun: run }));
     const first = nextMockStep(stateRef.current, run);

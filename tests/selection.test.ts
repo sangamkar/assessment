@@ -59,13 +59,17 @@ function topSkillShare(served: ReturnType<typeof simulate>['served']) {
 }
 
 describe('question selection over weeks of daily use', () => {
-  it('does not loop the same questions or let one topic take over', () => {
-    const { served, state } = simulate(emptyState(), 30);
+  it.each([
+    ['K', 0.15],
+    ['1', 0.2],
+  ] as const)('does not loop the same questions or let one topic take over (working level %s)', (grade, maxRepeats) => {
+    const base = emptyState();
+    const { served, state } = simulate({ ...base, settings: { ...base.settings, workingGrade: grade } }, 30);
     const share = recentRepeatShare(served);
     const top = topSkillShare(served);
     const mastered = Object.values(state.skills).filter((s) => s.mastered).length;
-    console.log(`30 days: ${served.length} questions, ${(share * 100).toFixed(0)}% seen in the last week, top topic ${(top * 100).toFixed(0)}%, ${new Set(served.map((q) => q.skill)).size} topics, ${mastered} mastered`);
-    expect(share).toBeLessThan(0.15);
+    console.log(`Level ${grade}, 30 days: ${served.length} questions, ${(share * 100).toFixed(0)}% seen in the last week, top topic ${(top * 100).toFixed(0)}%, ${new Set(served.map((q) => q.skill)).size} topics, ${mastered} mastered`);
+    expect(share).toBeLessThan(maxRepeats);
     expect(top).toBeLessThan(0.12);
     expect(mastered).toBeGreaterThan(15);
   });

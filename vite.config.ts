@@ -7,7 +7,8 @@ export default defineConfig(() => {
   return {
     base: './',
     // Agent worktrees under .claude/ hold other checkouts of this repo; never test them here.
-    test: { exclude: ['**/node_modules/**', '**/dist/**', '.claude/**'] },
+    // Building every skill's question catalogue takes a few seconds on CI the first time.
+    test: { exclude: ['**/node_modules/**', '**/dist/**', '.claude/**'], testTimeout: 30000 },
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

@@ -1,5 +1,5 @@
 import { ALL_SKILLS, SUBJECTS, getSkill, getSubject } from '../content';
-import type { Difficulty, Item, Skill, SubjectId } from '../content/types';
+import type { Difficulty, Grade, Item, Skill, SubjectId } from '../content/types';
 import { NOISE_TAGS } from '../content/misconceptions';
 import { createRng } from './rng';
 import { isAssessed, poolItems } from './itemPools';
@@ -14,8 +14,11 @@ let presentationSerial = 0;
 
 /** A prerequisite is satisfied once it is mastered, credited, or solidly being practised. */
 function prereqMet(state: AppState, id: string): boolean {
+  const pre = getSkill(id);
   // A prerequisite from another curriculum (e.g. Georgia-only) never blocks this one.
-  if (!inRegion(state, getSkill(id))) return true;
+  if (!inRegion(state, pre)) return true;
+  // Nor does one below the grade he works at: a Grade 1 child is not held back by Kindergarten.
+  if (pre && gradeRank(pre.grade) < gradeRank(workingGrade(state))) return true;
   const s = skillState(state, id);
   if (s.mastered || s.credited) return true;
   const list = attemptsFor(state, id);
@@ -27,10 +30,14 @@ export function inRegion(state: AppState, thing?: { regions?: string[] }): boole
   return !thing?.regions || thing.regions.some((r) => (state.settings.curricula as string[]).includes(r));
 }
 
+const GRADE_ORDER: Grade[] = ['K', '1', '2'];
+const gradeRank = (g: Grade) => GRADE_ORDER.indexOf(g);
+export const workingGrade = (state: AppState): Grade => state.settings.workingGrade ?? 'K';
+
 export function isVisible(state: AppState, skill: Skill): boolean {
   if (!inRegion(state, skill)) return false;
   if (skill.language && !(state.settings.languages ?? ['hi']).includes(skill.language)) return false;
-  return skill.grade === 'K' || state.settings.showStretch;
+  return gradeRank(skill.grade) <= gradeRank(workingGrade(state)) || state.settings.showStretch;
 }
 
 export function skillStatus(state: AppState, skill: Skill, now = Date.now()): SkillStatus {
@@ -70,13 +77,24 @@ export function pickItem(state: AppState, skill: Skill, level: Difficulty, avoid
   const hasFingerprints = [...avoid].some(value => value.startsWith('fp2:'));
   const unused = allowed.filter((i) => !avoid.has(itemFingerprint(i)) && (hasFingerprints || !avoid.has(i.id)));
   const candidates = unused.length ? unused : allowed;
-  const fresh = candidates.filter((i) => !wasExposed(state.exposures, i));
-  const pool = fresh.length ? fresh : candidates;
-  const distance = Math.min(...pool.map(i => Math.abs(i.difficulty - level)));
-  const chosen = rng.pick(pool.filter(i => Math.abs(i.difficulty - level) === distance));
+  const chosen = rng.pick(byLevelThenFreshness(state, candidates, level));
   // Some legacy generators reuse an ID for different pictures; keep speech keyed to the new task.
   const item = avoid.has(chosen.id) || avoid.has(itemFingerprint(chosen)) ? { ...chosen, id: `${chosen.id}:presentation-${++presentationSerial}` } : chosen;
   return present(item);
+}
+
+/**
+ * The right level matters more than novelty: a fresh question at his level, then a fresh one
+ * a level above, then a fresh one a level below, then a familiar one at his level. Never two
+ * levels below while anything closer exists.
+ */
+function byLevelThenFreshness(state: AppState, items: Item[], level: Difficulty): Item[] {
+  const at = (d: number) => items.filter((i) => i.difficulty === d);
+  const fresh = (list: Item[]) => list.filter((i) => !wasExposed(state.exposures, i));
+  for (const list of [fresh(at(level)), fresh(at(level + 1)), fresh(at(level - 1)), at(level)]) if (list.length) return list;
+  const distance = Math.min(...items.map((i) => Math.abs(i.difficulty - level)));
+  const closest = items.filter((i) => Math.abs(i.difficulty - level) === distance);
+  return fresh(closest).length ? fresh(closest) : closest;
 }
 
 /* ------------------------------------------------------------------------ */
@@ -107,13 +125,52 @@ export function focusSkills(state: AppState, now = Date.now()): Skill[] {
     const st = skillStatus(state, s, now);
     return st === 'ready' || st === 'learning';
   });
-  const score = (s: Skill) => {
-    const learning = attemptsFor(state, s.id).length > 0 ? 0 : 1;
-    const grade = s.grade === 'K' ? 0 : 2;
-    return learning + grade;
+  // New topics: his working grade first, then the grade above, then earlier grades.
+  const target = gradeRank(workingGrade(state));
+  const gradeOrder = (s: Skill) => {
+    const g = gradeRank(s.grade);
+    return g === target ? 0 : g > target ? g - target : 10 + target - g;
   };
-  return open.sort((a, b) => score(a) - score(b));
+  const lastPractised = (s: Skill) => attemptsFor(state, s.id).reduce((t, a) => Math.max(t, a.ts), 0);
+  const ordered: Skill[] = [];
+  for (const subject of SUBJECTS.map((x) => x.id)) {
+    const mine = open.filter((s) => s.subject === subject);
+    // In progress: the one practised longest ago first, so no topic takes over the Quest.
+    const learning = mine.filter((s) => skillStatus(state, s, now) === 'learning').sort((a, b) => lastPractised(a) - lastPractised(b));
+    // A topic whose questions were all seen this week rests until they are a week old.
+    const resting = learning.filter((s) => !hasFreshQuestions(state, s, now));
+    const working = learning.filter((s) => !resting.includes(s));
+    // Unfinished topics below his working grade wait until his grade's topics run out.
+    const active = working.filter((s) => gradeRank(s.grade) >= target);
+    const behind = working.filter((s) => gradeRank(s.grade) < target);
+    const fresh = mine.filter((s) => skillStatus(state, s, now) === 'ready').sort((a, b) => gradeOrder(a) - gradeOrder(b));
+    const freshAtGrade = fresh.filter((s) => gradeRank(s.grade) >= target);
+    const freshBelow = fresh.filter((s) => gradeRank(s.grade) < target);
+    // Keep up to MAX_ACTIVE topics going per subject; below that, start a new one first.
+    const current = active.length < MAX_ACTIVE && freshAtGrade.length ? [freshAtGrade[0], ...active, ...freshAtGrade.slice(1)] : [...active, ...freshAtGrade];
+    ordered.push(...current, ...behind, ...freshBelow, ...resting);
+  }
+  return ordered;
 }
+
+/** True when the topic has at least two practice questions he has not answered in the last week. */
+function hasFreshQuestions(state: AppState, skill: Skill, now: number): boolean {
+  if (skill.generate && !isAssessed(skill)) return true; // generated without limit
+  const since = now - 7 * 24 * 60 * 60 * 1000;
+  const recent = new Set<string>();
+  for (const a of state.attempts) if (a && a.skill === skill.id && a.ts > since) recent.add(a.fingerprint ?? a.itemId);
+  const pool = isAssessed(skill) ? poolItems(skill, 'practice') : skill.items ?? [];
+  let fresh = 0;
+  for (const item of pool) {
+    if (!inRegion(state, item) || recent.has(item.id)) continue;
+    if (isAssessed(skill) && recent.has(itemFingerprint(item))) continue;
+    if (++fresh >= 2) return true;
+  }
+  return false;
+}
+
+/** Topics in progress per subject before a new one is started. */
+const MAX_ACTIVE = 3;
 
 export function buildQuest(state: AppState, now = Date.now()): QuestStep[] {
   const steps: QuestStep[] = [];

@@ -90,7 +90,7 @@ describe('adaptive level', () => {
 
 describe('unlocking and visibility', () => {
   it('skills with no prerequisites start ready; others start locked', () => {
-    const s = emptyState();
+    const s = { ...emptyState(), settings: { ...emptyState().settings, workingGrade: 'K' as const } };
     expect(skillStatus(s, getSkill('m.count10')!)).toBe('ready');
     expect(skillStatus(s, getSkill('m.add')!)).toBe('locked');
   });
@@ -119,7 +119,7 @@ describe('unlocking and visibility', () => {
   });
 
   it('stretch skills hide when the setting is off', () => {
-    const s = { ...emptyState(), settings: { ...emptyState().settings, showStretch: false } };
+    const s = { ...emptyState(), settings: { ...emptyState().settings, showStretch: false, workingGrade: 'K' as const } };
     expect(isVisible(s, getSkill('m1.add20')!)).toBe(false);
     expect(isVisible(s, getSkill('m.add')!)).toBe(true);
   });

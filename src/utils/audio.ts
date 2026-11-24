@@ -6,10 +6,6 @@ class SoundEngine {
   private isMuted: boolean = false;
   private currentUtterance: SpeechSynthesisUtterance | null = null;
 
-  constructor() {
-    // Lazy initialize on first interaction
-  }
-
   private getContext(): AudioContext | null {
     if (typeof window === 'undefined') return null;
     if (!this.audioCtx) {
@@ -178,22 +174,54 @@ class SoundEngine {
 
   private locale = 'en-US';
   private sequence = 0;
+  private timers: ReturnType<typeof setTimeout>[] = [];
+  private keepAlive: ReturnType<typeof setInterval> | null = null;
+  /** Chrome refuses speech until the page has had a tap or key press. */
+  private unlocked = false;
+  /** Speech that was refused before the first tap; it plays on that tap. */
+  private waiting: { parts: SpeechPart[]; onEnd?: () => void } | null = null;
+  private voicesReady = false;
+
+  constructor() {
+    if (typeof window === 'undefined') return;
+    const unlock = () => {
+      this.unlocked = true;
+      this.getContext();
+      const waiting = this.waiting;
+      this.waiting = null;
+      if (waiting) this.speakParts(waiting.parts, waiting.onEnd);
+    };
+    window.addEventListener('pointerdown', unlock, { capture: true });
+    window.addEventListener('keydown', unlock, { capture: true });
+    if ('speechSynthesis' in window) {
+      const ready = () => {
+        if (window.speechSynthesis.getVoices().length) this.voicesReady = true;
+      };
+      ready();
+      window.speechSynthesis.addEventListener?.('voiceschanged', ready);
+    }
+  }
 
   /** English accent for the active curriculum (en-US or en-IN). */
   public setLocale(locale: string) {
     this.locale = locale;
   }
 
+  /**
+   * Prefers voices installed on the device. Chrome's online "Google" voices fail silently
+   * on a weak connection and stop mid-sentence after about 15 seconds.
+   */
   private pickVoice(lang: string): SpeechSynthesisVoice | undefined {
     const voices = window.speechSynthesis.getVoices();
     const prefix = lang.split('-')[0];
-    const friendly = (v: SpeechSynthesisVoice) => /Natural|Samantha|Google|Karen|Victoria|Lekha|Veena|Rishi/.test(v.name);
-    return (
-      voices.find((v) => v.lang.replace('_', '-') === lang && friendly(v)) ||
-      voices.find((v) => v.lang.replace('_', '-') === lang) ||
-      (prefix === 'en' ? voices.find((v) => v.lang.startsWith('en') && friendly(v)) : undefined) ||
-      voices.find((v) => v.lang.startsWith(prefix))
-    );
+    const norm = (v: SpeechSynthesisVoice) => v.lang.replace('_', '-');
+    const friendly = (v: SpeechSynthesisVoice) => /Natural|Samantha|Karen|Victoria|Lekha|Veena|Rishi|Aria|Jenny|Zira|Ava|Allison/.test(v.name);
+    const ranked = (list: SpeechSynthesisVoice[]) =>
+      list.find((v) => v.localService && friendly(v)) || list.find((v) => v.localService) || list.find(friendly) || list[0];
+    const exact = voices.filter((v) => norm(v) === lang);
+    if (exact.length) return ranked(exact);
+    const sameLanguage = voices.filter((v) => norm(v).startsWith(prefix));
+    return sameLanguage.length ? ranked(sameLanguage) : undefined;
   }
 
   /** True when the device has a voice for this language (e.g. 'hi' for Hindi). */
@@ -209,21 +237,31 @@ class SoundEngine {
     this.speakParts([{ text, lang }], onEnd);
   }
 
-  /** Speaks several parts in a row, each in its own language (English prompt, then a Hindi word). */
-  public speakParts(parts: { text: string; lang?: string; roman?: string }[], onEnd?: () => void) {
+  /**
+   * Speaks several parts in a row, each in its own language (English prompt, then a Hindi word).
+   * Works around Chrome's speech bugs: speech started right after cancel() is dropped, the
+   * queue can be left paused, the first speech before any tap is refused, and an utterance can
+   * silently never start. Each part gets one retry with the browser's default voice.
+   */
+  public speakParts(parts: SpeechPart[], onEnd?: () => void) {
     if (this.isMuted || typeof window === 'undefined' || !('speechSynthesis' in window)) {
       if (onEnd) onEnd();
       return;
     }
-    this.stopSpeech();
-    const run = ++this.sequence;
-    const next = (i: number) => {
+    const synth = window.speechSynthesis;
+    const busy = synth.speaking || synth.pending;
+    this.stopSpeech(busy);
+    const run = this.sequence;
+    const later = (fn: () => void, ms: number) => this.timers.push(setTimeout(() => run === this.sequence && fn(), ms));
+    const finish = () => {
+      this.clearKeepAlive();
+      this.currentUtterance = null;
+      if (onEnd) onEnd();
+    };
+
+    const say = (i: number, attempt: number) => {
       if (run !== this.sequence) return;
-      if (i >= parts.length) {
-        this.currentUtterance = null;
-        if (onEnd) onEnd();
-        return;
-      }
+      if (i >= parts.length) return finish();
       let lang = parts[i].lang ?? this.locale;
       let text = parts[i].text;
       // No voice for this language (common for Kannada): say the romanized form in English instead.
@@ -231,24 +269,84 @@ class SoundEngine {
         text = parts[i].roman!;
         lang = this.locale;
       }
+      if (!text.trim()) return say(i + 1, 0);
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = lang;
       utterance.rate = lang.startsWith('hi') ? 0.8 : 0.88;
       utterance.pitch = 1.05;
-      const voice = this.pickVoice(lang);
-      if (voice) utterance.voice = voice;
-      utterance.onend = () => next(i + 1);
-      utterance.onerror = () => next(i + 1);
+      // The retry leaves the voice to the browser, in case the chosen voice is broken.
+      const voice = attempt === 0 ? this.pickVoice(lang) : undefined;
+      try {
+        if (voice) utterance.voice = voice;
+      } catch {
+        // A voice the browser no longer accepts: speak with its default.
+      }
+      let started = false;
+      let settled = false;
+      const done = (ok: boolean, error?: string) => {
+        if (settled || run !== this.sequence) return;
+        settled = true;
+        this.clearKeepAlive();
+        if (error === 'not-allowed' && !this.unlocked) {
+          // Refused before the first tap: play it all as soon as the child touches the screen.
+          this.waiting = { parts: parts.slice(i), onEnd };
+          return;
+        }
+        if (!ok && !started && attempt === 0) {
+          synth.cancel();
+          later(() => say(i, 1), 120);
+          return;
+        }
+        say(i + 1, 0);
+      };
+      utterance.onstart = () => {
+        started = true;
+        // Online voices stop after ~15 s in Chrome unless nudged.
+        if (voice && !voice.localService) this.startKeepAlive();
+      };
+      utterance.onend = () => done(true);
+      utterance.onerror = (e) => done(false, (e as SpeechSynthesisErrorEvent).error);
       this.currentUtterance = utterance;
-      window.speechSynthesis.speak(utterance);
+      synth.resume();
+      synth.speak(utterance);
+      // Chrome sometimes never starts an utterance and never fires an event: retry it.
+      later(() => {
+        if (!started) done(false);
+      }, 2500);
     };
-    next(0);
+
+    const begin = () => say(0, 0);
+    // Chrome drops speech queued in the same instant as cancel(), and has no voices
+    // until they finish loading; give both a moment.
+    const delay = busy ? 120 : this.voicesReady ? 0 : 300;
+    if (delay) later(begin, delay);
+    else begin();
   }
 
-  public stopSpeech() {
+  private startKeepAlive() {
+    this.clearKeepAlive();
+    this.keepAlive = setInterval(() => {
+      const synth = window.speechSynthesis;
+      if (!synth.speaking) return this.clearKeepAlive();
+      synth.pause();
+      synth.resume();
+    }, 10000);
+  }
+
+  private clearKeepAlive() {
+    if (this.keepAlive) clearInterval(this.keepAlive);
+    this.keepAlive = null;
+  }
+
+  /** Stops current speech. `cancel` false skips Chrome's cancel() when nothing is playing. */
+  public stopSpeech(cancel = true) {
     this.sequence++;
+    this.timers.forEach(clearTimeout);
+    this.timers = [];
+    this.clearKeepAlive();
+    this.waiting = null;
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
+      if (cancel) window.speechSynthesis.cancel();
       this.currentUtterance = null;
     }
   }
@@ -260,5 +358,7 @@ class SoundEngine {
     return false;
   }
 }
+
+type SpeechPart = { text: string; lang?: string; roman?: string };
 
 export const soundEngine = new SoundEngine();

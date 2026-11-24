@@ -1,4 +1,4 @@
-import type { CurriculumId, Difficulty, LanguageCode } from '../content/types';
+import type { CurriculumId, Difficulty, Grade, LanguageCode } from '../content/types';
 import { getSkill } from '../content';
 import type { MockResult, MockRun } from './mock';
 import { emptyGrowth, mergeGrowth } from './growth';
@@ -17,6 +17,8 @@ export interface Attempt {
   d: Difficulty;
   /** Correct on the first try — the only thing that counts toward mastery. */
   correct: boolean;
+  /** A repeat of a question last seen at least a week earlier: counts as retention evidence. */
+  spaced?: boolean;
   why?: string;
   ts: number;
   mode: Mode;
@@ -76,6 +78,12 @@ export interface Settings {
   focus?: string[];
   /** Date of the next school i-Ready diagnostic (YYYY-MM-DD). */
   iReadyDate?: string;
+  /**
+   * The grade he works at. New topics come from this grade first, and topics from
+   * earlier grades never lock it (a child working at Grade 1 is not held back by
+   * Kindergarten prerequisites). Default: Grade 1 (Aarav works ahead of grade).
+   */
+  workingGrade?: Grade;
 }
 
 export type GameId = 'mystery-word' | 'number-path' | 'sentence-builder';
@@ -112,7 +120,7 @@ const DAY = 24 * 60 * 60 * 1000;
 export const MASTERY = { window: 8, minAttempts: 6, accuracy: 0.85, minHardAttempts: 3, minDays: 3, dayWindow: 21 };
 
 export function emptyState(): AppState {
-  return { version: 5, exposures: emptyExposures(), growth: emptyGrowth(), settings: { muted: false, unlockAll: false, showStretch: true, curricula: ['us-ga'], primary: 'us-ga', languages: ['hi'] }, skills: {}, attempts: [], stars: 0, days: [], checkups: [], games: {} };
+  return { version: 5, exposures: emptyExposures(), growth: emptyGrowth(), settings: { muted: false, unlockAll: false, showStretch: true, curricula: ['us-ga'], primary: 'us-ga', languages: ['hi'], workingGrade: '1', iReadyDate: '2026-12-03' }, skills: {}, attempts: [], stars: 0, days: [], checkups: [], games: {} };
 }
 
 export const STATE_VERSION = 5;
@@ -223,14 +231,31 @@ export function meetsMastery(list: Attempt[]): boolean {
   return days.size >= MASTERY.minDays;
 }
 
+/** A first sighting, or a repeat a week or more later (which shows it was remembered). */
+export const isEvidence = (a: Attempt) => isFreshEvidence(a) || a.spaced === true;
+
+export const SPACED_REPEAT_DAYS = 7;
+
+/**
+ * True when this question was not answered in the last week. A repeat that passes this
+ * counts as evidence again; so does a "repeat" that only looks like one because older
+ * progress was saved before questions had fingerprints.
+ */
+export function isSpacedRepeat(attempts: Attempt[], itemId: string, fingerprint: string | undefined, now: number): boolean {
+  const since = now - SPACED_REPEAT_DAYS * DAY;
+  return !attempts.some((a) => a && a.ts > since && (a.itemId === itemId || (!!fingerprint && a.fingerprint === fingerprint)));
+}
+
 /** Records one answered item and returns the new state (immutable update). */
 export function recordAttempt(state: AppState, attempt: Attempt): AppState {
   const prev = skillState(state, attempt.skill);
   const next: SkillState = { ...prev };
   const subject = getSkill(attempt.skill)?.subject;
   const scoped = subject === 'math' || subject === 'reading';
-  const eligible = !scoped || isFreshEvidence(attempt);
-  if (eligible && (attempt.mode === 'quest' || attempt.mode === 'skill')) {
+  const eligible = !scoped || isEvidence(attempt);
+  // Every practice answer moves the level, repeats included: the level only chooses how hard
+  // the next question is. Only fresh or spaced answers count toward mastery.
+  if (attempt.mode === 'quest' || attempt.mode === 'skill') {
     if (attempt.correct) {
       next.streak = prev.streak + 1;
       if (next.streak >= 2 && prev.level < 3) {
@@ -244,7 +269,7 @@ export function recordAttempt(state: AppState, attempt: Attempt): AppState {
   }
   const attempts = [...state.attempts, attempt];
   const practice = attempt.mode === 'quest' || attempt.mode === 'skill';
-  const list = attempts.filter((a) => a && a.skill === attempt.skill && (!scoped || isFreshEvidence(a)));
+  const list = attempts.filter((a) => a && a.skill === attempt.skill && (!scoped || isEvidence(a)));
 
   if (eligible && prev.mastered && prev.nextReview && attempt.ts >= prev.nextReview && practice) {
     // A spaced review: success moves the next review further out, a miss brings it back.

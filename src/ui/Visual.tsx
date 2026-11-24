@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import type { Place, Visual as V } from '../content/types';
-import { CompositeSvg, ShapeSvg } from './ShapeSvg';
+import { CompositeSvg, PartsSvg, PiecesSvg, ShapeSvg } from './ShapeSvg';
 
 export type VSize = 'lg' | 'md' | 'sm';
 
@@ -266,6 +266,144 @@ function PlaceScene({ thing, refEmoji, where, size }: { thing: string; refEmoji:
   );
 }
 
+const BAR_COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
+
+function Ruler({ unit, max, objects, size }: { unit: 'in' | 'cm'; max: number; objects: { emoji: string; color: string; from: number; to: number }[]; size: VSize }) {
+  const u = (unit === 'in' ? 34 : 24) * (size === 'lg' ? 1 : 0.6);
+  const pad = 14;
+  const rowH = 30;
+  const top = 8;
+  const rulerY = top + objects.length * (rowH + 8) + 6;
+  const W = pad * 2 + max * u;
+  const H = rulerY + 46;
+  return (
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label="objects above a ruler">
+      {objects.map((o, i) => {
+        const y = top + i * (rowH + 8);
+        const x0 = pad + o.from * u;
+        const x1 = pad + o.to * u;
+        return (
+          <g key={i}>
+            <line x1={x0} y1={y} x2={x0} y2={rulerY} stroke="#94a3b8" strokeDasharray="3 3" />
+            <line x1={x1} y1={y} x2={x1} y2={rulerY} stroke="#94a3b8" strokeDasharray="3 3" />
+            <rect x={x0} y={y} width={x1 - x0} height={rowH} rx={rowH / 2} fill={o.color} stroke="#1f2937" strokeWidth={2} />
+            <text x={x0 + 6} y={y + rowH * 0.72} fontSize={rowH * 0.62}>{o.emoji}</text>
+          </g>
+        );
+      })}
+      <rect x={2} y={rulerY} width={W - 4} height={40} rx={4} fill="#fde68a" stroke="#92400e" strokeWidth={2} />
+      {Array.from({ length: max * 2 + 1 }, (_, k) => {
+        const x = pad + (k / 2) * u;
+        const whole = k % 2 === 0;
+        if (unit === 'cm' && !whole) return null;
+        return (
+          <g key={k}>
+            <line x1={x} y1={rulerY} x2={x} y2={rulerY + (whole ? 16 : 9)} stroke="#1f2937" strokeWidth={whole ? 2 : 1.2} />
+            {whole && <text x={x} y={rulerY + 32} textAnchor="middle" fontSize={13} fontWeight={700} fill="#1f2937">{k / 2}</text>}
+          </g>
+        );
+      })}
+      <text x={W - 6} y={rulerY + 32} textAnchor="end" fontSize={9} fill="#92400e">{unit === 'in' ? 'inches' : 'cm'}</text>
+    </svg>
+  );
+}
+
+function Bars({ title, bars, max, size }: { title?: string; bars: { label: string; emoji: string; value: number }[]; max: number; size: VSize }) {
+  const k = size === 'lg' ? 1 : 0.6;
+  const step = 22 * k * (max > 12 ? 0.7 : 1);
+  const left = 34;
+  const barW = 46 * k;
+  const gap = 22 * k;
+  const plotH = max * step;
+  const topY = title ? 26 : 10;
+  const W = left + bars.length * (barW + gap) + gap;
+  const H = topY + plotH + 40 * k + 14;
+  const labelEvery = max > 10 ? 2 : 1;
+  return (
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={title ?? 'bar graph'} className="rounded-2xl bg-white">
+      {title && <text x={W / 2} y={18} textAnchor="middle" fontSize={14} fontWeight={700} fill="#475569">{title}</text>}
+      {Array.from({ length: max + 1 }, (_, i) => {
+        const y = topY + plotH - i * step;
+        return (
+          <g key={i}>
+            <line x1={left} y1={y} x2={W - 6} y2={y} stroke={i === 0 ? '#1f2937' : '#e2e8f0'} strokeWidth={i === 0 ? 2 : 1} />
+            {i % labelEvery === 0 && <text x={left - 6} y={y + 4} textAnchor="end" fontSize={12} fontWeight={700} fill="#334155">{i}</text>}
+          </g>
+        );
+      })}
+      <line x1={left} y1={topY} x2={left} y2={topY + plotH} stroke="#1f2937" strokeWidth={2} />
+      {bars.map((b, i) => {
+        const x = left + gap + i * (barW + gap);
+        return (
+          <g key={i}>
+            <rect x={x} y={topY + plotH - b.value * step} width={barW} height={b.value * step} fill={BAR_COLORS[i % BAR_COLORS.length]} stroke="#1f2937" strokeWidth={1.5} />
+            <text x={x + barW / 2} y={topY + plotH + 26 * k} textAnchor="middle" fontSize={24 * k}>{b.emoji}</text>
+            <text x={x + barW / 2} y={topY + plotH + 40 * k + 8} textAnchor="middle" fontSize={11} fill="#475569">{b.label}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+function LinePlot({ start, end, counts, label, size }: { start: number; end: number; counts: number[]; label?: string; size: VSize }) {
+  const u = size === 'lg' ? 44 : 28;
+  const xH = size === 'lg' ? 22 : 14;
+  const most = Math.max(1, ...counts);
+  const pad = 20;
+  const n = end - start + 1;
+  const W = pad * 2 + (n - 1) * u;
+  const lineY = 10 + most * xH + 8;
+  const H = lineY + (label ? 46 : 30);
+  return (
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label="line plot">
+      <line x1={4} y1={lineY} x2={W - 4} y2={lineY} stroke="#1f2937" strokeWidth={2.5} />
+      {Array.from({ length: n }, (_, i) => {
+        const x = pad + i * u;
+        return (
+          <g key={i}>
+            <line x1={x} y1={lineY - 6} x2={x} y2={lineY + 6} stroke="#1f2937" strokeWidth={2} />
+            <text x={x} y={lineY + 22} textAnchor="middle" fontSize={14} fontWeight={700} fill="#1f2937">{start + i}</text>
+            {Array.from({ length: counts[i] ?? 0 }, (_, k) => (
+              <text key={k} x={x} y={lineY - 8 - k * xH} textAnchor="middle" fontSize={xH * 0.95} fontWeight={800} fill="#2563eb">✕</text>
+            ))}
+          </g>
+        );
+      })}
+      {label && <text x={W / 2} y={lineY + 40} textAnchor="middle" fontSize={12} fill="#475569">{label}</text>}
+    </svg>
+  );
+}
+
+function Grid({ rows, cols, partial, emoji, color = '#60a5fa', size }: { rows: number; cols: number; partial?: boolean; emoji?: string; color?: string; size: VSize }) {
+  if (emoji) {
+    const px = EMOJI_PX[size] * (cols > 4 ? 0.6 : 0.7);
+    return (
+      <div className="grid gap-1.5 rounded-2xl bg-white/80 p-2 ring-2 ring-slate-200" style={{ gridTemplateColumns: `repeat(${cols}, ${px * 1.2}px)` }}>
+        {Array.from({ length: rows * cols }, (_, i) => (
+          <span key={i} className="flex items-center justify-center leading-none" style={{ height: px * 1.2, fontSize: px }}>
+            {emoji}
+          </span>
+        ))}
+      </div>
+    );
+  }
+  const c = size === 'lg' ? 40 : 22;
+  const W = cols * c + 8;
+  const H = rows * c + 8;
+  return (
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label="rectangle split into squares">
+      <rect x={4} y={4} width={cols * c} height={rows * c} fill={partial ? '#ffffff' : color} stroke="#1f2937" strokeWidth={3} strokeDasharray={partial ? '6 4' : undefined} />
+      {Array.from({ length: rows * cols }, (_, i) => {
+        const r = Math.floor(i / cols);
+        const k = i % cols;
+        if (partial && r > 0 && k > 0) return null;
+        return <rect key={i} x={4 + k * c} y={4 + r * c} width={c} height={c} fill={color} stroke="#1f2937" strokeWidth={1.5} />;
+      })}
+    </svg>
+  );
+}
+
 function VisualBody({ v, size = 'lg' }: { v: V; size?: VSize }) {
   switch (v.kind) {
     case 'emoji': {
@@ -438,6 +576,14 @@ function VisualBody({ v, size = 'lg' }: { v: V; size?: VSize }) {
       return (
         <div className="flex flex-wrap items-center justify-center gap-2">
           {v.values.map((value, i) => {
+            if (value >= 100) {
+              // Dollar bills: green notes that show their value, as real bills do.
+              return (
+                <div key={i} className="flex items-center justify-center rounded-md border-4 border-green-800 bg-green-200 font-kid font-bold text-green-900 shadow" style={{ width: base * 1.9, height: base * 0.9, fontSize: base * 0.36 }}>
+                  {v.labels?.[i] ?? `${v.symbol}${value / 100}`}
+                </div>
+              );
+            }
             const us = v.labels ? US[value] : undefined;
             const d = us ? base * us.scale : base * (0.8 + Math.min(value, 10) * 0.03);
             const gold = us ? us.gold : value >= 10 || value === 2;
@@ -483,6 +629,18 @@ function VisualBody({ v, size = 'lg' }: { v: V; size?: VSize }) {
         </div>
       );
     }
+    case 'parts':
+      return <PartsSvg shape={v.shape} n={v.n} equal={v.equal} shaded={v.shaded} cut={v.cut} color={v.color} size={SHAPE_PX[size]} />;
+    case 'pieces':
+      return <PiecesSvg preset={v.preset} apart={v.apart} color={v.color} size={size === 'lg' ? 200 : size === 'md' ? 110 : 70} />;
+    case 'grid':
+      return <Grid {...v} size={size} />;
+    case 'ruler':
+      return <Ruler {...v} size={size} />;
+    case 'bars':
+      return <Bars {...v} size={size} />;
+    case 'lineplot':
+      return <LinePlot {...v} size={size} />;
     case 'row':
       return (
         <div className="flex flex-wrap items-center justify-center gap-3">

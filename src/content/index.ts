@@ -4,6 +4,7 @@ import { KINDERGARTEN_NUMBER_SKILLS } from './kindergartenNumbers';
 import { KINDERGARTEN_VISUAL_SKILLS } from './kindergartenVisual';
 import { MATH2_SKILLS } from './math2';
 import { MATH_EXTRA_SKILLS } from './mathExtra';
+import { MATH_GRADE1_EXTRA, MATH_GRADE2_EXTRA } from './mathGrade12';
 import { READING_SKILLS } from './reading';
 import { WORD_SKILLS } from './wordSkills';
 import { EXPANDED_READING_SKILLS } from './readingExpanded';
@@ -128,7 +129,7 @@ export const LANGUAGES = [
 
 // India-only skills slot in next to their subject (they only show when India is switched on).
 const [moneyIN, ...indiaSocial] = [INDIA_SKILLS.find((s) => s.subject === 'math')!, ...INDIA_SKILLS.filter((s) => s.subject !== 'math')];
-export const ALL_SKILLS: Skill[] = [...MATH_SKILLS, ...KINDERGARTEN_NUMBER_SKILLS, ...KINDERGARTEN_VISUAL_SKILLS, ...MATH_EXTRA_SKILLS, ...MATH2_SKILLS, moneyIN, ...READING_SKILLS, ...WORD_SKILLS, ...READING2_SKILLS, ...READING_PLAN_SKILLS, ...READING_INFERENCE_SKILLS, ...EXPANDED_READING_SKILLS, ...COMPREHENSION_SKILLS, ...INDEPENDENT_READING_SKILLS, ...SCIENCE_SKILLS, ...SOCIAL_SKILLS, ...indiaSocial, ...REASONING_SKILLS, ...HINDI_SKILLS, ...KANNADA_SKILLS];
+export const ALL_SKILLS: Skill[] = [...MATH_SKILLS, ...KINDERGARTEN_NUMBER_SKILLS, ...KINDERGARTEN_VISUAL_SKILLS, ...MATH_EXTRA_SKILLS, ...MATH_GRADE1_EXTRA, ...MATH2_SKILLS, ...MATH_GRADE2_EXTRA, moneyIN, ...READING_SKILLS, ...WORD_SKILLS, ...READING2_SKILLS, ...READING_PLAN_SKILLS, ...READING_INFERENCE_SKILLS, ...EXPANDED_READING_SKILLS, ...COMPREHENSION_SKILLS, ...INDEPENDENT_READING_SKILLS, ...SCIENCE_SKILLS, ...SOCIAL_SKILLS, ...indiaSocial, ...REASONING_SKILLS, ...HINDI_SKILLS, ...KANNADA_SKILLS];
 
 const BY_ID = new Map(ALL_SKILLS.map((s) => [s.id, s]));
 

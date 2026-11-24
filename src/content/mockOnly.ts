@@ -5,6 +5,7 @@ import { INDEPENDENT_READING_MOCK } from "./readingIndependent";
 import { COMPREHENSION_MOCK } from "./readingComprehension";
 import { READING_PLAN_MOCK } from "./readingPlan";
 import { READING_INFERENCE_MOCK } from "./readingInference";
+import { PASSAGE_MOCK } from "./readingPassages12";
 import { items, txt, num, vis } from "./helpers";
 /** Fresh contexts for the two reading domains with only one authored skill each. */
 const vocab = items("r.vocab.mock", [
@@ -123,8 +124,8 @@ const info = items("r.info.mock", [
     ),
     choices: [
       txt("Roots take in water."),
-      txt("Leaves turn into stones.", "detail_not_in_text"),
-      txt("The soil disappears.", "detail_not_in_text"),
+      txt("Water soaks into the soil.", "sequence_confusion"),
+      txt("The soil dries out.", "unsupported_inference"),
     ],
     explain: "Roots take in water from the soil after the rainwater soaks in.",
   },
@@ -137,8 +138,8 @@ const info = items("r.info.mock", [
     ),
     choices: [
       txt("the map key"),
-      txt("the weather forecast", "detail_not_in_text"),
-      txt("the time on a clock", "detail_not_in_text"),
+      txt("the map title", "text_feature_confusion"),
+      txt("the biggest symbol on the map", "unsupported_inference"),
     ],
     explain:
       "The map key explains the symbols, so it can help with an unfamiliar one.",
@@ -208,12 +209,12 @@ const coinComparisons = items("m1.coins.mock", [
 const storyChecks = items("r.lit.mock", [
   {
     difficulty: 1,
-    say: "Listen. Lila put a blue cup on the table. Who put the cup on the table?",
-    visual: passage("A blue cup", "Lila put a blue cup on the table."),
+    say: "Listen. Lila put a blue cup on the table. Her brother Sam filled it with milk. Who put the cup on the table?",
+    visual: passage("A blue cup", "Lila put a blue cup on the table. Her brother Sam filled it with milk."),
     choices: [
       txt("Lila"),
-      txt("a dog", "detail_not_in_text"),
-      txt("a pilot", "detail_not_in_text"),
+      txt("Sam", "wrong_character"),
+      txt("their mom", "detail_not_in_text"),
     ],
     explain: "The story says Lila put the cup on the table.",
   },
@@ -342,8 +343,8 @@ const independentChecks = items("r2.readalone.mock", [
     ),
     choices: [
       txt("to stop the model from tipping"),
-      txt("to make the sails invisible", "inference_confusion"),
-      txt("to hide the ship under the desk", "inference_confusion"),
+      txt("to make the model look bigger", "unsupported_inference"),
+      txt("to carry the model to her desk", "sequence_confusion"),
     ],
     explain: "The narrow base tipped. The wider board helped it stay upright.",
   },
@@ -356,8 +357,8 @@ const independentChecks = items("r2.readalone.mock", [
     ),
     choices: [
       txt("He made a clearer sign."),
-      txt("He locked the garden forever.", "detail_not_in_text"),
-      txt("He removed every plant.", "detail_not_in_text"),
+      txt("He moved the old sign inside the garden.", "detail_not_in_text"),
+      txt("He waited for someone else to fix the sign.", "detail_misread"),
     ],
     explain: "Arun wrote a new sign so visitors could read the opening time.",
   },
@@ -494,8 +495,8 @@ const reserve = [
   ...items('m.shapes2d.reserved', [{ difficulty: 1, say: 'Which shape has exactly three straight sides?', choices: [vis({ kind: 'shape', shape: 'triangle', color: '#8b5cf6' }, 'triangle'), vis({ kind: 'shape', shape: 'square', color: '#8b5cf6' }, 'square', 'shape_name_confusion'), vis({ kind: 'shape', shape: 'circle', color: '#8b5cf6' }, 'circle', 'shape_name_confusion')], speakChoices: false, explain: 'A triangle has three straight sides.' }]).map(i => ({ ...i, skill: 'm.shapes2d' })),
   ...items('r.rhyme.reserved', [{ difficulty: 1, say: 'Which word rhymes with bell: shell, boat, or sun?', choices: [txt('shell'), txt('boat', 'rhyme_confusion'), txt('sun', 'rhyme_confusion')], explain: 'Bell and shell end with the same sound.' }]).map(i => ({ ...i, skill: 'r.rhyme' })),
   ...items('r.lettersound.reserved', [{ difficulty: 1, say: 'Which letter makes the first sound in peach?', choices: [txt('p'), txt('b', 'letter_sound_confusion'), txt('m', 'letter_sound_confusion')], explain: 'Peach starts with the sound of p.' }]).map(i => ({ ...i, skill: 'r.lettersound' })),
-  ...items('r.sight.reserved', [{ difficulty: 1, say: 'Tap the word said on this card.', choices: [txt('said'), txt('sit', 'sight_word_confusion'), txt('sand', 'sight_word_confusion')], speakChoices: false, explain: 'This word is said.' }]).map(i => ({ ...i, skill: 'r.sight' })),
-  ...items('r.vocab.reserved', [{ difficulty: 1, say: 'The puppy was chilly. What does chilly mean?', choices: [txt('a little cold'), txt('very loud', 'meaning_confusion'), txt('very fast', 'meaning_confusion')], explain: 'Chilly means a little cold.' }]).map(i => ({ ...i, skill: 'r.vocab' })),
+  ...items('r.sight.reserved', [{ difficulty: 1, say: 'Tap the word went on this card.', choices: [txt('went'), txt('tent', 'sight_word_confusion'), txt('west', 'sight_word_confusion')], speakChoices: false, explain: 'This word is went: w, e, n, t.' }]).map(i => ({ ...i, skill: 'r.sight' })),
+  ...items('r.vocab.reserved', [{ difficulty: 2, say: 'The pond was frigid, so nobody wanted to swim. What does frigid mean?', choices: [txt('very cold'), txt('very deep', 'meaning_confusion'), txt('very dirty', 'meaning_confusion')], explain: 'Nobody wanted to swim because the water was very cold. Frigid means very cold.' }]).map(i => ({ ...i, skill: 'r.vocab' })),
   ...items('r.lit.reserved', [{ difficulty: 1, say: 'A fox lost her hat. A bird found it and gave it back. Who found the hat?', choices: [txt('the bird'), txt('the fox', 'detail_not_in_text'), txt('a fish', 'detail_not_in_text')], explain: 'The bird found the hat and gave it back.' }]).map(i => ({ ...i, skill: 'r.lit' })),
   ...items('r.info.reserved', [{ difficulty: 1, say: 'Some turtles have shells that protect their bodies. What helps protect a turtle?', choices: [txt('its shell'), txt('a feather', 'detail_not_in_text'), txt('a hat', 'detail_not_in_text')], explain: 'The turtle has a shell that helps protect its body.' }]).map(i => ({ ...i, skill: 'r.info' })),
 ];
@@ -511,23 +512,26 @@ const rhymes = [['bell','shell','boat','sun'], ['cat','hat','cup','dog'], ['bee'
 const museumRhymes = items('r.rhyme.museum', rhymes.map(([word, yes, no1, no2]) => ({ difficulty: 1 as const, say: `At our word table, which word rhymes with ${word}?`, choices: [txt(yes), txt(no1, 'rhyme_confusion'), txt(no2, 'rhyme_confusion')], explain: `${word} and ${yes} end with the same sound.` }))).map(i => ({ ...i, skill: 'r.rhyme' }));
 const initials = [['moon','m','s','t'], ['fish','f','p','b'], ['dog','d','m','s'], ['sun','s','t','p'], ['kite','k','m','b'], ['net','n','s','t'], ['hat','h','m','f'], ['van','v','s','p']] as const;
 const museumSounds = items('r.lettersound.museum', initials.map(([word, yes, no1, no2]) => ({ difficulty: 1 as const, say: `At our letter table, which letter starts ${word}?`, choices: [txt(yes), txt(no1, 'letter_sound_confusion'), txt(no2, 'letter_sound_confusion')], explain: `${word} starts with ${yes}.` }))).map(i => ({ ...i, skill: 'r.lettersound' }));
-const cardWords = ['the', 'and', 'said', 'here', 'come', 'look', 'you', 'was'];
+// Held-out words: none of these is a practice target in r.sight, r.high-frequency or r1.sight-spell.
+const cardWords = ['jump', 'help', 'funny', 'yellow', 'away', 'three', 'blue', 'big'];
 const museumWords = items('r.sight.museum', cardWords.map((word, i) => ({ difficulty: 1 as const, say: `On our word card, find the word ${word}.`, choices: [txt(word), txt(cardWords[(i+1)%8], 'sight_word_confusion'), txt(cardWords[(i+2)%8], 'sight_word_confusion')], speakChoices: false, explain: `This word is ${word}.` }))).map(i => ({ ...i, skill: 'r.sight' }));
-const meanings = [['tiny','very small','very loud','very fast'], ['silent','quiet','hungry','wet'], ['glad','happy','cold','tired'], ['rapid','fast','slow','soft'], ['damp','a little wet','very dry','very tall'], ['brave','not afraid to try','very sleepy','very small'], ['enormous','very big','very quiet','very cold'], ['repair','fix','hide','lose']] as const;
+// Held-out words that no practice item teaches.
+const meanings = [['drowsy','sleepy','hungry','grumpy'], ['soggy','very wet','very dry','very sticky'], ['timid','shy and easily scared','loud and bossy','very fast'], ['scorching','very hot','a little warm','very bright'], ['sturdy','strong and hard to break','soft and fluffy','very tiny'], ['tidy','neat','messy','empty'], ['gloomy','dark and sad','bright and cheerful','very noisy'], ['nibble','take small bites','gulp down fast','cook']] as const;
 const museumWordsMeaning = items('r.vocab.museum', meanings.map(([word, yes, no1, no2]) => ({ difficulty: 1 as const, say: `At our word table, what does ${word} mean?`, choices: [txt(yes), txt(no1, 'meaning_confusion'), txt(no2, 'meaning_confusion')], explain: `${word} means ${yes}.` }))).map(i => ({ ...i, skill: 'r.vocab' }));
 const characters = [['fox','bird','hat'], ['cat','dog','ball'], ['bear','frog','scarf'], ['mouse','rabbit','book'], ['owl','deer','kite'], ['goat','duck','bell'], ['pig','horse','bag'], ['seal','whale','shell']] as const;
 const museumStories = items('r.lit.museum', characters.map(([owner, finder, thing]) => ({ difficulty: 1 as const, say: `On our story card, a ${owner} lost a ${thing}. A ${finder} found it. Who found the ${thing}?`, choices: [txt(`the ${finder}`), txt(`the ${owner}`, 'detail_not_in_text'), txt('a robot', 'detail_not_in_text')], explain: `The ${finder} found the ${thing}.` }))).map(i => ({ ...i, skill: 'r.lit' }));
+// Each card has two sentences, so the wrong choices can be true details that were not asked about.
 const facts = [
-  ['Bees collect nectar from flowers.', 'What do bees collect?', 'nectar', 'stones', 'snow'],
-  ['Plants need sunlight to grow.', 'What do plants need to grow?', 'sunlight', 'shoes', 'toys'],
-  ['Fish live in water.', 'Where do fish live?', 'water', 'sandwiches', 'hats'],
-  ['Birds have feathers.', 'What do birds have?', 'feathers', 'wheels', 'boots'],
-  ['Turtles have shells.', 'What do turtles have?', 'shells', 'umbrellas', 'pillows'],
-  ['Trees have roots.', 'What do trees have?', 'roots', 'spoons', 'wings'],
-  ['Ducks have webbed feet.', 'What do ducks have?', 'webbed feet', 'mittens', 'wheels'],
-  ['Butterflies have wings.', 'What do butterflies have?', 'wings', 'helmets', 'tires'],
+  ['Bees fly from flower to flower. They drink nectar and carry pollen on their fuzzy legs.', 'What do bees carry on their legs?', 'pollen', ['nectar', 'detail_not_asked'], ['honey', 'prior_knowledge_over_text'], 1, 'The card says bees carry pollen on their fuzzy legs. They drink the nectar.'],
+  ['Plants need sunlight and water to grow. Their roots take in water from the soil.', 'Which part of a plant takes in water?', 'the roots', ['the leaves', 'prior_knowledge_over_text'], ['the sunlight', 'detail_not_asked'], 1, 'The second sentence says the roots take in water from the soil.'],
+  ['Fish live in water. They swim with fins and breathe with gills.', 'What do fish use to breathe?', 'gills', ['fins', 'detail_not_asked'], ['lungs', 'prior_knowledge_over_text'], 1, 'Fish breathe with gills. Their fins are for swimming.'],
+  ['Birds have feathers and wings. Feathers keep birds warm and help them fly.', 'How do feathers help birds?', 'they keep birds warm', ['they help birds swim', 'detail_not_in_text'], ['they help birds build nests', 'unsupported_inference'], 1, 'The card says feathers keep birds warm and help them fly.'],
+  ['Turtles have hard shells. When a turtle is scared, it pulls its head inside its shell.', 'What does a turtle do when it is scared?', 'hides its head in its shell', ['swims away fast', 'unsupported_inference'], ['grows a new shell', 'detail_not_in_text'], 2, 'A scared turtle pulls its head inside its shell to hide.'],
+  ['Trees have roots under the ground. The roots hold the tree in place when the wind blows.', 'Why does a tree stay standing in the wind?', 'its roots hold it in place', ['its leaves are light', 'unsupported_inference'], ['the wind is weak', 'unsupported_inference'], 2, 'The roots under the ground hold the tree in place.'],
+  ['Ducks have webbed feet. The skin between their toes works like a paddle in the water.', 'How do webbed feet help a duck?', 'they push it through the water', ['they keep it warm', 'unsupported_inference'], ['they help it fly', 'unsupported_inference'], 2, 'Webbed feet work like paddles, so they push the duck through the water.'],
+  ['A butterfly has four wings. It tastes its food with its feet!', 'What does a butterfly use to taste?', 'its feet', ['its wings', 'detail_not_asked'], ['its tongue', 'prior_knowledge_over_text'], 1, 'The card says a butterfly tastes its food with its feet.'],
 ] as const;
-const museumFacts = items('r.info.museum', facts.map(([fact, question, yes, no1, no2]) => ({ difficulty: 1 as const, say: `On our fact card, ${fact} ${question}`, choices: [txt(yes), txt(no1, 'detail_not_in_text'), txt(no2, 'detail_not_in_text')], explain: `The card says ${yes}.` }))).map(i => ({ ...i, skill: 'r.info' }));
+const museumFacts = items('r.info.museum', facts.map(([fact, question, yes, no1, no2, difficulty, explain]) => ({ difficulty, say: `On our fact card: ${fact} ${question}`, choices: [txt(yes), txt(no1[0], no1[1]), txt(no2[0], no2[1])], explain }))).map(i => ({ ...i, skill: 'r.info' }));
 // New held-out contexts for explicitly sampled calendar, clock and shape skills.
 const week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const calendarCoverage = items('m.timepatterns.reserved-calendar', week.flatMap((day, i) => [
@@ -546,7 +550,7 @@ const shapeRows = [
 ] as const;
 const shapeCoverage = items('m.shapeattr.reserved-attributes', shapeRows.flatMap(([shape, count, no1, no2]) => (['sides','corners'] as const).map(attribute => ({ difficulty: 2 as const, say: `Look at this ${shape}. How many ${attribute} does it have?`, show: `How many ${attribute}?`, visual: {kind:'shape' as const, shape, color:'#2563eb'}, choices: [num(count), num(no1, 'shape_attribute_confusion'), num(no2, 'shape_attribute_confusion')], explain: `A ${shape} has ${count} ${attribute}.` })))).map(i => ({ ...i, skill: 'm.shapeattr' }));
 export const MOCK_ONLY_ITEMS: Item[] = [
-  ...calendarCoverage, ...clockCoverage, ...shapeCoverage, ...WORD_MOCK_ITEMS, ...READING_PLAN_MOCK, ...READING_INFERENCE_MOCK, ...EXPANDED_READING_MOCK, ...COMPREHENSION_MOCK, ...INDEPENDENT_READING_MOCK,
+  ...calendarCoverage, ...clockCoverage, ...shapeCoverage, ...WORD_MOCK_ITEMS, ...READING_PLAN_MOCK, ...READING_INFERENCE_MOCK, ...EXPANDED_READING_MOCK, ...COMPREHENSION_MOCK, ...INDEPENDENT_READING_MOCK, ...PASSAGE_MOCK,
   ...reserve, ...museumNumbers, ...museumAdd, ...museumMeasure, ...museumShapes, ...museumRhymes, ...museumSounds, ...museumWords, ...museumWordsMeaning, ...museumStories, ...museumFacts,
   ...geometry,
   ...vocab,

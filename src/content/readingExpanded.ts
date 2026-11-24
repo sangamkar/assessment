@@ -24,18 +24,19 @@ const specs: Spec[] = [
  ['sunset','sunzet','sunseth'],['basket','baskit','baskut'],['napkin','napken','napkun'],['rabbit','rabit','rabbot'],['picnic','picnik','picknic'],['magnet','magnit','magnett'],['kitten','kittun','kitton'],['pumpkin','pumpken','pumpkun'],['candle','candl','candul'],['table','tabl','tabul'],['apple','aple','appul'],['purple','purpl','purpul']
 ], 'Read the word in parts and check the whole spelling.')},
 {id:'r.syllable-compare',title:'Compare the number of syllables in words',kidTitle:'Compare word beats',strand:'phonological',grade:'K',icon:'🥁',tag:'syllable_count_confusion',rows:[
- ['Which word has more syllables: cat, tiger, or dog?','tiger','cat','dog','Tiger has two beats; cat and dog each have one.'],
- ['Which word has more syllables: sun, rabbit, or moon?','rabbit','sun','moon','Rabbit has two beats; sun and moon each have one.'],
- ['Which word has more syllables: frog, elephant, or fish?','elephant','frog','fish','Elephant has three beats; frog and fish each have one.'],
- ['Which word has more syllables: boat, banana, or car?','banana','boat','car','Banana has three beats; boat and car each have one.'],
- ['Which word has more syllables: tree, apple, or leaf?','apple','tree','leaf','Apple has two beats; tree and leaf each have one.'],
- ['Which word has more syllables: bed, potato, or chair?','potato','bed','chair','Potato has three beats; bed and chair each have one.'],
- ['Which word has more syllables: shoe, window, or sock?','window','shoe','sock','Window has two beats; shoe and sock each have one.'],
- ['Which word has more syllables: train, butterfly, or bus?','butterfly','train','bus','Butterfly has three beats; train and bus each have one.'],
- ['Which word has more syllables: cup, table, or plate?','table','cup','plate','Table has two beats; cup and plate each have one.'],
- ['Which word has more syllables: pen, umbrella, or book?','umbrella','pen','book','Umbrella has three beats; pen and book each have one.'],
- ['Which word has more syllables: hat, pencil, or coat?','pencil','hat','coat','Pencil has two beats; hat and coat each have one.'],
- ['Which word has more syllables: bear, alligator, or fox?','alligator','bear','fox','Alligator has four beats; bear and fox each have one.']
+ // Distractors are long one-beat words or real two- and three-beat words, so the longest-sounding word is not automatically right.
+ ['Which word has more syllables: stretch, tiger, or splash?','tiger','stretch','splash','Tiger has two beats: ti, ger. Stretch and splash sound long, but each has only one beat.'],
+ ['Which word has more syllables: strong, rabbit, or scratch?','rabbit','strong','scratch','Rabbit has two beats: rab, bit. Strong and scratch each have one beat.'],
+ ['Which word has more syllables: tiger, elephant, or pencil?','elephant','tiger','pencil','Elephant has three beats: el, e, phant. Tiger and pencil each have two.'],
+ ['Which word has more syllables: apple, banana, or monkey?','banana','apple','monkey','Banana has three beats: ba, na, na. Apple and monkey each have two.'],
+ ['Which word has more syllables: street, apple, or splash?','apple','street','splash','Apple has two beats: ap, ple. Street and splash each have one beat.'],
+ ['Which word has more syllables: carrot, potato, or pumpkin?','potato','carrot','pumpkin','Potato has three beats: po, ta, to. Carrot and pumpkin each have two.'],
+ ['Which word has more syllables: school, window, or scream?','window','school','scream','Window has two beats: win, dow. School and scream each have one beat.'],
+ ['Which word has more syllables: rainbow, butterfly, or turtle?','butterfly','rainbow','turtle','Butterfly has three beats: but, ter, fly. Rainbow and turtle each have two.'],
+ ['Which word has more syllables: thrown, table, or spring?','table','thrown','spring','Table has two beats: ta, ble. Thrown and spring each have one beat.'],
+ ['Which word has more syllables: pencil, umbrella, or window?','umbrella','pencil','window','Umbrella has three beats: um, brel, la. Pencil and window each have two.'],
+ ['Which word has more syllables: crunch, pencil, or stripes?','pencil','crunch','stripes','Pencil has two beats: pen, cil. Crunch and stripes each have one beat.'],
+ ['Which word has more syllables: elephant, alligator, or kangaroo?','alligator','elephant','kangaroo','Alligator has four beats: al, li, ga, tor. Elephant and kangaroo each have three.']
 ]},
 {id:'r.sound-position',title:'Identify the first, middle, and last sound',kidTitle:'Sounds in order',strand:'phonological',grade:'K',icon:'👂',tag:'sound_position_confusion',rows:[
  ['What sound comes first in map?','m as in moon','s as in sun','t as in top','Map starts with the m sound.'],

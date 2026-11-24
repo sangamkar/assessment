@@ -4,12 +4,23 @@ import {items, txt} from './helpers';
 // Distinct words in the two lists keep the focused check independent of the new practice list.
 const practiceWords = ['the','and','you','said','come','here','look','little','play','with','down','make','where','what','have','some','could','would','people','because','after','again','every','under'];
 const testWords = ['they','there','were','when','your','from','their','about','other','which','want','many','does','once','give','over','very','know','think','before','around','another','always','first'];
+// Visually similar real words, never homophones (no would/wood, which/witch, there/their), so each item has one answer.
+const LOOKALIKE:Record<string,string[]>={
+ the:['then','they','she'],and:['an','end','hand'],you:['your','yet','out'],said:['sad','sand','paid'],come:['came','some','cone'],here:['her','there','hare'],
+ look:['book','took','lock'],little:['litter','title','kettle'],play:['pay','plan','clay'],with:['will','wish','width'],down:['dawn','gown','own'],make:['made','take','mask'],
+ where:['were','there','here'],what:['that','want','wheat'],have:['has','hive','gave'],some:['same','come','soon'],could:['cloud','cold','would'],would:['world','could','word'],
+ people:['purple','pebble','poodle'],because:['became','beside','below'],after:['often','alter','father'],again:['against','gain','agent'],every:['very','ever','even'],under:['undo','order','thunder'],
+ they:['them','then','the'],there:['three','where','these'],were:['where','wire','here'],when:['then','where','what'],your:['you','four','young'],from:['form','farm','frog'],
+ their:['three','train','thief'],about:['above','around','abode'],other:['mother','otter','order'],which:['white','while','watch'],want:['went','wait','what'],many:['may','money','mean'],
+ does:['goes','dose','dots'],once:['ounce','one','ones'],give:['gave','live','five'],over:['oven','ever','offer'],very:['every','berry','veer'],know:['knew','snow','knot'],
+ think:['thank','thing','thin'],before:['below','beside','bored'],around:['round','ground','arena'],another:['other','mother','anthem'],always:['away','also','allows'],first:['fist','fast','frost'],
+};
 function wordItems(words:string[], reserve:boolean):Item[] {
   return items(reserve?'r.high-frequency.reserved-words':'r.high-frequency',words.map((word,i)=>({
     difficulty:(i<8?1:i<16?2:3) as Difficulty,
     say:reserve?`Tap the printed word ${word}.`:`Find the printed word ${word}.`,
     show:'Find the word.', speakChoices:false,
-    choices:[txt(word), ...[1,2,3].map(n=>txt(words[(i+n)%words.length],'lookalike_sight_word'))],
+    choices:[txt(word), ...LOOKALIKE[word].map(w=>txt(w,'lookalike_sight_word'))],
     explain:`This is ${word}, spelled ${word.split('').join(', ')}.`,
   }))).map(item=>({...item,skill:'r.high-frequency'}));
 }

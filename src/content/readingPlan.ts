@@ -35,7 +35,7 @@ const prefixRows: readonly Row[] = [
   ['If you redo a drawing, what do you do?', 'do it again', 'throw it away', 'hide it', 'Re means again, so redo means do again.'],
   ['If you refill a cup, what do you do?', 'fill it again', 'empty it', 'break it', 'Re means again, so refill means fill again.'],
   ['If you reread a book, what do you do?', 'read it again', 'close it forever', 'write it', 'Re means again, so reread means read again.'],
-  ['If a door is unlocked, what can you do?', 'open it without unlocking it', 'only look at it', 'make it disappear', 'Un can mean not. Unlocked means not locked.'],
+  ['If a door is unlocked, what is true about it?', 'it is not locked', 'it is locked again', 'it is locked twice', 'Un can mean not. Unlocked means not locked, so the door can open.'],
   ['If a toy is unsafe, what is it?', 'not safe', 'very safe', 'new and shiny', 'Un can mean not. Unsafe means not safe.'],
   ['If a box is unopened, what is true?', 'it has not been opened', 'it is empty', 'it is very large', 'Unopened means not opened.'],
   ['If you repack a bag, what do you do?', 'pack it again', 'lose the bag', 'wash the bag', 'Re means again, so repack means pack again.'],
@@ -48,24 +48,29 @@ const prefixRows: readonly Row[] = [
 const suffixRows: readonly Row[] = [
   ['A playful puppy likes to play. What does playful mean?', 'full of play', 'unable to play', 'asleep all day', 'The ending ful can mean full of.'],
   ['A careless driver does not take care. What does careless mean?', 'without care', 'full of care', 'ready for bed', 'The ending less can mean without.'],
-  ['Mina jumped yesterday. When did she jump?', 'already', 'tomorrow', 'next year', 'The ending ed can tell about something that already happened.'],
+  ['Mina jumped over the puddle. What does the ed ending in jumped tell you?', 'it already happened', 'it will happen tomorrow', 'it is happening right now', 'The ending ed tells about something that already happened, in the past.'],
   ['Two cats are sleeping. How many cats are there?', 'more than one', 'exactly one', 'none', 'The ending s can mean more than one.'],
   ['A helpful friend likes to help. What does helpful mean?', 'ready to help', 'unable to help', 'asleep', 'The ending ful helps make a word meaning full of help.'],
   ['A leafless tree has no leaves. What does leafless mean?', 'without leaves', 'covered in leaves', 'made from a leaf', 'The ending less means without.'],
-  ['Ravi painted yesterday. When did he paint?', 'already', 'next week', 'tomorrow', 'The ending ed can show that something happened already.'],
+  ['Ravi painted a picture of a boat. What does the ed ending in painted tell you?', 'he finished painting in the past', 'he will paint next week', 'he is painting right now', 'The ending ed shows the painting already happened.'],
   ['Three dogs are playing. What does the s in dogs tell us?', 'there is more than one dog', 'the dog is small', 'the dog is asleep', 'The ending s can mean more than one.'],
   ['A cloudless sky has no clouds. What does cloudless mean?', 'without clouds', 'full of clouds', 'full of stars', 'The ending less means without.'],
   ['A joyful child feels joy. What does joyful mean?', 'full of joy', 'without joy', 'full of sleep', 'The ending ful can mean full of.'],
-  ['Ana waved yesterday. When did she wave?', 'already', 'tomorrow', 'next month', 'The ending ed can show that something happened already.'],
+  ['Ana waved to the bus driver. What does the ed ending in waved tell you?', 'the waving is over', 'she will wave next month', 'she is waving right now', 'The ending ed (here just d after the e) shows the waving already happened.'],
   ['Four books are on the shelf. What does the s in books tell us?', 'there is more than one book', 'the book is red', 'the book is open', 'The ending s can mean more than one.'],
 ];
-interface Spec { id: string; grade: 'K'|'1'; strand: string; title: string; kidTitle: string; icon: string; rows: readonly Row[]; tag: string }
+interface Spec { id: string; grade: 'K'|'1'; strand: string; title: string; kidTitle: string; icon: string; rows: readonly Row[]; tag: string; level: (row: Row) => Difficulty }
+// Difficulty follows the content: easy-to-hear vowels and common word parts first, look-alike sounds and rarer parts last.
+const shortVowelLevel = ([, answer]: Row): Difficulty => /[ao]/.test(answer) ? 1 : /[iu]/.test(answer) ? 2 : 3;
+const rLevel = ([, answer]: Row): Difficulty => answer.includes('ar') ? 1 : answer.includes('or') ? 2 : 3;
+const prefixLevel = ([say]: Row): Difficulty => /\bre/.test(say) ? 1 : /\b(unsafe|unlocked|unopened)\b/.test(say) ? 2 : 3;
+const suffixLevel = ([say]: Row): Difficulty => /less\b/.test(say) ? 3 : /\b(two|three|four)\b/i.test(say) ? 1 : 2;
 const specs: Spec[] = [
-  {id:'r.vowelsounds', grade:'K', strand:'phonological', title:'Hear and compare short vowel sounds', kidTitle:'Middle sounds', icon:'👂', rows:soundRows, tag:'vowel_sound_confusion'},
-  {id:'r1.rcontrolled', grade:'1', strand:'phonics', title:'Hear r-controlled vowel sounds', kidTitle:'Vowels and R', icon:'🚗', rows:rRows, tag:'vowel_sound_confusion'},
-  {id:'r1.prefixes', grade:'1', strand:'vocab', title:'Understand common prefixes', kidTitle:'Word beginnings', icon:'🧩', rows:prefixRows, tag:'word_part_confusion'},
-  {id:'r1.suffixes', grade:'1', strand:'vocab', title:'Understand common suffixes', kidTitle:'Word endings', icon:'🧱', rows:suffixRows, tag:'word_part_confusion'},
+  {id:'r.vowelsounds', grade:'K', strand:'phonological', title:'Hear and compare short vowel sounds', kidTitle:'Middle sounds', icon:'👂', rows:soundRows, tag:'vowel_sound_confusion', level:shortVowelLevel},
+  {id:'r1.rcontrolled', grade:'1', strand:'phonics', title:'Hear r-controlled vowel sounds', kidTitle:'Vowels and R', icon:'🚗', rows:rRows, tag:'vowel_sound_confusion', level:rLevel},
+  {id:'r1.prefixes', grade:'1', strand:'vocab', title:'Understand common prefixes', kidTitle:'Word beginnings', icon:'🧩', rows:prefixRows, tag:'word_part_confusion', level:prefixLevel},
+  {id:'r1.suffixes', grade:'1', strand:'vocab', title:'Understand common suffixes', kidTitle:'Word endings', icon:'🧱', rows:suffixRows, tag:'word_part_confusion', level:suffixLevel},
 ];
-const makeItems = (s: Spec, rows: readonly Row[], reserve: boolean): Item[] => items(reserve ? `${s.id}.reserved-reading` : s.id, rows.map(([say, answer, wrong1, wrong2], i) => ({difficulty: (i % 3 + 1) as Difficulty, say, choices:[txt(answer), txt(wrong1,s.tag), txt(wrong2,s.tag)], explain: rows[i][4]}))).map(i => ({...i, skill:s.id}));
+const makeItems = (s: Spec, rows: readonly Row[], reserve: boolean): Item[] => items(reserve ? `${s.id}.reserved-reading` : s.id, rows.map((row, i) => { const [say, answer, wrong1, wrong2] = row; return {difficulty: s.level(row), say, choices:[txt(answer), txt(wrong1,s.tag), txt(wrong2,s.tag)], explain: rows[i][4]}; })).map(i => ({...i, skill:s.id}));
 export const READING_PLAN_SKILLS: Skill[] = specs.map(s => ({id:s.id, subject:'reading', strand:s.strand, grade:s.grade, title:s.title, kidTitle:s.kidTitle, icon:s.icon, standards:['IXL Skill Plan: Reading'], prereqs:[], parentTip:'Ask which sounds or word parts helped with the answer.', intro:[{say:`Let’s practice ${s.title.toLowerCase()}.`}], items:makeItems(s,s.rows.slice(0,8),false)}));
 export const READING_PLAN_MOCK: Item[] = specs.flatMap(s => makeItems(s,s.rows.slice(8),true));

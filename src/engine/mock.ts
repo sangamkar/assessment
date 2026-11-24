@@ -149,15 +149,21 @@ export function chooseMockCandidate(state: AppState, answers: MockAnswer[], cand
     const uses = Math.max(usesById.get(item.id) ?? 0, usesByPrint.get(fp) ?? 0);
     const newTask = isNewReserve(item) || (newlyAuthored.has(skill.id) && !unknownPractice.has(skill.id) && !unknownMock.has(skill.id));
     const uncertainSubject = oldSubjects.has(skill.subject);
-    const repeated = uses > 0 || practicePrints.has(fp) || mockPrints.has(fp) || (uncertainSubject && !newTask);
+    // Progress saved before fingerprints can't say which questions were seen. Treating every
+    // such question as seen left one topic per domain (the reserve set), so the mock skipped
+    // most topics; a question is only "seen" when the records show it.
+    const repeated = uses > 0 || practicePrints.has(fp) || mockPrints.has(fp);
     return { candidate, fp, uses, repeated, newTask, uncertainSubject };
-  }).filter(x => !(unknownPractice.has(x.candidate.skill.id) && practiceIds.has(x.candidate.item.id)) && !practicePrints.has(x.fp) && (!x.uncertainSubject || x.newTask));
+  }).filter(x => !(unknownPractice.has(x.candidate.skill.id) && practiceIds.has(x.candidate.item.id)) && !practicePrints.has(x.fp));
   const unused = eligible.filter(x => x.uses === 0);
   const fresh = unused.filter(x => !x.repeated);
   const pool = fresh.length ? fresh : unused.length ? unused : eligible;
   if (!pool.length) return undefined;
   const minimum = Math.min(...pool.map(x => x.uses));
-  const chosen = pool.find(x => x.uses === minimum)!;
+  const first = pool.find(x => x.uses === minimum)!;
+  // Within the topic chosen for coverage, a reserved question nobody can have practised wins
+  // when older progress leaves it unclear what was seen.
+  const chosen = (first.uncertainSubject && pool.find(x => x.uses === minimum && x.newTask && x.candidate.skill.id === first.candidate.skill.id)) || first;
   return { candidate: chosen.candidate, repeated: chosen.repeated };
 }
 
@@ -173,8 +179,14 @@ export function nextMockStep(state: AppState, run: MockRun): (QuestStep & { stra
   run.answers.forEach(a => usedSkills.set(a.skill, (usedSkills.get(a.skill) ?? 0) + 1));
   const offset = Math.abs(run.startedAt) % skills.length;
   const rotated = [...skills.slice(offset), ...skills.slice(0, offset)];
-  rotated.sort((a, b) => Math.abs(GRADES.indexOf(a.grade)-GRADES.indexOf(grade)) - Math.abs(GRADES.indexOf(b.grade)-GRADES.indexOf(grade)) || (usedSkills.get(a.id) ?? 0) - (usedSkills.get(b.id) ?? 0));
-  const candidates = rotated.flatMap(skill => poolItems(skill, 'mock').filter(item => !item.regions || item.regions.includes('us-ga')).sort((a,b) => Math.abs(a.difficulty-d)-Math.abs(b.difficulty-d)).map(item => ({ skill, item })));
+  // Cover the whole domain like the real diagnostic: every topic within one grade of his level,
+  // least-asked first, then the nearest grade. Questions follow his level within each topic.
+  const gradeGap = (s: Skill) => Math.abs(GRADES.indexOf(s.grade) - GRADES.indexOf(grade));
+  const nearby = rotated.filter((s) => gradeGap(s) <= 1);
+  const ordered = (nearby.length ? nearby : rotated).sort((a, b) => (usedSkills.get(a.id) ?? 0) - (usedSkills.get(b.id) ?? 0) || gradeGap(a) - gradeGap(b));
+  const rest = rotated.filter((s) => !ordered.includes(s));
+  const fit = (skill: Skill, item: Item) => Math.abs(ladderOf(skill.grade, item.difficulty) - target);
+  const candidates = [...ordered, ...rest].flatMap(skill => poolItems(skill, 'mock').filter(item => !item.regions || item.regions.includes('us-ga')).sort((a, b) => fit(skill, a) - fit(skill, b)).map(item => ({ skill, item })));
   // Reserve early slots for the requested concepts, without repeating while
   // any eligible task in the domain remains unused.
   const inDomain = run.answers.filter(a => a.strand === domain.strand).length;
@@ -232,6 +244,12 @@ export function scoreMock(run: MockRun): MockResult {
     misconceptions: [...tags.entries()].map(([tag, count]) => ({ tag, count })).sort((a, b) => b.count - a.count),
     practice,
   };
+}
+
+/** Start the mock in the middle of the grade he works at (Mid Grade 1 for Grade 1). */
+export function mockStartLevel(state: AppState): number {
+  const grade = state.settings.workingGrade ?? 'K';
+  return GRADES.indexOf(grade) * 3 + 1;
 }
 
 export function newMockRun(subject: MockSubject, startLevel = 2, now = Date.now()): MockRun {

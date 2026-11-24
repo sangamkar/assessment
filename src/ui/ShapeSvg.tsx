@@ -171,9 +171,9 @@ function Shape3D({ spec, fill, gid }: { spec: ShapeSpec; fill: string; gid: stri
     case 'tri-prism':
       return (
         <g>
-          <polygon points="30,50 70,22 88,58 48,86" fill={fill} {...s} style={{ filter: 'brightness(0.8)' }} />
-          <polygon points="8,86 48,86 30,50" fill={fill} {...s} style={{ filter: 'brightness(1.15)' }} />
-          <path d="M 8,86 L 50,58 L 88,58 M 50,58 L 70,22" fill="none" {...s} strokeDasharray="4 4" />
+          <polygon points="28,50 76,26 94,58 46,82" fill={fill} {...s} style={{ filter: 'brightness(0.8)' }} />
+          <polygon points="10,82 46,82 28,50" fill={fill} {...s} style={{ filter: 'brightness(1.15)' }} />
+          <path d="M 10,82 L 58,58 L 94,58 M 58,58 L 76,26" fill="none" {...s} strokeDasharray="4 4" />
         </g>
       );
     default:

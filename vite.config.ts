@@ -6,6 +6,8 @@ import {defineConfig} from 'vite';
 export default defineConfig(() => {
   return {
     base: './',
+    // Agent worktrees under .claude/ hold other checkouts of this repo; never test them here.
+    test: { exclude: ['**/node_modules/**', '**/dist/**', '.claude/**'] },
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

@@ -5,9 +5,9 @@ import type { CheckupAnswer, CheckupPlan, QuestStep } from './engine/planner';
 import { PLACEMENT_CAP, buildQuest, buildSkillSession, buildSkipChallenge, creditFromCheckup, nextCheckupItem, placementAnswer, placementNext, planCheckup, planWordCheckup, scoreCheckup, startPlacement } from './engine/planner';
 import type { PlacementRun } from './engine/planner';
 import type { MockRun, MockSubject } from './engine/mock';
-import { MOCK_BREAK_EVERY, mockTitle, mockTotal, newMockRun, nextMockStep, scoreMock } from './engine/mock';
+import { MOCK_BREAK_EVERY, mockTitle, mockTotal, mockStartLevel, newMockRun, nextMockStep, scoreMock } from './engine/mock';
 import type { AppState, Attempt, GameId, Mode } from './engine/progress';
-import { gameState, loadState, markIntroSeen, markKnown, recordAttempt, recordGame, saveState, skillState } from './engine/progress';
+import { gameState, isSpacedRepeat, loadState, markIntroSeen, markKnown, recordAttempt, recordGame, saveState, skillState } from './engine/progress';
 import { itemFingerprint, wasExposed } from './engine/exposures';
 import { Games } from './ui/games/Games';
 import { MysteryWord } from './ui/games/MysteryWord';
@@ -144,7 +144,7 @@ export default function App() {
 
   const startMock = (subject: MockSubject) => {
     const saved = stateRef.current.mockRun;
-    const run: MockRun = saved && saved.subject === subject ? { ...saved, answers: [...saved.answers] } : newMockRun(subject);
+    const run: MockRun = saved && saved.subject === subject ? { ...saved, answers: [...saved.answers] } : newMockRun(subject, mockStartLevel(stateRef.current));
     session.current = { queue: [], index: 0, mock: run, answers: [] };
     if (!saved || saved.subject !== subject) update((s) => ({ ...s, mockRun: run }));
     const first = nextMockStep(stateRef.current, run);
@@ -174,9 +174,11 @@ export default function App() {
   const onAnswer = (e: AnswerEvent, mode: Mode) => {
     const fingerprint = itemFingerprint(e.step.item);
     const repeated = !!e.step.repeated || (mode !== 'mock' && wasExposed(stateRef.current.exposures, e.step.item)) || session.current.answers.some(a => a.fingerprint ? a.fingerprint === fingerprint : a.itemId === e.step.item.id);
-    const attempt: Attempt = { itemId: e.step.item.id, fingerprint, repeated, question: { say: e.step.item.say, show: e.step.item.show }, skill: e.step.skill.id, d: e.step.item.difficulty, correct: e.correct, why: e.why, ts: Date.now(), mode };
+    const ts = Date.now();
+    const spaced = repeated && mode !== 'mock' && isSpacedRepeat(stateRef.current.attempts, e.step.item.id, fingerprint, ts) && !session.current.answers.some((a) => (a.fingerprint ? a.fingerprint === fingerprint : a.itemId === e.step.item.id));
+    const attempt: Attempt = { itemId: e.step.item.id, fingerprint, repeated, spaced, question: { say: e.step.item.say, show: e.step.item.show }, skill: e.step.skill.id, d: e.step.item.difficulty, correct: e.correct, why: e.why, ts, mode };
     const assessedSubject = e.step.skill.subject === 'math' || e.step.skill.subject === 'reading';
-    if (mode === 'placement' && session.current.placement) placementAnswer(session.current.placement, e.correct && (!assessedSubject || !repeated));
+    if (mode === 'placement' && session.current.placement) placementAnswer(session.current.placement, e.correct && (!assessedSubject || !repeated || spaced));
     if (mode === 'mock' && session.current.mock) {
       const run = session.current.mock;
       const step = e.step as QuestStep & { strand: string; level: number; target: number };

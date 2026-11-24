@@ -109,4 +109,24 @@ const specs: Spec[] = [
 
 export const EXPANDED_READING_SKILLS: Skill[] = specs.map(s => ({id:s.id, subject:'reading',strand:s.strand,grade:s.grade,title:s.title,kidTitle:s.kidTitle,icon:s.icon,standards:['Reading topic checklist'],prereqs:[],parentTip:'Ask which sound or spelling helped with the answer.',intro:[{say:`Let's practice ${s.kidTitle.toLowerCase()}.`}],items:build(s,s.rows.slice(0,8),false)}));
 export const EXPANDED_READING_MOCK: Item[] = specs.flatMap(s => build(s,s.rows.slice(8),true));
-function build(s:Spec, rows:readonly Row[], mock:boolean): Item[] { return items(mock ? `${s.id}.reserved-reading` : s.id, rows.map(([say,answer,no1,no2,explain],n) => ({difficulty:(n%3+1) as Difficulty,say,visual:s.id === 'r.vowel-letter' ? {kind:'text' as const,text:say.match(/in (\w+)\?$/)![1],size:'xl' as const} : undefined,choices:[txt(answer),txt(no1,s.tag),txt(no2,s.tag)],explain,speakChoices:!s.quiet}))).map(i => ({...i,skill:s.id})); }
+// Difficulty follows the content, not the row: short words, first sounds and easy-to-hear vowels first;
+// longer words, last and middle sounds, and distractors that share the answer's first part later.
+function level(s:Spec, [say,answer,no1,no2]:Row): Difficulty {
+  switch (s.id) {
+    case 'r.syllable-compare': { const beats = (answer.match(/[aeiouy]+/g) ?? []).length - (/[^aeiou]e$/.test(answer) ? 1 : 0); return beats <= 2 ? 1 : beats === 3 ? 2 : 3; }
+    case 'r1.spell-r': return answer.includes('ar') ? 1 : answer.includes('or') ? 2 : 3;
+    case 'r.sound-position': return say.includes('first') ? 1 : say.includes('last') ? 2 : 3;
+    case 'r.vowel-letter': return ({a:1, o:1, i:2, u:2, e:3} as Record<string, Difficulty>)[answer] ?? 2;
+    case 'r1.long-short': return [no1,no2].some(w => w.length > 1 && (answer.startsWith(w) || w.startsWith(answer))) ? 3 : say.includes('long') ? 2 : 1;
+    case 'r1.syllable-join': { const head = (w:string) => w.slice(0, 3); const shared = [no1,no2].filter(w => head(w) === head(answer)).length; return (shared + 1) as Difficulty; }
+    default: {
+      // Spelling: rank the skill's words by length, then by how easily the vowel is confused (e and i hardest);
+      // the shortest, clearest third is level 1 and the longest, most confusable third is level 3.
+      const score = (w:string) => w.length * 10 + (({a:1, o:1, i:3, u:2, e:3} as Record<string, number>)[w.match(/[aeiou]/)?.[0] ?? 'a'] ?? 1);
+      const ranked = [...s.rows].map(r => score(r[1])).sort((x, y) => x - y);
+      const rank = (ranked.indexOf(score(answer)) + ranked.lastIndexOf(score(answer))) / 2 / ranked.length;
+      return rank < 1 / 3 ? 1 : rank < 2 / 3 ? 2 : 3;
+    }
+  }
+}
+function build(s:Spec, rows:readonly Row[], mock:boolean): Item[] { return items(mock ? `${s.id}.reserved-reading` : s.id, rows.map((row) => { const [say,answer,no1,no2,explain] = row; return {difficulty:level(s,row),say,visual:s.id === 'r.vowel-letter' ? {kind:'text' as const,text:say.match(/in (\w+)\?$/)![1],size:'xl' as const} : undefined,choices:[txt(answer),txt(no1,s.tag),txt(no2,s.tag)],explain,speakChoices:!s.quiet}; })).map(i => ({...i,skill:s.id})); }

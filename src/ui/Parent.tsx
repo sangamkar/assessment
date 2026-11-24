@@ -507,6 +507,23 @@ function Settings({ state, setState }: { state: AppState; setState: (s: AppState
         )}
       </Card>
       <Card title="Learning">
+        <label className="block py-2">
+          <span className="block font-semibold text-slate-800">Working level</span>
+          <span className="block text-xs text-slate-500">
+            New topics come from this grade first, and earlier-grade topics never lock them. Earlier topics still come back as reviews and in check-ups.
+          </span>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {(['K', '1', '2'] as const).map((g) => (
+              <button
+                key={g}
+                onClick={() => set({ workingGrade: g })}
+                className={`rounded-xl px-4 py-2 text-sm font-bold ${(state.settings.workingGrade ?? 'K') === g ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700'}`}
+              >
+                {g === 'K' ? kLabel(state) : `${CURRICULA[state.settings.primary].short === 'India' ? 'Class' : 'Grade'} ${g}`}
+              </button>
+            ))}
+          </div>
+        </label>
         {toggle('Show Grade 1–2 stretch skills', 'Stretch skills still unlock only after their prerequisites.', 'showStretch')}
         {toggle('Unlock every skill', 'Skip prerequisites (useful when earlier skills are already known).', 'unlockAll')}
         {toggle('Mute sound', 'Turns off speech and sound effects. Not recommended for non-readers.', 'muted')}

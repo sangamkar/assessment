@@ -274,7 +274,7 @@ function Ruler({ unit, max, objects, size }: { unit: 'in' | 'cm'; max: number; o
   const rowH = 30;
   const top = 8;
   const rulerY = top + objects.length * (rowH + 8) + 6;
-  const W = pad * 2 + max * u;
+  const W = pad * 2 + max * u + 34;
   const H = rulerY + 46;
   return (
     <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label="objects above a ruler">

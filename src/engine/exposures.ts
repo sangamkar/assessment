@@ -7,6 +7,7 @@ import { EXPANDED_READING_SKILLS } from '../content/readingExpanded';
 import { COMPREHENSION_SKILLS } from '../content/readingComprehension';
 import { INDEPENDENT_READING_SKILLS } from '../content/readingIndependent';
 import { localizeDeep } from '../content/curricula';
+import { MATH_GRADE1_EXTRA, MATH_GRADE2_EXTRA } from '../content/mathGrade12';
 
 export interface ExposureLog {
   practiceIds: string[];
@@ -61,7 +62,7 @@ export function itemFingerprint(item: Item): string {
   fingerprints.set(item, fingerprint);
   return fingerprint;
 }
-const newlyAuthored = new Set([...WORD_SKILLS, ...KINDERGARTEN_NUMBER_SKILLS, ...KINDERGARTEN_VISUAL_SKILLS, ...EXPANDED_READING_SKILLS, ...COMPREHENSION_SKILLS, ...INDEPENDENT_READING_SKILLS].map(s => s.id));
+const newlyAuthored = new Set([...WORD_SKILLS, ...KINDERGARTEN_NUMBER_SKILLS, ...KINDERGARTEN_VISUAL_SKILLS, ...EXPANDED_READING_SKILLS, ...COMPREHENSION_SKILLS, ...INDEPENDENT_READING_SKILLS, ...MATH_GRADE1_EXTRA, ...MATH_GRADE2_EXTRA].map(s => s.id));
 export function wasExposed(log: ExposureLog, item: Item): boolean {
   const fp = itemFingerprint(item);
   const subject = getSkill(item.skill)?.subject;

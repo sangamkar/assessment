@@ -1,5 +1,5 @@
 import React, { useId } from 'react';
-import type { CompositePreset, ShapeSpec } from '../content/types';
+import type { CompositePreset, PiecesPreset, ShapeSpec } from '../content/types';
 
 const INK = '#1f2937';
 
@@ -87,6 +87,28 @@ function Shape2D({ spec, fill, stroke }: { spec: ShapeSpec; fill: string; stroke
           <line x1={78} y1={25} x2={78} y2={75} {...divider} stroke={INK} />
         </g>
       );
+    case 'scalene-triangle':
+      return <polygon points="12,80 88,80 35,18" {...common} />;
+    case 'obtuse-triangle':
+      return <polygon points="6,70 94,70 24,40" {...common} />;
+    case 'parallelogram':
+      return <polygon points="28,25 92,25 72,75 8,75" {...common} />;
+    case 'kite':
+      return <polygon points="50,8 78,38 50,92 22,38" {...common} />;
+    case 'irregular-quad':
+      return <polygon points="15,20 75,12 88,80 25,70" {...common} />;
+    case 'irregular-pentagon':
+      return <polygon points="50,8 90,40 72,88 20,80 10,35" {...common} />;
+    case 'irregular-hexagon':
+      return <polygon points="30,10 75,15 92,50 70,88 25,85 8,45" {...common} />;
+    case 'concave-hexagon':
+      return <polygon points="10,15 50,40 90,15 90,62 50,88 10,62" {...common} />;
+    case 'octagon':
+      return <polygon points={poly(8, 42, -67.5)} {...common} />;
+    case 'semicircle':
+      return <path d="M 8,68 A 42,42 0 0 1 92,68 Z" {...common} />;
+    case 'quarter-circle':
+      return <path d="M 15,85 L 15,15 A 70,70 0 0 1 85,85 Z" {...common} />;
     default:
       return null;
   }
@@ -138,12 +160,28 @@ function Shape3D({ spec, fill, gid }: { spec: ShapeSpec; fill: string; gid: stri
           <path d="M 18,78 A 32,11 0 0 0 82,78" fill="none" {...s} strokeDasharray="4 4" />
         </g>
       );
+    case 'pyramid':
+      return (
+        <g>
+          <polygon points="12,74 58,88 50,10" fill={fill} {...s} />
+          <polygon points="58,88 90,68 50,10" fill={fill} {...s} style={{ filter: 'brightness(0.75)' }} />
+          <path d="M 12,74 L 44,58 L 90,68 M 44,58 L 50,10" fill="none" {...s} strokeDasharray="4 4" />
+        </g>
+      );
+    case 'tri-prism':
+      return (
+        <g>
+          <polygon points="28,50 76,26 94,58 46,82" fill={fill} {...s} style={{ filter: 'brightness(0.8)' }} />
+          <polygon points="10,82 46,82 28,50" fill={fill} {...s} style={{ filter: 'brightness(1.15)' }} />
+          <path d="M 10,82 L 58,58 L 94,58 M 58,58 L 76,26" fill="none" {...s} strokeDasharray="4 4" />
+        </g>
+      );
     default:
       return null;
   }
 }
 
-const SOLIDS = new Set(['cube', 'rect-prism', 'sphere', 'cylinder', 'cone']);
+const SOLIDS = new Set(['cube', 'rect-prism', 'sphere', 'cylinder', 'cone', 'pyramid', 'tri-prism']);
 
 export function ShapeSvg({ spec, size = 120 }: { spec: ShapeSpec; size?: number }) {
   const gid = useId().replace(/:/g, '');
@@ -216,6 +254,122 @@ export function CompositeSvg({ preset, size = 200 }: { preset: CompositePreset; 
   return (
     <svg viewBox="0 0 100 100" width={size} height={size} role="img" aria-label={preset}>
       {body}
+    </svg>
+  );
+}
+
+/* ---- Shapes cut into pieces (composing and decomposing) ---- */
+
+type Piece = { d: string; c: [number, number] };
+const P = (pts: string): Piece => {
+  const xy = pts.trim().split(/\s+/).map((p) => p.split(',').map(Number) as [number, number]);
+  const c: [number, number] = [xy.reduce((a, p) => a + p[0], 0) / xy.length, xy.reduce((a, p) => a + p[1], 0) / xy.length];
+  return { d: `M ${xy.map((p) => p.join(',')).join(' L ')} Z`, c };
+};
+const HEX = [[92, 50], [71, 86], [29, 86], [8, 50], [29, 14], [71, 14]].map((p) => p.join(','));
+export const PIECES: Record<PiecesPreset, Piece[]> = {
+  'square-2tri': [P('15,15 85,15 15,85'), P('85,15 85,85 15,85')],
+  'square-2rect': [P('15,15 50,15 50,85 15,85'), P('50,15 85,15 85,85 50,85')],
+  'square-4tri': [P('15,15 85,15 50,50'), P('85,15 85,85 50,50'), P('85,85 15,85 50,50'), P('15,85 15,15 50,50')],
+  'square-4sq': [P('15,15 50,15 50,50 15,50'), P('50,15 85,15 85,50 50,50'), P('15,50 50,50 50,85 15,85'), P('50,50 85,50 85,85 50,85')],
+  'rect-2sq': [P('8,29 50,29 50,71 8,71'), P('50,29 92,29 92,71 50,71')],
+  'rect-2tri': [P('8,29 92,29 8,71'), P('92,29 92,71 8,71')],
+  'rect-3sq': [P('5,35 35,35 35,65 5,65'), P('35,35 65,35 65,65 35,65'), P('65,35 95,35 95,65 65,65')],
+  'hex-2trap': [P(`${HEX[3]} ${HEX[4]} ${HEX[5]} ${HEX[0]}`), P(`${HEX[0]} ${HEX[1]} ${HEX[2]} ${HEX[3]}`)],
+  'hex-6tri': HEX.map((v, i) => P(`50,50 ${v} ${HEX[(i + 1) % 6]}`)),
+  'hex-3rhom': [0, 2, 4].map((i) => P(`50,50 ${HEX[i]} ${HEX[i + 1]} ${HEX[(i + 2) % 6]}`)),
+  'hex-trap-3tri': [P(`${HEX[3]} ${HEX[4]} ${HEX[5]} ${HEX[0]}`), P(`${HEX[3]} ${HEX[2]} 50,50`), P(`50,50 ${HEX[2]} ${HEX[1]}`), P(`50,50 ${HEX[1]} ${HEX[0]}`)],
+  'trap-3tri': [P('4,80 50,80 27,40'), P('27,40 50,80 73,40'), P('50,80 96,80 73,40')],
+  'trap-tri-rhom': [P('4,80 50,80 73,40 27,40'), P('50,80 96,80 73,40')],
+  'rhom-2tri': [P('16,70 62,70 39,30'), P('39,30 62,70 85,30')],
+  'tri-4tri': [P('4,88 50,88 27,48'), P('50,88 96,88 73,48'), P('27,48 73,48 50,8'), P('27,48 50,88 73,48')],
+  'circle-2semi': [{ d: 'M 10,50 A 40,40 0 0 1 90,50 Z', c: [50, 33] }, { d: 'M 90,50 A 40,40 0 0 1 10,50 Z', c: [50, 67] }],
+  'circle-4quarter': [
+    { d: 'M 50,50 L 50,10 A 40,40 0 0 1 90,50 Z', c: [67, 33] },
+    { d: 'M 50,50 L 90,50 A 40,40 0 0 1 50,90 Z', c: [67, 67] },
+    { d: 'M 50,50 L 50,90 A 40,40 0 0 1 10,50 Z', c: [33, 67] },
+    { d: 'M 50,50 L 10,50 A 40,40 0 0 1 50,10 Z', c: [33, 33] },
+  ],
+  'rect-tri-trap': [P('8,29 40,29 8,71'), P('40,29 92,29 92,71 8,71')],
+  'house-sq-tri': [P('25,45 75,45 50,10'), P('25,45 75,45 75,95 25,95')],
+};
+
+export function PiecesSvg({ preset, apart, color = '#3b82f6', size = 200 }: { preset: PiecesPreset; apart?: boolean; color?: string; size?: number }) {
+  const pieces = PIECES[preset];
+  const k = apart ? 0.45 : 0;
+  return (
+    <svg viewBox={apart ? '-22 -22 144 144' : '0 0 100 100'} width={size} height={size} role="img" aria-label="shape made of pieces">
+      {pieces.map((p, i) => (
+        <path
+          key={i}
+          d={p.d}
+          transform={`translate(${(p.c[0] - 50) * k} ${(p.c[1] - 50) * k})`}
+          fill={color}
+          stroke={INK}
+          strokeWidth={2.5}
+          strokeLinejoin="round"
+          style={{ filter: `brightness(${i % 2 ? 1.25 : 1})` }}
+        />
+      ))}
+    </svg>
+  );
+}
+
+/* ---- Circles and rectangles cut into equal or unequal parts ---- */
+
+const UNEQUAL: Record<number, number[]> = { 2: [0.3, 0.7], 3: [0.18, 0.32, 0.5], 4: [0.12, 0.2, 0.3, 0.38], 6: [0.08, 0.1, 0.14, 0.18, 0.22, 0.28], 8: [0.05, 0.07, 0.09, 0.11, 0.13, 0.15, 0.18, 0.22] };
+
+export function PartsSvg({ shape, n, equal = true, shaded, cut = 'v', color = '#3b82f6', size = 190 }: { shape: 'circle' | 'rect' | 'square'; n: number; equal?: boolean; shaded?: number; cut?: 'v' | 'h' | 'grid' | 'diag'; color?: string; size?: number }) {
+  const on = (i: number) => (shaded === undefined ? color : i < shaded ? color : '#ffffff');
+  const st = { stroke: INK, strokeWidth: 2.5, strokeLinejoin: 'round' as const };
+  const paths: string[] = [];
+  if (shape === 'circle') {
+    if (equal) {
+      if (n === 1) paths.push('M 10,50 A 40,40 0 1 1 90,50 A 40,40 0 1 1 10,50 Z');
+      for (let i = 0; n > 1 && i < n; i++) {
+        const a0 = -Math.PI / 2 + (2 * Math.PI * i) / n;
+        const a1 = a0 + (2 * Math.PI) / n;
+        const p = (a: number) => `${(50 + 40 * Math.cos(a)).toFixed(2)},${(50 + 40 * Math.sin(a)).toFixed(2)}`;
+        paths.push(`M 50,50 L ${p(a0)} A 40,40 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${p(a1)} Z`);
+      }
+    } else {
+      // Parallel cuts: strips of a circle are never equal, even when they look evenly spaced.
+      const xs = n === 2 ? [10, 32, 90] : Array.from({ length: n + 1 }, (_, i) => 10 + (80 * i) / n);
+      for (let i = 0; i < n; i++) {
+        const y = (x: number) => Math.sqrt(Math.max(0, 1600 - (x - 50) ** 2));
+        const [x0, x1] = [xs[i], xs[i + 1]];
+        const big = x0 < 50 && x1 > 50 ? 0 : 0;
+        paths.push(`M ${x0},${50 - y(x0)} A 40,40 0 ${big} 1 ${x1},${50 - y(x1)} L ${x1},${50 + y(x1)} A 40,40 0 0 1 ${x0},${50 + y(x0)} Z`);
+      }
+    }
+  } else {
+    const [x, y, w, h] = shape === 'square' ? [15, 15, 70, 70] : [6, 25, 88, 50];
+    if (cut === 'diag' && (n === 2 || n === 4)) {
+      const [a, b, c, d] = [`${x},${y}`, `${x + w},${y}`, `${x + w},${y + h}`, `${x},${y + h}`];
+      const m = `${x + w / 2},${y + h / 2}`;
+      if (n === 2) paths.push(`M ${a} L ${b} L ${d} Z`, `M ${b} L ${c} L ${d} Z`);
+      else paths.push(`M ${a} L ${b} L ${m} Z`, `M ${b} L ${c} L ${m} Z`, `M ${c} L ${d} L ${m} Z`, `M ${d} L ${a} L ${m} Z`);
+    } else if (cut === 'grid' && n % 2 === 0 && n >= 4) {
+      const cols = n / 2;
+      for (let r = 0; r < 2; r++) for (let c = 0; c < cols; c++) {
+        const [cx, cy, cw, ch] = [x + (w * c) / cols, y + (h * r) / 2, w / cols, h / 2];
+        paths.push(`M ${cx},${cy} h ${cw} v ${ch} h ${-cw} Z`);
+      }
+    } else {
+      const weights = equal ? Array.from({ length: n }, () => 1 / n) : UNEQUAL[n] ?? Array.from({ length: n }, () => 1 / n);
+      let at = 0;
+      for (const wt of weights) {
+        if (cut === 'h') paths.push(`M ${x},${y + h * at} h ${w} v ${h * wt} h ${-w} Z`);
+        else paths.push(`M ${x + w * at},${y} h ${w * wt} v ${h} h ${-w * wt} Z`);
+        at += wt;
+      }
+    }
+  }
+  return (
+    <svg viewBox="-4 -4 108 108" width={size} height={size} role="img" aria-label={`${shape} in ${n} parts`}>
+      {paths.map((d, i) => (
+        <path key={i} d={d} fill={on(i)} {...st} />
+      ))}
     </svg>
   );
 }

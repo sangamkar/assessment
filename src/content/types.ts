@@ -28,12 +28,26 @@ export type ShapeKind =
   | 'rect-halves'
   | 'rect-fourths'
   | 'rect-unequal'
+  // more 2-D shapes, so defining attributes (not looks) decide the name
+  | 'scalene-triangle'
+  | 'obtuse-triangle'
+  | 'parallelogram'
+  | 'kite'
+  | 'irregular-quad'
+  | 'irregular-pentagon'
+  | 'irregular-hexagon'
+  | 'concave-hexagon'
+  | 'octagon'
+  | 'semicircle'
+  | 'quarter-circle'
   // 3-D
   | 'cube'
   | 'sphere'
   | 'cylinder'
   | 'cone'
-  | 'rect-prism';
+  | 'rect-prism'
+  | 'pyramid'
+  | 'tri-prism';
 
 export interface ShapeSpec {
   shape: ShapeKind;
@@ -57,6 +71,28 @@ export type CompositePreset =
   | 'hexagon-from-trapezoids'
   | 'ice-cream'
   | 'triangle-split';
+
+/** Shapes cut into pieces (see ui/ShapeSvg.tsx PIECES): drawn joined, or pulled apart. */
+export type PiecesPreset =
+  | 'square-2tri'
+  | 'square-2rect'
+  | 'square-4tri'
+  | 'square-4sq'
+  | 'rect-2sq'
+  | 'rect-2tri'
+  | 'rect-3sq'
+  | 'hex-2trap'
+  | 'hex-6tri'
+  | 'hex-3rhom'
+  | 'hex-trap-3tri'
+  | 'trap-3tri'
+  | 'trap-tri-rhom'
+  | 'rhom-2tri'
+  | 'tri-4tri'
+  | 'circle-2semi'
+  | 'circle-4quarter'
+  | 'rect-tri-trap'
+  | 'house-sq-tri';
 
 export type Place = 'above' | 'below' | 'beside' | 'inside' | 'behind' | 'in-front';
 
@@ -90,7 +126,18 @@ export type Visual =
   | { kind: 'place'; thing: string; ref: string; where: Place }
   | { kind: 'coins'; values: number[]; symbol: string; labels?: string[] }
   | { kind: 'baseTen'; hundreds: number; tens: number; ones: number }
-  | { kind: 'row'; items: Visual[]; sep?: string };
+  | { kind: 'row'; items: Visual[]; sep?: string }
+  /** A circle, rectangle or square cut into n parts (equal or not), some shaded. */
+  | { kind: 'parts'; shape: 'circle' | 'rect' | 'square'; n: number; equal?: boolean; shaded?: number; cut?: 'v' | 'h' | 'grid' | 'diag'; color?: string }
+  /** A rectangle split into rows × columns of squares (partial: only the first row and column drawn); with emoji: an array of objects. */
+  | { kind: 'grid'; rows: number; cols: number; partial?: boolean; emoji?: string; color?: string }
+  /** Objects lying above a ruler marked 0…max in inches or centimeters. */
+  | { kind: 'ruler'; unit: 'in' | 'cm'; max: number; objects: { emoji: string; color: string; from: number; to: number }[] }
+  /** Vertical bar graph with a numbered scale (each grid line is 1). */
+  | { kind: 'bars'; title?: string; bars: { label: string; emoji: string; value: number }[]; max: number }
+  /** Line plot: an X for each measurement above a number line. */
+  | { kind: 'lineplot'; start: number; end: number; counts: number[]; label?: string }
+  | { kind: 'pieces'; preset: PiecesPreset; apart?: boolean; color?: string };
 
 export interface Choice {
   id: string;

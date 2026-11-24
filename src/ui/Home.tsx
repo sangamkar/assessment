@@ -47,12 +47,10 @@ export function Home({ state, onQuest, onGames, onDiscovery, onIsland, onGrownUp
         >
           <div className="absolute -bottom-4 -right-4 text-[7rem] opacity-30">🧩</div>
           <div className="font-kid text-sm font-bold uppercase tracking-widest text-white/80">Brain Games</div>
-          <div className="mt-1 font-kid text-3xl font-bold leading-tight text-white">Word, number &amp; sentence puzzles</div>
+          <div className="mt-1 font-kid text-3xl font-bold leading-tight text-white">Word puzzles, gears &amp; water rescue</div>
           <div className="mt-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-white text-3xl shadow-lg">🎮</div>
         </button>
       </div>
-
-      <button onClick={onDiscovery} className="rounded-2xl bg-teal-100 px-5 py-4 text-left font-kid text-xl font-bold text-teal-800 shadow">🎨 Discover &amp; create</button>
 
       <div className={`grid grid-cols-2 gap-4 sm:grid-cols-3 ${SUBJECTS.filter((x) => subjectSummary(state, x.id).total).length > 5 ? 'lg:grid-cols-6' : 'lg:grid-cols-5'}`}>
         {SUBJECTS.map((s) => {

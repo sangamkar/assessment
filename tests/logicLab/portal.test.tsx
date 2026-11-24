@@ -40,7 +40,10 @@ describe("Logic Lab portal integration", () => {
     );
     expect(lab).toContain("Brain Games");
     expect(lab).toContain("GearWorks");
-    expect(lab).toContain("GravityBuilder");
+    expect(lab).toContain("Play puzzle 1");
+    // The child sees no level editor, and the unfinished GravityBuilder stays hidden.
+    expect(lab).not.toContain("Level editor");
+    expect(lab).not.toContain("GravityBuilder");
   });
   it("scopes lab styles so they cannot alter portal elements", () => {
     const css =

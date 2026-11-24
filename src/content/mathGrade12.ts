@@ -275,7 +275,7 @@ const solids: Skill = {
   strand: 'geometry',
   grade: '1',
   title: '3-D shapes: names, flat faces, vertices, edges; roll, stack, slide',
-  kidTitle: 'Solid shapes',
+  kidTitle: 'Faces, edges and vertices',
   icon: '🧊',
   standards: ['1.GSR.4.1', '2.GSR.7.1'],
   prereqs: ['m.shapes3d'],
@@ -408,8 +408,12 @@ const fracName = (k: number, n: number) => `${WORD[k]} ${k === 1 ? ONE[n] : MANY
 type PartsShape = 'circle' | 'rect' | 'square';
 type Cut = 'v' | 'h' | 'grid' | 'diag';
 const partsVis = (shape: PartsShape, n: number, equal: boolean, cut: Cut, color: string, shaded?: number): Visual => ({ kind: 'parts', shape, n, equal, cut: shape === 'circle' || !equal ? (cut === 'h' && shape !== 'circle' ? 'h' : 'v') : cut, color, ...(shaded === undefined ? {} : { shaded }) });
-const randomCut = (rng: Rng, n: number, grade: 1 | 2): Cut =>
-  rng.pick<Cut>(n === 2 ? ['v', 'h', 'diag'] : n === 4 ? (grade === 2 ? ['v', 'h', 'grid', 'diag'] : ['v', 'h', 'grid', 'grid']) : ['v', 'h']);
+// Diagonal cuts only on squares and circles: a long rectangle cut corner to corner gives
+// triangles of different shapes, which a young child reasonably reads as unfair shares.
+const randomCut = (rng: Rng, n: number, grade: 1 | 2, shape: PartsShape): Cut => {
+  const diag: Cut[] = shape === 'rect' ? [] : ['diag'];
+  return rng.pick<Cut>(n === 2 ? ['v', 'h', ...diag] : n === 4 ? (grade === 2 ? ['v', 'h', 'grid', ...diag] : ['v', 'h', 'grid', 'grid']) : ['v', 'h']);
+};
 
 function sharesGenerator(id: string, grade: 1 | 2) {
   const counts = grade === 1 ? [2, 4] : [2, 3, 4];
@@ -418,12 +422,12 @@ function sharesGenerator(id: string, grade: 1 | 2) {
     const color = rng.pick(COLORS);
     const n = rng.pick(counts);
     if (d === 1) {
-      const cut = randomCut(rng, n, grade);
+      const cut = randomCut(rng, n, grade, shape);
       const otherNs = counts.filter((k) => k !== n);
       const choices = dedupe([
         v(partsVis(shape, n, true, cut, color), undefined),
         v(partsVis(shape, n, false, rng.pick<Cut>(['v', 'h']), color), undefined, 'unequal_parts_accepted'),
-        ...otherNs.map((k) => v(partsVis(shape, k, true, randomCut(rng, k, grade), color), undefined, n === 3 || k === 3 ? 'counted_parts_wrong' : 'halves_fourths_confusion')),
+        ...otherNs.map((k) => v(partsVis(shape, k, true, randomCut(rng, k, grade, shape), color), undefined, n === 3 || k === 3 ? 'counted_parts_wrong' : 'halves_fourths_confusion')),
         v(partsVis(shape, rng.pick(otherNs), false, 'v', color), undefined, 'unequal_parts_accepted'),
       ]);
       return makeItem(id, `which${n}-${JSON.stringify(choices.map((c) => c.visual))}`, d, {
@@ -437,7 +441,7 @@ function sharesGenerator(id: string, grade: 1 | 2) {
     }
     if (d === 2) {
       const mode = rng.pick(grade === 2 ? (['name', 'name', 'pick', 'count'] as const) : (['name', 'pick', 'count'] as const));
-      const cut = randomCut(rng, n, grade);
+      const cut = randomCut(rng, n, grade, shape);
       if (mode === 'name') {
         const k = grade === 2 ? rng.int(1, n - 1) : 1;
         const partToPart = n - k > 1 && counts.includes(n - k) && k < n - k ? [t(fracName(k, n - k), 'compared_shaded_to_unshaded')] : [];
@@ -475,7 +479,7 @@ function sharesGenerator(id: string, grade: 1 | 2) {
       const choices = dedupe([
         v(partsVis(shape, n, true, cut, color, 1), undefined),
         v(partsVis(shape, n, false, rng.pick<Cut>(['v', 'h']), color, 1), undefined, 'unequal_parts_accepted'),
-        ...counts.filter((c) => c !== n).map((c) => v(partsVis(shape, c, true, randomCut(rng, c, grade), color, 1), undefined, 'fraction_name_confusion')),
+        ...counts.filter((c) => c !== n).map((c) => v(partsVis(shape, c, true, randomCut(rng, c, grade, shape), color, 1), undefined, 'fraction_name_confusion')),
         v(partsVis(shape, n, true, cut, color, n - 1), undefined, 'shaded_vs_unshaded'),
       ]);
       return makeItem(id, `pick1of${n}-${JSON.stringify(choices.map((c) => c.visual))}`, d, {
@@ -491,10 +495,11 @@ function sharesGenerator(id: string, grade: 1 | 2) {
     const mode = rng.pick(grade === 2 ? (['bigger', 'whole', 'story', 'sameSize', 'bigger'] as const) : (['bigger', 'whole', 'story'] as const));
     if (mode === 'whole') {
       const thing = rng.pick(['pizza', 'sandwich', 'pie', 'tortilla', 'cake']);
+      const thingShape: PartsShape = thing === 'sandwich' ? 'square' : thing === 'cake' ? 'rect' : 'circle';
       return makeItem(id, `whole${n}-${thing}-${color}`, d, {
         say: `A ${thing} is cut into ${MANY[n]}. How many ${MANY[n]} make the whole ${thing}?`,
         show: `How many ${MANY[n]} make a whole?`,
-        visual: partsVis(thing === 'sandwich' ? 'square' : thing === 'cake' ? 'rect' : 'circle', n, true, randomCut(rng, n, grade), color),
+        visual: partsVis(thingShape, n, true, randomCut(rng, n, grade, thingShape), color),
         choices: numberChoices(rng, n, [
           { n: 1, why: 'one_part_is_whole' },
           { n: n - 1, why: 'counted_lines_not_parts' },
@@ -512,8 +517,8 @@ function sharesGenerator(id: string, grade: 1 | 2) {
         say: `These shapes are the same size. Which shaded part is ${askBig ? 'bigger' : 'smaller'}: one ${ONE[a]} or one ${ONE[b]}?`,
         show: `Which is ${askBig ? 'bigger' : 'smaller'}?`,
         choices: [
-          v(partsVis(shape, target, true, randomCut(rng, target, grade), color, 1), `one ${ONE[target]}`),
-          v(partsVis(shape, other, true, randomCut(rng, other, grade), color, 1), `one ${ONE[other]}`, 'more_parts_bigger_pieces'),
+          v(partsVis(shape, target, true, randomCut(rng, target, grade, shape), color, 1), `one ${ONE[target]}`),
+          v(partsVis(shape, other, true, randomCut(rng, other, grade, shape), color, 1), `one ${ONE[other]}`, 'more_parts_bigger_pieces'),
           t('They are the same size', 'all_parts_same_size'),
         ],
         hint: 'Cutting the same whole into more parts makes each part smaller.',
@@ -1568,7 +1573,7 @@ const pictureGraphs: Skill = {
   strand: 'measure',
   grade: '1',
   title: 'Picture graphs with three categories: how many, more, fewer, in all',
-  kidTitle: 'Picture graphs',
+  kidTitle: 'Graphs and tallies',
   icon: '📊',
   standards: ['1.MDR.6.4'],
   prereqs: ['m.data'],
@@ -1627,7 +1632,7 @@ const linePlot: Skill = {
       const i = rng.pick(options);
       return makeItem('m2.lineplot', `${mode}${i}-${key}`, d, {
         say: `How many ${plot.what} are ${start + i} ${plot.unit} long?`,
-        show: `How many are ${start + i} ${plot.unit}?`,
+        show: `How many ${plot.what} are ${start + i} ${plot.unit} long?`,
         visual,
         choices: numberChoices(rng, counts[i], [
           { n: start + i, why: 'read_number_line_label' },
@@ -1803,7 +1808,7 @@ const count120: Skill = {
   strand: 'number',
   grade: '1',
   title: 'Count to 120 forward and back; read and write numbers past 100',
-  kidTitle: 'Count to 120',
+  kidTitle: 'Numbers past 100',
   icon: '💯',
   standards: ['1.NR.1.1'],
   prereqs: ['m.count20', 'm.tens'],

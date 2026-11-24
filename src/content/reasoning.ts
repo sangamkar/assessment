@@ -223,7 +223,7 @@ const series: Skill = {
   strand: 'figural',
   grade: 'K',
   title: 'Series: what comes next? (turning, growing, number rules)',
-  kidTitle: 'What comes next?',
+  kidTitle: 'Pattern puzzles',
   icon: '🔄',
   standards: ['reasoning:series'],
   prereqs: ['m.pattern'],

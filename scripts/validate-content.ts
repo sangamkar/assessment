@@ -108,6 +108,16 @@ for (const item of MOCK_ONLY_ITEMS) {
   checkItem(item, item.id);
 }
 
+// Two stones with the same name on one island confuse a child: names must be unique per subject.
+for (const subject of SUBJECTS) {
+  const seen = new Map<string, string>();
+  for (const s of ALL_SKILLS.filter((k) => k.subject === subject.id)) {
+    const other = seen.get(s.kidTitle);
+    if (other) errors.push(`${s.id}: kidTitle "${s.kidTitle}" is also used by ${other}`);
+    seen.set(s.kidTitle, s.id);
+  }
+}
+
 for (const subject of SUBJECTS) {
   const skills = ALL_SKILLS.filter((s) => s.subject === subject.id);
   const hand = skills.reduce((n, s) => n + (s.items?.length ?? 0), 0);
